@@ -21,7 +21,7 @@ A Python tool to convert LTspice schematic files (.asc) into SVG format. This to
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/ltspice_to_svg.git
+git clone https://github.com/jianxun/ltspice_to_svg.git
 cd ltspice_to_svg
 ```
 
@@ -47,7 +47,7 @@ python src/ltspice_to_svg.py path/to/schematic.asc
 
 The SVG file will be generated in the same directory as the input file.
 
-The schematic:
+Example schematic:
 
 ![Schematic](fig/miller_ota_schematic.png)
 
