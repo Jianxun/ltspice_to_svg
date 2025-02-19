@@ -1,0 +1,2 @@
+svgwrite>=1.4.3
+pytest>=7.3.1 
