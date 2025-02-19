@@ -53,7 +53,7 @@ Example schematic:
 
 The generated SVG:
 
-![SVG](fig/miller_ota.svg)
+![SVG](schematics/miller_ota.svg)
 
 ### Advanced Options
 
