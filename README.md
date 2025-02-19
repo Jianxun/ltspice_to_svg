@@ -51,7 +51,7 @@ The schematic:
 
 The generated SVG:
 
-![SVG](fig/miller_ota_svg.png)
+![SVG](fig/miller_ota.svg)
 
 ### Advanced Options
 

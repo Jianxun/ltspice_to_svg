@@ -37,8 +37,6 @@ env/
 # Project specific
 .cursorrules
 output/
-*.svg
-!fig/*.svg  # Keep SVG files in the fig directory for documentation
 .pytest_cache/
 .coverage
 htmlcov/
