@@ -5,10 +5,12 @@ A Python tool to convert LTspice schematic files (.asc) into SVG format. This to
 ## Features
 
 - Converts LTspice schematics (.asc) to SVG format
-- Supports all standard LTspice components:
+- Supports LTspice symbols (local only):
   - Basic components (NMOS, PMOS, resistors, capacitors)
   - Power and ground symbols (VDD, GND)
-  - Pin/port symbols with connection dots
+  - Pin/port symbol
+  - Support lines and circle shape in the symbol.
+  - Feel free to add your own symbols
 - Handles component rotations (R0, R90, R180, R270) and mirroring (M0, M90, M180, M270)
 - Preserves wire connections and adds T-junction dots
 - Maintains text elements with proper alignment (labels, values, comments)
