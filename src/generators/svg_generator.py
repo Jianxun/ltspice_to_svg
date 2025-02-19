@@ -14,7 +14,7 @@ class SVGGenerator:
         self.stroke_width = stroke_width
         self.dot_size_multiplier = dot_size_multiplier  # Controls size of junction dots relative to stroke width
         self.scale = scale  # Scale factor for coordinates (default: 0.1 = 10x scale down)
-        self.font_size = font_size  # Font size in pixels before scaling
+        self.font_size = font_size  # Font size in pixels
         self.symbols_cache: Dict[str, Dict] = {}  # Cache for parsed symbol data
         
     def generate(self, schematic_data: Dict, output_path: str, symbols_data: Optional[Dict] = None) -> None:
@@ -313,25 +313,52 @@ class SVGGenerator:
             dwg.add(g)
 
     def _add_texts(self, dwg, texts):
-        """Add text elements to the SVG drawing."""
+        """Add text elements to the SVG drawing.
+        Handles LTspice text justification options:
+        - Left: Left-aligned, vertically centered
+        - Center: Horizontally and vertically centered
+        - Right: Right-aligned, vertically centered
+        - Top: Top-aligned, horizontally centered
+        - Bottom: Bottom-aligned, horizontally centered
+        
+        Font size is calculated by multiplying the base font size with the size_multiplier from the ASC file.
+        Horizontal alignment is handled using text-anchor.
+        Vertical alignment is handled by adjusting the y-coordinate.
+        """
         for text in texts:
-            # Scale coordinates
+            # Scale coordinates only (not font size)
             x = text['x'] * self.scale
             y = text['y'] * self.scale
             
-            # Convert LTspice justification to SVG text-anchor
-            text_anchor = {
-                'Left': 'start',
-                'Center': 'middle',
-                'Right': 'end'
-            }.get(text['justification'], 'start')
+            # Calculate actual font size using the multiplier
+            size_multiplier = text.get('size_multiplier', 1.5)  # Default to 1.5x if not specified
+            font_size = self.font_size * size_multiplier
             
-            # Add text element with scaled font size
+            # Set text alignment based on justification
+            if text['justification'] == 'Left':
+                text_anchor = 'start'
+            elif text['justification'] == 'Right':
+                text_anchor = 'end'
+            else:  # Center, Top, Bottom all use middle horizontal alignment
+                text_anchor = 'middle'
+            
+            # Adjust vertical position based on justification
+            # For Left/Center/Right, move up by half the font size to center vertically
+            # For Top/Bottom, adjust by a third of the font size
+            if text['justification'] in ['Left', 'Center', 'Right']:
+                y_offset = font_size * 0.3  # Move up to center vertically
+            elif text['justification'] == 'Top':
+                y_offset = font_size * 0.6  # Move down
+            else:  # Bottom
+                y_offset = font_size * 0.0  # Move up
+            
+            # Add text element with all attributes
             text_element = dwg.text(
                 text['text'],
-                insert=(x, y),
+                insert=(x, y + y_offset),
                 font_family='Arial',
-                font_size=f'{self.font_size * self.scale}px',
-                text_anchor=text_anchor
+                font_size=f'{font_size}px',
+                text_anchor=text_anchor,
+                fill='black'  # Ensure text is visible
             )
             dwg.add(text_element)

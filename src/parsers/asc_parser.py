@@ -101,7 +101,31 @@ class ASCParser:
                 print(f"Warning: Invalid symbol data in line: {line} - {e}")
     
     def _parse_text(self, line: str):
-        """Parse a TEXT line and extract position, justification, and content."""
+        """Parse a TEXT line and extract position, justification, and content.
+        Format: TEXT x y justification size ;content
+        Justification can be: Left, Center, Right, Top, Bottom
+        Size is an index that maps to a font size multiplier:
+        0 -> 0.625x
+        1 -> 1.0x
+        2 -> 1.5x (default)
+        3 -> 2.0x
+        4 -> 2.5x
+        5 -> 3.5x
+        6 -> 5.0x
+        7 -> 7.0x
+        """
+        # Font size multiplier mapping
+        size_multipliers = {
+            0: 0.625,
+            1: 1.0,
+            2: 1.5,  # default
+            3: 2.0,
+            4: 2.5,
+            5: 3.5,
+            6: 5.0,
+            7: 7.0
+        }
+
         # Find the semicolon that separates attributes from text content
         try:
             attrs, content = line.split(';', 1)
@@ -113,11 +137,21 @@ class ASCParser:
                     y = int(attrs_parts[2])
                     justification = attrs_parts[3]
                     
+                    # Extract size index if available
+                    size_multiplier = size_multipliers[2]  # Default to index 2 (1.5x)
+                    if len(attrs_parts) >= 5:
+                        try:
+                            size_index = int(attrs_parts[4])
+                            size_multiplier = size_multipliers.get(size_index, size_multipliers[2])
+                        except ValueError:
+                            print(f"Warning: Invalid size index in line: {line}, using default")
+                    
                     text = {
                         'x': x,
                         'y': y,
                         'justification': justification,
-                        'text': content.strip()
+                        'text': content.strip(),
+                        'size_multiplier': size_multiplier
                     }
                     self.texts.append(text)
                 except ValueError as e:

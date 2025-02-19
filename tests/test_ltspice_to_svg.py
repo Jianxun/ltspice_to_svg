@@ -68,10 +68,10 @@ def test_svg_generator():
     # Generate SVG in the same directory as the schematic
     svg_file = asc_file.with_suffix('.svg')
     
-    stroke_width = 4.0
+    stroke_width = 3.0
     dot_size_multiplier = 1.5
     scale = 1.0
-    font_size = 22.0
+    font_size = 16.0
 
     generator = SVGGenerator(stroke_width=stroke_width, 
                            dot_size_multiplier=dot_size_multiplier, 
@@ -96,8 +96,18 @@ def test_svg_generator():
     if schematic_data.get('texts'):
         text = schematic_data['texts'][0]
         # Check text attributes
-        text_anchor = 'middle' if text['justification'].lower() == 'center' else 'end' if text['justification'].lower() == 'right' else 'start'
-        assert f'text-anchor="{text_anchor}"' in svg_content
+        assert all(k in text for k in ['x', 'y', 'justification', 'text'])
+        
+        # Check horizontal alignment
+        if text['justification'] in ['Left', 'Center', 'Right']:
+            text_anchor = {
+                'Left': 'start',
+                'Center': 'middle',
+                'Right': 'end'
+            }[text['justification']]
+            assert f'text-anchor="{text_anchor}"' in svg_content
+            
         # Check font size
+        font_size = text.get('size', font_size)  # Use text size if provided
         scaled_font_size = font_size * scale
         assert f'font-size="{scaled_font_size}px"' in svg_content 

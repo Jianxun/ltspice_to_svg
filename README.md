@@ -60,10 +60,10 @@ python src/ltspice_to_svg.py path/to/schematic.asc [options]
 ```
 
 Available options:
-- `--stroke-width WIDTH`: Line width in SVG (default: 4.0)
+- `--stroke-width WIDTH`: Line width in SVG (default: 3.0)
 - `--dot-size SIZE`: Size of junction dots relative to stroke width (default: 1.5)
 - `--scale SCALE`: Scale factor for coordinates (default: 1.0)
-- `--font-size SIZE`: Font size in pixels before scaling (default: 22.0)
+- `--font-size SIZE`: Font size in pixels (default: 16.0)
 - `--export-json`: Export intermediate JSON files for debugging
 
 ### Example

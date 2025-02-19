@@ -1,0 +1,11 @@
+[Cursor] Clean up code and update default values
+
+- Remove debug print statements from SVG generator and main script
+- Update default values:
+  - stroke_width: 3.0 (was 4.0)
+  - font_size: 16.0 (was 22.0)
+  - dot_size: 1.5 (unchanged)
+  - scale: 1.0 (unchanged)
+- Update documentation to reflect new defaults
+- Fix vertical text alignment
+- Clean up code comments and docstrings 
