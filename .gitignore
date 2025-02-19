@@ -40,6 +40,7 @@ output/
 .pytest_cache/
 .coverage
 htmlcov/
+commit_msg.txt
 
 # OS specific
 .DS_Store
