@@ -1,0 +1,11 @@
+Version 4
+SymbolType BLOCK
+LINE Normal -64 -64 64 -64 0
+LINE Normal 64 -64 64 64 1
+LINE Normal 64 64 -64 64 2
+LINE Normal -64 64 -64 -64 3
+RECTANGLE Normal -48 -48 -16 -16 2
+RECTANGLE Normal 16 -48 48 -16 0
+CIRCLE Normal -8 -8 8 8 4
+ARC Normal -48 16 -16 48 -32 48 -48 32 2
+ARC Normal 16 16 48 48 16 32 32 16 0

@@ -5,12 +5,13 @@ A Python tool to convert LTspice schematic files (.asc) into SVG format. This to
 ## Features
 
 - Converts LTspice schematics (.asc) to SVG format
-- Supports LTspice symbols (local only):
+- Supports LTspice symbols:
+  - Local symbols in the schematic directory
+  - Standard LTspice library symbols (via LTSPICE_LIB_PATH)
   - Basic components (NMOS, PMOS, resistors, capacitors)
   - Power and ground symbols (VDD, GND)
   - Pin/port symbol
-  - Support lines and circle shape in the symbol.
-  - Feel free to add your own symbols
+  - Support lines and circle shape in the symbol
 - Handles component rotations (R0, R90, R180, R270) and mirroring (M0, M90, M180, M270)
 - Preserves wire connections and adds T-junction dots
 - Maintains text elements with proper alignment (labels, values, comments)
@@ -55,6 +56,27 @@ The generated SVG:
 
 ![SVG](schematics/miller_ota.svg)
 
+### LTspice Library Support
+
+The converter can use symbols from your LTspice installation's standard library. Set the `LTSPICE_LIB_PATH` environment variable to your LTspice symbol directory:
+
+```bash
+# On macOS
+export LTSPICE_LIB_PATH="/Users/username/Library/Application Support/LTspice/lib/sym"
+
+# On Windows
+set LTSPICE_LIB_PATH="C:\Program Files\LTC\LTspiceXVII\lib\sym"
+```
+
+You can also specify the library path directly when running the converter:
+```bash
+python src/ltspice_to_svg.py path/to/schematic.asc --ltspice-lib "/path/to/ltspice/lib/sym"
+```
+
+The converter searches for symbol files in the following order:
+1. Local directory (same as the schematic file)
+2. LTspice library directory (from LTSPICE_LIB_PATH or --ltspice-lib)
+
 ### Advanced Options
 
 ```bash
@@ -67,6 +89,7 @@ Available options:
 - `--scale SCALE`: Scale factor for coordinates (default: 1.0)
 - `--font-size SIZE`: Font size in pixels (default: 16.0)
 - `--export-json`: Export intermediate JSON files for debugging
+- `--ltspice-lib PATH`: Path to LTspice symbol library (overrides LTSPICE_LIB_PATH)
 
 ### Example
 

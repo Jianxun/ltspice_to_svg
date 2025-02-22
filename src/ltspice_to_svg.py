@@ -8,6 +8,33 @@ from parsers.asc_parser import ASCParser
 from parsers.asy_parser import ASYParser
 from generators.svg_generator import SVGGenerator
 
+def find_symbol_file(symbol_name: str, schematic_dir: Path) -> Path:
+    """
+    Find a symbol file by searching in the following order:
+    1. Local directory (same as schematic)
+    2. LTspice library directory (from LTSPICE_LIB_PATH environment variable)
+    
+    Args:
+        symbol_name: Name of the symbol to find
+        schematic_dir: Directory containing the schematic file
+        
+    Returns:
+        Path to the symbol file if found, None otherwise
+    """
+    # First try local directory
+    local_symbol = schematic_dir / f"{symbol_name}.asy"
+    if local_symbol.exists():
+        return local_symbol
+        
+    # Then try LTspice library directory
+    ltspice_lib = os.environ.get('LTSPICE_LIB_PATH')
+    if ltspice_lib:
+        lib_symbol = Path(ltspice_lib) / f"{symbol_name}.asy"
+        if lib_symbol.exists():
+            return lib_symbol
+            
+    return None
+
 def convert_schematic(asc_file: str, 
                      stroke_width: float = 3.0, dot_size_multiplier: float = 1.5,
                      scale: float = 1.0, font_size: float = 16.0, export_json: bool = False):
@@ -43,11 +70,14 @@ def convert_schematic(asc_file: str,
     
     # Parse symbol files and collect their data
     symbols_data = {}
+    missing_symbols = []
     for symbol in schematic_data['symbols']:
         symbol_name = symbol['name']
-        asy_file = schematic_dir / f"{symbol_name}.asy"
         
-        if asy_file.exists():
+        # Try to find the symbol file
+        asy_file = find_symbol_file(symbol_name, schematic_dir)
+        
+        if asy_file:
             asy_parser = ASYParser(str(asy_file))
             symbol_data = asy_parser.parse()
             symbols_data[symbol_name] = symbol_data
@@ -57,7 +87,18 @@ def convert_schematic(asc_file: str,
                 symbol_json = output_dir / f"{symbol_name}_symbol.json"
                 asy_parser.export_json(str(symbol_json))
         else:
-            print(f"Warning: Symbol file not found: {asy_file}")
+            missing_symbols.append(symbol_name)
+    
+    # Report missing symbols
+    if missing_symbols:
+        print("Warning: The following symbols were not found:")
+        print("  Local directory:", schematic_dir)
+        if os.environ.get('LTSPICE_LIB_PATH'):
+            print("  LTspice library:", os.environ.get('LTSPICE_LIB_PATH'))
+        else:
+            print("  Note: Set LTSPICE_LIB_PATH environment variable to use LTspice standard library")
+        for symbol in missing_symbols:
+            print(f"  - {symbol}")
     
     # Generate SVG in the same directory as the schematic
     svg_file = schematic_dir / f"{base_name}.svg"
@@ -82,7 +123,14 @@ if __name__ == "__main__":
                       help="Font size in pixels (default: 16.0)")
     parser.add_argument("--export-json", action="store_true",
                       help="Export intermediate JSON files for debugging")
+    parser.add_argument("--ltspice-lib", type=str,
+                      help="Path to LTspice symbol library (overrides LTSPICE_LIB_PATH)")
     
     args = parser.parse_args()
+    
+    # Set LTspice library path from argument or environment variable
+    if args.ltspice_lib:
+        os.environ['LTSPICE_LIB_PATH'] = args.ltspice_lib
+        
     convert_schematic(args.asc_file, args.stroke_width, args.dot_size, 
                      args.scale, args.font_size, args.export_json) 

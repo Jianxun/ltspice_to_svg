@@ -8,6 +8,7 @@ from collections import defaultdict
 import json
 import os
 import warnings
+import math
 
 class SVGGenerator:
     def __init__(self, stroke_width: float = 1.0, dot_size_multiplier: float = 0.75, scale: float = 0.1, font_size: float = 22.0):
@@ -232,6 +233,12 @@ class SVGGenerator:
                     
         return t_junctions
 
+    def _scale_dash_array(self, dash_array: str, stroke_width: float) -> str:
+        """Scale a dash array pattern by the stroke width."""
+        if not dash_array:
+            return None
+        return ','.join(str(float(x) * stroke_width) for x in dash_array.split(','))
+
     def _add_symbols(self, dwg, symbols: List[Dict], symbols_data: Dict[str, Dict]):
         """Add symbols to the SVG drawing."""
         for symbol in symbols:
@@ -274,12 +281,19 @@ class SVGGenerator:
             
             # Add lines with scaling
             for line in symbols_data[symbol_name]['lines']:
+                line_attrs = {
+                    'stroke': 'black',
+                    'stroke-width': self.stroke_width,
+                    'stroke-linecap': 'round'
+                }
+                if 'style' in line:
+                    scaled_style = self._scale_dash_array(line['style'], self.stroke_width)
+                    if scaled_style:
+                        line_attrs['stroke-dasharray'] = scaled_style
                 g.add(dwg.line(
                     (line['x1'] * self.scale, line['y1'] * self.scale),
                     (line['x2'] * self.scale, line['y2'] * self.scale),
-                    stroke='black',
-                    stroke_width=self.stroke_width,
-                    stroke_linecap='round'
+                    **line_attrs
                 ))
             
             # Add circles with scaling
@@ -290,25 +304,90 @@ class SVGGenerator:
                 rx = abs(circle['x2'] - circle['x1']) / 2 * self.scale
                 ry = abs(circle['y2'] - circle['y1']) / 2 * self.scale
                 
+                circle_attrs = {
+                    'stroke': 'black',
+                    'stroke-width': self.stroke_width,
+                    'fill': 'none'
+                }
+                if 'style' in circle:
+                    scaled_style = self._scale_dash_array(circle['style'], self.stroke_width)
+                    if scaled_style:
+                        circle_attrs['stroke-dasharray'] = scaled_style
+                
                 # For perfect circles, use circle element
                 if abs(rx - ry) < 0.01:  # Allow small difference due to rounding
                     g.add(dwg.circle(
                         center=(cx, cy),
                         r=rx,  # Use rx as radius
-                        stroke='black',
-                        stroke_width=self.stroke_width,
-                        fill='none'
+                        **circle_attrs
                     ))
                 else:
                     # For ellipses, use ellipse element
                     g.add(dwg.ellipse(
                         center=(cx, cy),
                         r=(rx, ry),
-                        stroke='black',
-                        stroke_width=self.stroke_width,
-                        fill='none'
+                        **circle_attrs
                     ))
+            
+            # Add rectangles with scaling
+            for rect in symbols_data[symbol_name].get('rectangles', []):
+                rect_attrs = {
+                    'stroke': 'black',
+                    'stroke-width': self.stroke_width,
+                    'fill': 'none'
+                }
+                if 'style' in rect:
+                    scaled_style = self._scale_dash_array(rect['style'], self.stroke_width)
+                    if scaled_style:
+                        rect_attrs['stroke-dasharray'] = scaled_style
+                g.add(dwg.rect(
+                    insert=(rect['x1'] * self.scale, rect['y1'] * self.scale),
+                    size=(
+                        (rect['x2'] - rect['x1']) * self.scale,
+                        (rect['y2'] - rect['y1']) * self.scale
+                    ),
+                    **rect_attrs
+                ))
+            
+            # Add arcs with scaling
+            for arc in symbols_data[symbol_name].get('arcs', []):
+                # Calculate center and radii
+                cx = (arc['x1'] + arc['x2']) / 2 * self.scale
+                cy = (arc['y1'] + arc['y2']) / 2 * self.scale
+                rx = abs(arc['x2'] - arc['x1']) / 2 * self.scale
+                ry = abs(arc['y2'] - arc['y1']) / 2 * self.scale
                 
+                # Get start and end angles
+                start_angle = arc['start_angle']
+                end_angle = arc['end_angle']
+                
+                # SVG arc flags
+                large_arc_flag = '1' if (end_angle - start_angle) % 360 > 180 else '0'
+                sweep_flag = '1'  # Always draw arc clockwise
+                
+                # Calculate start and end points
+                start_x = cx + rx * math.cos(math.radians(start_angle))
+                start_y = cy + ry * math.sin(math.radians(start_angle))
+                end_x = cx + rx * math.cos(math.radians(end_angle))
+                end_y = cy + ry * math.sin(math.radians(end_angle))
+                
+                # Create SVG path for arc
+                path_data = f"M {start_x},{start_y} A {rx},{ry} 0 {large_arc_flag} {sweep_flag} {end_x},{end_y}"
+                
+                arc_attrs = {
+                    'stroke': 'black',
+                    'stroke-width': self.stroke_width,
+                    'fill': 'none'
+                }
+                if 'style' in arc:
+                    scaled_style = self._scale_dash_array(arc['style'], self.stroke_width)
+                    if scaled_style:
+                        arc_attrs['stroke-dasharray'] = scaled_style
+                g.add(dwg.path(
+                    d=path_data,
+                    **arc_attrs
+                ))
+            
             # Add the group to the drawing
             dwg.add(g)
 
