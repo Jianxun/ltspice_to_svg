@@ -14,15 +14,19 @@ LINE Normal 64 64 64 48
 LINE Normal 64 64 64 48
 LINE Normal 0 0 24 0
 LINE Normal 64 -64 64 -48
+LINE Normal 80 -16 48 -16
 WINDOW 0 8 48 Left 2
 SYMATTR Prefix MP
-SYMATTR Description P-Channel MOSFET transistor
-PIN 64 -64 NONE 0
+SYMATTR Description P-Channel MOSFET transistor with explicit substrate connection(used for monolithic MOSFETS)
+PIN 64 64 NONE 0
 PINATTR PinName D
 PINATTR SpiceOrder 1
 PIN 0 0 NONE 0
 PINATTR PinName G
 PINATTR SpiceOrder 2
-PIN 64 64 NONE 0
+PIN 64 -64 NONE 0
 PINATTR PinName S
 PINATTR SpiceOrder 3
+PIN 80 -16 NONE 0
+PINATTR PinName B
+PINATTR SpiceOrder 4

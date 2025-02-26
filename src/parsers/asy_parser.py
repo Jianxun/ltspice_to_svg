@@ -12,6 +12,7 @@ class ASYParser:
         self.circles: List[Dict[str, int]] = []
         self.rectangles: List[Dict[str, int]] = []  # Add rectangles list
         self.arcs: List[Dict[str, any]] = []  # Add arcs list
+        self.texts: List[Dict[str, any]] = []  # Add texts list for WINDOW entries
         
     def parse(self) -> Dict[str, any]:
         """Parse the ASY file and return a dictionary containing line and shape information."""
@@ -41,12 +42,15 @@ class ASYParser:
                 self._parse_rectangle(line)
             elif line.startswith('ARC'):
                 self._parse_arc(line)
+            elif line.startswith('WINDOW'):
+                self._parse_window(line)
                 
         return {
             'lines': self.lines,
             'circles': self.circles,
             'rectangles': self.rectangles,
-            'arcs': self.arcs
+            'arcs': self.arcs,
+            'texts': self.texts
         }
     
     def _get_line_style(self, style_code: int) -> str:
@@ -203,6 +207,60 @@ class ASYParser:
                 self.arcs.append(arc_data)
             except ValueError as e:
                 print(f"Warning: Invalid arc coordinates in line: {line} - {e}")
+    
+    def _parse_window(self, line: str):
+        """Parse a WINDOW entry and extract text information.
+        Format: WINDOW property_id x y justification size_multiplier
+        
+        property_id: Integer identifying the property (0 for instance name)
+        x, y: Position coordinates
+        justification: Text alignment (Left, Center, Right, Top, Bottom)
+        size_multiplier: Font size index (0-7) that maps to actual multiplier:
+        0 -> 0.625x
+        1 -> 1.0x
+        2 -> 1.5x (default)
+        3 -> 2.0x
+        4 -> 2.5x
+        5 -> 3.5x
+        6 -> 5.0x
+        7 -> 7.0x
+        """
+        # Font size multiplier mapping
+        size_multipliers = {
+            0: 0.625,
+            1: 1.0,
+            2: 1.5,  # default
+            3: 2.0,
+            4: 2.5,
+            5: 3.5,
+            6: 5.0,
+            7: 7.0
+        }
+
+        parts = line.split()
+        if len(parts) >= 6:  # WINDOW + property_id + x + y + justification + size
+            try:
+                # Convert coordinates and property ID to integers
+                property_id = int(parts[1])
+                x = int(parts[2])
+                y = int(parts[3])
+                justification = parts[4]
+                
+                # Convert size index to actual multiplier
+                size_index = int(parts[5])
+                size_multiplier = size_multipliers.get(size_index, size_multipliers[2])  # Default to 1.5x if invalid
+                
+                # Create text entry
+                text = {
+                    'property_id': property_id,
+                    'x': x,
+                    'y': y,
+                    'justification': justification,
+                    'size_multiplier': size_multiplier  # Store actual multiplier value
+                }
+                self.texts.append(text)
+            except ValueError as e:
+                print(f"Warning: Invalid WINDOW data in line: {line} - {e}")
     
     def export_json(self, output_path: str):
         """Export the parsed data to a JSON file."""

@@ -25,6 +25,7 @@ venv/
 ENV/
 env/
 
+
 # IDE
 .idea/
 .vscode/
@@ -41,6 +42,7 @@ output/
 .coverage
 htmlcov/
 commit_msg.txt
+tools/
 
 # OS specific
 .DS_Store

@@ -25,13 +25,65 @@ def test_asc_parser():
     # Verify symbols are parsed
     assert len(data['symbols']) > 0
     symbol = data['symbols'][0]
-    assert all(k in symbol for k in ['name', 'x', 'y', 'rotation'])
+    assert all(k in symbol for k in ['symbol_name', 'instance_name', 'x', 'y', 'rotation'])
     
     # Verify texts are parsed
     assert 'texts' in data
     if len(data['texts']) > 0:  # Only test if text elements exist
         text = data['texts'][0]
         assert all(k in text for k in ['x', 'y', 'justification', 'text'])
+        
+    # Verify flags are parsed
+    assert 'flags' in data
+    if len(data['flags']) > 0:  # Only test if flag elements exist
+        flag = data['flags'][0]
+        assert all(k in flag for k in ['x', 'y', 'net_name'])
+
+def test_flag_parsing():
+    """Test FLAG line parsing with a test schematic."""
+    # Create a temporary test file
+    test_file = PROJECT_ROOT / 'tests' / 'test_flags.asc'
+    test_file.parent.mkdir(exist_ok=True)
+    
+    try:
+        # Write test content
+        with open(test_file, 'w') as f:
+            f.write("Version 4\n")
+            f.write("SHEET 1 1208 692\n")
+            f.write("FLAG 100 200 Vout\n")
+            f.write("FLAG 300 400 GND\n")
+            f.write("FLAG 500 600 Vin with spaces\n")
+        
+        # Parse the test file
+        parser = ASCParser(str(test_file))
+        data = parser.parse()
+        
+        # Verify flags are parsed correctly
+        assert 'flags' in data
+        assert len(data['flags']) == 3
+        
+        # Check first flag
+        flag1 = data['flags'][0]
+        assert flag1['x'] == 100
+        assert flag1['y'] == 200
+        assert flag1['net_name'] == 'Vout'
+        
+        # Check second flag
+        flag2 = data['flags'][1]
+        assert flag2['x'] == 300
+        assert flag2['y'] == 400
+        assert flag2['net_name'] == 'GND'
+        
+        # Check third flag (with spaces in net name)
+        flag3 = data['flags'][2]
+        assert flag3['x'] == 500
+        assert flag3['y'] == 600
+        assert flag3['net_name'] == 'Vin with spaces'
+        
+    finally:
+        # Clean up test file
+        if test_file.exists():
+            test_file.unlink()
 
 def test_asy_parser():
     """Test ASY parser with pin.asy file."""
@@ -59,7 +111,7 @@ def test_svg_generator():
     # Parse symbols
     symbols_data = {}
     for symbol in schematic_data['symbols']:
-        symbol_name = symbol['name']
+        symbol_name = symbol['symbol_name']
         asy_file = PROJECT_ROOT / 'schematics' / f'{symbol_name}.asy'
         if asy_file.exists():
             asy_parser = ASYParser(str(asy_file))

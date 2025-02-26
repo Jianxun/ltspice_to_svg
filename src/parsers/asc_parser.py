@@ -3,17 +3,28 @@ Parser for LTspice ASC schematic files.
 Extracts wire and symbol information from the schematic.
 """
 import re
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Set
 
 class ASCParser:
     def __init__(self, file_path: str):
         self.file_path = file_path
         self.wires: List[Dict[str, int]] = []
         self.symbols: List[Dict[str, any]] = []
-        self.texts: List[Dict[str, any]] = []  # Add text list
+        self.texts: List[Dict[str, any]] = []
+        self.flags: List[Dict[str, any]] = []
+        self.io_pins: List[Dict[str, any]] = []
+        self._flag_positions: Set[Tuple[int, int]] = set()  # Track unique flag positions
+        self._parsed_data: Dict[str, any] = None  # Cache for parsed data
+        self._current_symbol = None  # Track current symbol being parsed
         
     def parse(self) -> Dict[str, any]:
         """Parse the ASC file and return a dictionary containing wires and symbols."""
+        # Return cached data if available
+        if self._parsed_data is not None:
+            return self._parsed_data
+            
+        print(f"Parsing schematic: {self.file_path}")
+        
         # Try different encodings
         encodings = ['utf-16', 'utf-8', 'ascii']
         lines = None
@@ -29,13 +40,17 @@ class ASCParser:
         if lines is None:
             raise ValueError(f"Could not read {self.file_path} with any of the supported encodings")
             
-        for line in lines:
+        i = 0
+        total_lines = len(lines)
+        
+        while i < total_lines:
             # Clean up the line by removing any hidden characters
-            line = ''.join(c for c in line.strip() if c.isprintable())
+            line = ''.join(c for c in lines[i].strip() if c.isprintable())
             
             if line:  # Skip empty lines
                 parts = line.split()
                 if not parts:
+                    i += 1
                     continue
                     
                 first_word = parts[0]
@@ -44,15 +59,53 @@ class ASCParser:
                     self._parse_wire(line)
                 elif first_word == 'SYMBOL':
                     self._parse_symbol(line)
+                elif first_word == 'SYMATTR':
+                    if len(parts) >= 3 and parts[1] == 'InstName':
+                        self._parse_instance_name(' '.join(parts[2:]))
                 elif first_word == 'TEXT':
                     self._parse_text(line)
+                elif first_word == 'FLAG':
+                    # Look ahead for IOPIN
+                    is_io_pin = False
+                    if i + 1 < total_lines:
+                        next_line = ''.join(c for c in lines[i + 1].strip() if c.isprintable())
+                        if next_line.startswith('IOPIN'):
+                            is_io_pin = True
+                            self._parse_flag_and_iopin(line, next_line)
+                            i += 1  # Skip the IOPIN line since we've processed it
+                    
+                    if not is_io_pin:
+                        self._parse_flag(line)
                 
-        print(f"Found {len(self.wires)} wires, {len(self.symbols)} symbols, and {len(self.texts)} text elements")
-        return {
+                i += 1
+            else:
+                i += 1  # Make sure we still increment for empty lines
+                
+        # Add GND symbols for ground flags
+        for flag in self.flags:
+            if flag['net_name'] == '0':
+                # Create a GND symbol at the flag's position
+                gnd_symbol = {
+                    'symbol_name': 'GND',
+                    'instance_name': 'GND',
+                    'x': flag['x'],
+                    'y': flag['y'],
+                    'rotation': 'R0'
+                }
+                self.symbols.append(gnd_symbol)
+                
+        print(f"Found {len(self.wires)} wires, {len(self.symbols)} symbols, {len(self.texts)} text elements, "
+              f"{len(self.flags)} flags, and {len(self.io_pins)} IO pins")
+              
+        # Cache the parsed data
+        self._parsed_data = {
             'wires': self.wires,
             'symbols': self.symbols,
-            'texts': self.texts
+            'texts': self.texts,
+            'flags': self.flags,
+            'io_pins': self.io_pins
         }
+        return self._parsed_data
     
     def _parse_wire(self, line: str):
         """Parse a WIRE line and extract coordinates."""
@@ -91,14 +144,92 @@ class ASCParser:
                         print(f"Warning: Invalid rotation value: {rotation_str}, using R0")
                 
                 symbol = {
-                    'name': parts[1],
+                    'symbol_name': parts[1],
+                    'instance_name': '',  # Will be filled by _parse_instance_name
                     'x': x,
                     'y': y,
                     'rotation': rotation
                 }
                 self.symbols.append(symbol)
+                self._current_symbol = symbol  # Track current symbol for instance name parsing
             except ValueError as e:
                 print(f"Warning: Invalid symbol data in line: {line} - {e}")
+    
+    def _parse_flag(self, line: str):
+        """Parse a FLAG line and extract position and net name.
+        Format: FLAG x y net_name
+        """
+        parts = line.split()
+        if len(parts) >= 4:  # FLAG + x + y + net_name
+            try:
+                # Convert coordinates to integers
+                x, y = map(int, parts[1:3])
+                # Skip if we've already seen a flag at this position
+                if (x, y) in self._flag_positions:
+                    return
+                
+                # Join remaining parts as net name (in case it contains spaces)
+                net_name = ' '.join(parts[3:])
+                
+                flag = {
+                    'x': x,
+                    'y': y,
+                    'net_name': net_name
+                }
+                self.flags.append(flag)
+                self._flag_positions.add((x, y))
+            except ValueError as e:
+                print(f"Warning: Invalid flag data in line: {line} - {e}")
+    
+    def _parse_flag_and_iopin(self, flag_line: str, iopin_line: str):
+        """Parse a FLAG line followed by an IOPIN line.
+        Format: 
+        FLAG x y net_name
+        IOPIN x y direction
+        """
+        flag_parts = flag_line.split()
+        iopin_parts = iopin_line.split()
+        
+        if len(flag_parts) >= 4 and len(iopin_parts) >= 4:  # FLAG/IOPIN + x + y + net_name/direction
+            try:
+                # Convert coordinates to integers
+                x, y = map(int, flag_parts[1:3])
+                # Skip if we've already seen a flag at this position
+                if (x, y) in self._flag_positions:
+                    return
+                
+                # Get net name from flag
+                net_name = ' '.join(flag_parts[3:])
+                
+                # Get direction from IOPIN
+                direction = iopin_parts[3]
+                
+                # Verify IOPIN coordinates match FLAG coordinates
+                iopin_x, iopin_y = map(int, iopin_parts[1:3])
+                if (x, y) != (iopin_x, iopin_y):
+                    print(f"Warning: IOPIN coordinates ({iopin_x}, {iopin_y}) don't match FLAG coordinates ({x}, {y})")
+                    return
+                
+                # Add flag
+                flag = {
+                    'x': x,
+                    'y': y,
+                    'net_name': net_name
+                }
+                self.flags.append(flag)
+                self._flag_positions.add((x, y))
+                
+                # Add IO pin
+                io_pin = {
+                    'x': x,
+                    'y': y,
+                    'net_name': net_name,
+                    'direction': direction
+                }
+                self.io_pins.append(io_pin)
+                
+            except ValueError as e:
+                print(f"Warning: Invalid flag/iopin data in lines: {flag_line} / {iopin_line} - {e}")
     
     def _parse_text(self, line: str):
         """Parse a TEXT line and extract position, justification, and content.
@@ -137,7 +268,7 @@ class ASCParser:
                     y = int(attrs_parts[2])
                     justification = attrs_parts[3]
                     
-                    # Extract size index if available
+                    # Extract size index and convert to actual multiplier if available
                     size_multiplier = size_multipliers[2]  # Default to index 2 (1.5x)
                     if len(attrs_parts) >= 5:
                         try:
@@ -151,13 +282,18 @@ class ASCParser:
                         'y': y,
                         'justification': justification,
                         'text': content.strip(),
-                        'size_multiplier': size_multiplier
+                        'size_multiplier': size_multiplier  # Store actual multiplier value
                     }
                     self.texts.append(text)
                 except ValueError as e:
                     print(f"Warning: Invalid text coordinates in line: {line} - {e}")
         except ValueError:
             print(f"Warning: Invalid text format in line: {line}")
+    
+    def _parse_instance_name(self, instance_name: str):
+        """Parse the instance name for the current symbol."""
+        if self._current_symbol is not None:
+            self._current_symbol['instance_name'] = instance_name
     
     def export_json(self, output_path: str):
         """Export the parsed data to a JSON file."""
