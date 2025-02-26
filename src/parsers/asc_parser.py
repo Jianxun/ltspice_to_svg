@@ -234,6 +234,9 @@ class ASCParser:
         Format: 
         FLAG x y net_name
         IOPIN x y direction
+        
+        The IOPIN line must have the same coordinates as the FLAG line.
+        The direction can be In, Out, or BiDir.
         """
         flag_parts = flag_line.split()
         iopin_parts = iopin_line.split()
@@ -267,7 +270,7 @@ class ASCParser:
                 self.flags.append(flag)
                 self._flag_positions.add((x, y))
                 
-                # Add IO pin
+                # Add IO pin with all required information
                 io_pin = {
                     'x': x,
                     'y': y,
@@ -275,6 +278,7 @@ class ASCParser:
                     'direction': direction
                 }
                 self.io_pins.append(io_pin)
+                print(f"Added IO pin: {io_pin}")
                 
             except ValueError as e:
                 print(f"Warning: Invalid flag/iopin data in lines: {flag_line} / {iopin_line} - {e}")
@@ -346,5 +350,10 @@ class ASCParser:
     def export_json(self, output_path: str):
         """Export the parsed data to a JSON file."""
         import json
+        # Make sure we have parsed data
+        parsed_data = self.parse()
+        # Ensure io_pins are included
+        if 'io_pins' not in parsed_data:
+            parsed_data['io_pins'] = self.io_pins
         with open(output_path, 'w') as f:
-            json.dump(self.parse(), f, indent=2) 
+            json.dump(parsed_data, f, indent=2) 

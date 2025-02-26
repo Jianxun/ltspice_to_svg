@@ -49,9 +49,15 @@
       "y2": 128
     },
     {
-      "x1": 704,
+      "x1": 608,
       "y1": 128,
       "x2": 208,
+      "y2": 128
+    },
+    {
+      "x1": 704,
+      "y1": 128,
+      "x2": 608,
       "y2": 128
     },
     {
@@ -495,6 +501,31 @@
       "x": 1200,
       "y": 368,
       "net_name": "PIN_BiDirect"
+    },
+    {
+      "x": 608,
+      "y": 128,
+      "net_name": "VBP"
+    }
+  ],
+  "io_pins": [
+    {
+      "x": 960,
+      "y": 256,
+      "net_name": "PIN_IN",
+      "direction": "In"
+    },
+    {
+      "x": 960,
+      "y": 320,
+      "net_name": "PIN_OUT",
+      "direction": "Out"
+    },
+    {
+      "x": 1200,
+      "y": 368,
+      "net_name": "PIN_BiDirect",
+      "direction": "BiDir"
     }
   ],
   "shapes": {

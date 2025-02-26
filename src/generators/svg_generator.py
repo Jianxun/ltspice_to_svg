@@ -54,6 +54,7 @@ class SVGGenerator:
         self.symbols = schematic_data.get('symbols', [])
         self.texts = schematic_data.get('texts', [])
         self.flags = schematic_data.get('flags', [])  # Add flags
+        self.io_pins = schematic_data.get('io_pins', [])  # Add io_pins
         self.shapes = schematic_data.get('shapes', {})  # Add shapes
         self.symbol_data = symbols_data or {}
         
@@ -75,6 +76,7 @@ class SVGGenerator:
                 'symbols': self.symbols,
                 'texts': self.texts,
                 'flags': self.flags,
+                'io_pins': self.io_pins,  # Include io_pins in debug data
                 'shapes': self.shapes,
                 'symbol_data': self.symbol_data,
                 't_junctions': [{'x': x, 'y': y} for x, y in t_junctions],
