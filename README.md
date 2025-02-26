@@ -57,21 +57,37 @@ This will create `schematic.svg` in the same directory as the input file.
 
 - `LTSPICE_LIB_PATH`: Path to LTspice symbol library directory
 
+On macOS:
+```bash
+export LTSPICE_LIB_PATH="/Users/$USER/Library/Application Support/LTspice/lib/sym"
+```
+
+On Windows:
+
+CMD:
+```cmd
+set LTSPICE_LIB_PATH="C:\Users\%USERNAME%\AppData\Local\LTspice\lib\sym"
+```
+Power Shell:
+```powershell
+$env:LTSPICE_LIB_PATH="C:\Users\$env:USERNAME\AppData\Local\LTspice\lib\sym"
+```
+
 ### Examples
 
 Convert with custom stroke width and font size:
 ```bash
-python src/ltspice_to_svg.py schematic.asc --stroke-width 2.0 --font-size 20.0
+python src/ltspice_to_svg.py ./schematics/miller_ota.asc --stroke-width 2.0 --font-size 20.0
 ```
 
 Convert without text elements:
 ```bash
-python src/ltspice_to_svg.py schematic.asc --no-text
+python src/ltspice_to_svg.py ./schematics/miller_ota.asc --no-text
 ```
 
 Export debug data:
 ```bash
-python src/ltspice_to_svg.py schematic.asc --export-json
+python src/ltspice_to_svg.py ./schematics/miller_ota.asc --export-json
 ```
 
 ## Supported Features
