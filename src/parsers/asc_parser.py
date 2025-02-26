@@ -4,6 +4,7 @@ Extracts wire and symbol information from the schematic.
 """
 import re
 from typing import Dict, List, Tuple, Set
+from . import shape_parser
 
 class ASCParser:
     def __init__(self, file_path: str):
@@ -13,6 +14,11 @@ class ASCParser:
         self.texts: List[Dict[str, any]] = []
         self.flags: List[Dict[str, any]] = []
         self.io_pins: List[Dict[str, any]] = []
+        # Shape lists for internal use
+        self._lines: List[Dict[str, any]] = []
+        self._circles: List[Dict[str, any]] = []
+        self._rectangles: List[Dict[str, any]] = []
+        self._arcs: List[Dict[str, any]] = []
         self._flag_positions: Set[Tuple[int, int]] = set()  # Track unique flag positions
         self._parsed_data: Dict[str, any] = None  # Cache for parsed data
         self._current_symbol = None  # Track current symbol being parsed
@@ -76,6 +82,39 @@ class ASCParser:
                     
                     if not is_io_pin:
                         self._parse_flag(line)
+                # Parse shapes
+                elif first_word == 'LINE':
+                    print(f"Found LINE entry: {line}")
+                    shape_data = shape_parser.parse_line(line)
+                    if shape_data:
+                        print(f"Adding LINE: {shape_data}")
+                        self._lines.append(shape_data)
+                    else:
+                        print("Failed to parse LINE")
+                elif first_word == 'CIRCLE':
+                    print(f"Found CIRCLE entry: {line}")
+                    shape_data = shape_parser.parse_circle(line)
+                    if shape_data:
+                        print(f"Adding CIRCLE: {shape_data}")
+                        self._circles.append(shape_data)
+                    else:
+                        print("Failed to parse CIRCLE")
+                elif first_word == 'RECTANGLE':
+                    print(f"Found RECTANGLE entry: {line}")
+                    shape_data = shape_parser.parse_rectangle(line)
+                    if shape_data:
+                        print(f"Adding RECTANGLE: {shape_data}")
+                        self._rectangles.append(shape_data)
+                    else:
+                        print("Failed to parse RECTANGLE")
+                elif first_word == 'ARC':
+                    print(f"Found ARC entry: {line}")
+                    shape_data = shape_parser.parse_arc(line)
+                    if shape_data:
+                        print(f"Adding ARC: {shape_data}")
+                        self._arcs.append(shape_data)
+                    else:
+                        print("Failed to parse ARC")
                 
                 i += 1
             else:
@@ -95,7 +134,10 @@ class ASCParser:
                 self.symbols.append(gnd_symbol)
                 
         print(f"Found {len(self.wires)} wires, {len(self.symbols)} symbols, {len(self.texts)} text elements, "
-              f"{len(self.flags)} flags, and {len(self.io_pins)} IO pins")
+              f"{len(self.flags)} flags, {len(self.io_pins)} IO pins")
+        if any([self._lines, self._circles, self._rectangles, self._arcs]):
+            print(f"Found shapes: {len(self._lines)} lines, {len(self._circles)} circles, "
+                  f"{len(self._rectangles)} rectangles, {len(self._arcs)} arcs")
               
         # Cache the parsed data
         self._parsed_data = {
@@ -103,7 +145,13 @@ class ASCParser:
             'symbols': self.symbols,
             'texts': self.texts,
             'flags': self.flags,
-            'io_pins': self.io_pins
+            'io_pins': self.io_pins,
+            'shapes': {
+                'lines': self._lines,
+                'circles': self._circles,
+                'rectangles': self._rectangles,
+                'arcs': self._arcs
+            }
         }
         return self._parsed_data
     

@@ -54,6 +54,7 @@ class SVGGenerator:
         self.symbols = schematic_data.get('symbols', [])
         self.texts = schematic_data.get('texts', [])
         self.flags = schematic_data.get('flags', [])  # Add flags
+        self.shapes = schematic_data.get('shapes', {})  # Add shapes
         self.symbol_data = symbols_data or {}
         
         # Add built-in symbols only if they don't exist in the parsed data
@@ -74,6 +75,7 @@ class SVGGenerator:
                 'symbols': self.symbols,
                 'texts': self.texts,
                 'flags': self.flags,
+                'shapes': self.shapes,
                 'symbol_data': self.symbol_data,
                 't_junctions': [{'x': x, 'y': y} for x, y in t_junctions],
                 'terminal_points': [{'x': x, 'y': y} for x, y in terminal_points]
@@ -123,6 +125,15 @@ class SVGGenerator:
             min_y = min(min_y, flag['y'] - 10)
             max_y = max(max_y, flag['y'] + 10)
 
+        # Include shape coordinates
+        for shape_type, shapes in self.shapes.items():
+            for shape in shapes:
+                has_elements = True
+                min_x = min(min_x, shape['x1'], shape['x2'])
+                max_x = max(max_x, shape['x1'], shape['x2'])
+                min_y = min(min_y, shape['y1'], shape['y2'])
+                max_y = max(max_y, shape['y1'], shape['y2'])
+
         # If no elements found, use default viewBox
         if not has_elements:
             min_x = -100
@@ -162,6 +173,9 @@ class SVGGenerator:
                 fill='black',
                 stroke='none'
             ))
+            
+        # Add shapes
+        self._add_shapes(dwg, self.shapes)
             
         # Add symbols
         self._add_symbols(dwg, self.symbols, self.symbol_data)
@@ -297,6 +311,135 @@ class SVGGenerator:
         if not dash_array:
             return None
         return ','.join(str(float(x) * stroke_width) for x in dash_array.split(','))
+
+    def _add_shapes(self, dwg, shapes: Dict[str, List[Dict]]):
+        """Add shapes from the schematic to the SVG."""
+        # Add lines
+        for line in shapes.get('lines', []):
+            style = {}
+            style['stroke'] = 'black'
+            style['stroke_width'] = self.stroke_width
+            style['stroke_linecap'] = 'round'
+            
+            if 'style' in line:
+                style['stroke_dasharray'] = self._scale_dash_array(line['style'], self.stroke_width)
+                
+            dwg.add(dwg.line(
+                (line['x1'] * self.scale, line['y1'] * self.scale),
+                (line['x2'] * self.scale, line['y2'] * self.scale),
+                **style
+            ))
+            
+        # Add circles
+        for circle in shapes.get('circles', []):
+            # Calculate radius from bounding box
+            rx = abs(circle['x2'] - circle['x1']) / 2
+            ry = abs(circle['y2'] - circle['y1']) / 2
+            cx = (circle['x1'] + circle['x2']) / 2
+            cy = (circle['y1'] + circle['y2']) / 2
+            
+            style = {}
+            style['stroke'] = 'black'
+            style['stroke_width'] = self.stroke_width
+            style['fill'] = 'none'
+            
+            if 'style' in circle:
+                style['stroke_dasharray'] = self._scale_dash_array(circle['style'], self.stroke_width)
+                
+            if rx == ry:  # Perfect circle
+                dwg.add(dwg.circle(
+                    center=(cx * self.scale, cy * self.scale),
+                    r=rx * self.scale,
+                    **style
+                ))
+            else:  # Ellipse
+                dwg.add(dwg.ellipse(
+                    center=(cx * self.scale, cy * self.scale),
+                    r=(rx * self.scale, ry * self.scale),
+                    **style
+                ))
+                
+        # Add rectangles
+        for rect in shapes.get('rectangles', []):
+            x = min(rect['x1'], rect['x2'])
+            y = min(rect['y1'], rect['y2'])
+            width = abs(rect['x2'] - rect['x1'])
+            height = abs(rect['y2'] - rect['y1'])
+            
+            style = {}
+            style['stroke'] = 'black'
+            style['stroke_width'] = self.stroke_width
+            style['fill'] = 'none'
+            
+            if 'style' in rect:
+                style['stroke_dasharray'] = self._scale_dash_array(rect['style'], self.stroke_width)
+                style['stroke_linecap'] = 'round'  # Add round line caps for dotted/dashed styles
+                
+                # For dotted/dashed rectangles, use path instead of rect to get proper line caps
+                # Create path data for the rectangle
+                path_data = [
+                    # Move to top-left corner
+                    ('M', [(x * self.scale, y * self.scale)]),
+                    # Draw top line
+                    ('L', [(x * self.scale + width * self.scale, y * self.scale)]),
+                    # Draw right line
+                    ('L', [(x * self.scale + width * self.scale, y * self.scale + height * self.scale)]),
+                    # Draw bottom line
+                    ('L', [(x * self.scale, y * self.scale + height * self.scale)]),
+                    # Close path (back to top-left)
+                    ('Z', [])
+                ]
+                dwg.add(dwg.path(d=path_data, **style))
+            else:
+                # For solid rectangles, use rect element
+                dwg.add(dwg.rect(
+                    insert=(x * self.scale, y * self.scale),
+                    size=(width * self.scale, height * self.scale),
+                    **style
+                ))
+            
+        # Add arcs
+        for arc in shapes.get('arcs', []):
+            # Calculate center and radius
+            cx = (arc['x1'] + arc['x2']) / 2
+            cy = (arc['y1'] + arc['y2']) / 2
+            rx = abs(arc['x2'] - arc['x1']) / 2
+            ry = abs(arc['y2'] - arc['y1']) / 2
+            
+            # Convert angles to radians for path calculation
+            start_angle = math.radians(arc['start_angle'])
+            end_angle = math.radians(arc['end_angle'])
+            
+            # Calculate start and end points
+            start_x = cx + rx * math.cos(start_angle)
+            start_y = cy + ry * math.sin(start_angle)
+            end_x = cx + rx * math.cos(end_angle)
+            end_y = cy + ry * math.sin(end_angle)
+            
+            # Determine if arc should be drawn clockwise or counterclockwise
+            large_arc = abs(end_angle - start_angle) > math.pi
+            sweep = end_angle > start_angle
+            
+            # Create path data
+            path_data = [
+                ('M', [(start_x * self.scale, start_y * self.scale)]),
+                ('A', [
+                    rx * self.scale, ry * self.scale,  # radii
+                    0,  # x-axis-rotation
+                    int(large_arc), int(sweep),  # large-arc and sweep flags
+                    end_x * self.scale, end_y * self.scale  # end point
+                ])
+            ]
+            
+            style = {}
+            style['stroke'] = 'black'
+            style['stroke_width'] = self.stroke_width
+            style['fill'] = 'none'
+            
+            if 'style' in arc:
+                style['stroke_dasharray'] = self._scale_dash_array(arc['style'], self.stroke_width)
+                
+            dwg.add(dwg.path(d=path_data, **style))
 
     def _add_symbols(self, dwg, symbols: List[Dict], symbols_data: Dict[str, Dict]):
         """Add symbols to the SVG drawing."""
