@@ -54,14 +54,14 @@ class SVGGenerator:
         self.wires = schematic_data.get('wires', [])
         self.symbols = schematic_data.get('symbols', [])
         self.texts = schematic_data.get('texts', [])
-        self.flags = schematic_data.get('flags', [])  # Add flags
-        self.io_pins = schematic_data.get('io_pins', [])  # Add io_pins
-        self.shapes = schematic_data.get('shapes', {})  # Add shapes
+        self.flags = schematic_data.get('flags', [])
+        self.io_pins = schematic_data.get('io_pins', [])
+        self.shapes = schematic_data.get('shapes', {})
         self.symbol_data = symbols_data or {}
         
         # Add built-in symbols only if they don't exist in the parsed data
         for name, geometry in self.BUILTIN_SYMBOLS.items():
-            if name.upper() not in self.symbol_data:  # Case-insensitive check
+            if name.upper() not in self.symbol_data:
                 self.symbol_data[name] = geometry
         
         # Find T-junctions and terminal points
@@ -167,7 +167,7 @@ class SVGGenerator:
                 stroke_width=self.stroke_width,
                 stroke_linecap='round'
             ))
-            
+        
         # Add T-junction dots with scaling
         for x, y in t_junctions:
             dwg.add(dwg.circle(
@@ -176,16 +176,29 @@ class SVGGenerator:
                 fill='black',
                 stroke='none'
             ))
-            
+        
         # Add shapes
         self._add_shapes(dwg, self.shapes)
-            
+        
         # Add symbols
         self._add_symbols(dwg, self.symbols, self.symbol_data)
         
         # Add text elements
         self._add_texts(dwg, self.texts)
+        
+        # Add flags
+        if not self.no_text:
+            # Add net labels
+            for flag in self.flags:
+                if flag['type'] == 'net_label':
+                    self._add_net_label(dwg, flag)
+                elif flag['type'] == 'gnd':
+                    self._add_gnd_flag(dwg, flag)
             
+            # Add IO pins
+            for io_pin in self.io_pins:
+                self._add_io_pin(dwg, io_pin)
+        
         # Save the drawing
         dwg.save()
         
@@ -836,3 +849,150 @@ class SVGGenerator:
                 text_anchor
             )
             dwg.add(text_element)
+
+    def _add_net_label(self, dwg, flag: Dict):
+        """Add a net label flag to the SVG drawing."""
+        text_data = {
+            'x': flag['x'],
+            'y': flag['y'],
+            'text': flag['net_name'],
+            'justification': 'Bottom',  # Always bottom-justified for net labels
+            'size_multiplier': 1  # Use size 1 (1.0x) for net labels
+        }
+        self._add_symbol_text(dwg, text_data)
+
+    def _add_gnd_flag(self, dwg, flag: Dict):
+        """Add a ground flag to the SVG drawing."""
+        # Add GND text
+        text_data = {
+            'x': flag['x'],
+            'y': flag['y'],
+            'text': 'GND',
+            'justification': 'Bottom',  # Always bottom-justified for ground flags
+            'size_multiplier': 1  # Use size 1 (1.0x) for ground flags
+        }
+        self._add_symbol_text(dwg, text_data)
+
+    def _add_io_pin(self, dwg, io_pin: Dict):
+        """Add an IO pin flag to the SVG drawing with direction-specific shapes.
+        
+        Each IO pin is rendered with a distinctive shape based on its direction:
+        - Input (In): Right-pointing triangle with text on right side
+        - Output (Out): Left-pointing triangle with text on right side
+        - Bidirectional (BiDir): Double-ended arrow with text on right side
+        
+        The shapes are based on LTspice's built-in IO pin symbols and maintain
+        consistent dimensions:
+        - Input shape: 48x32 units
+        - Output shape: 80x32 units
+        - BiDir shape: 100x32 units
+        
+        Text is positioned to the right of each shape at a consistent height,
+        using standard font size (1.0x) and left justification.
+        
+        Args:
+            dwg: SVG drawing object
+            io_pin: Dictionary containing IO pin properties:
+                - x: X coordinate
+                - y: Y coordinate
+                - direction: Pin direction ('In', 'Out', or 'BiDir')
+                - net_name: Name of the net/signal
+        """
+        x = io_pin['x']
+        y = io_pin['y']
+        direction = io_pin['direction']
+        
+        # Create a group for the IO pin
+        g = dwg.g()
+        
+        # Apply translation
+        g.attribs['transform'] = f"translate({x * self.scale},{y * self.scale})"
+        
+        # Add shape based on direction
+        if direction == 'BiDir':
+            # BiDir shape (triangle with base on left)
+            g.add(dwg.line(
+                (0, 0), (16 * self.scale, -16 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (16 * self.scale, -16 * self.scale), (84 * self.scale, -16 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (84 * self.scale, -16 * self.scale), (100 * self.scale, 0),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (100 * self.scale, 0), (84 * self.scale, 16 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (84 * self.scale, 16 * self.scale), (16 * self.scale, 16 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (16 * self.scale, 16 * self.scale), (0, 0),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+        elif direction == 'In':
+            # Input shape (triangle pointing right)
+            g.add(dwg.line(
+                (0, 0), (16 * self.scale, -16 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (16 * self.scale, -16 * self.scale), (48 * self.scale, -16 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (48 * self.scale, -16 * self.scale), (48 * self.scale, 16 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (48 * self.scale, 16 * self.scale), (16 * self.scale, 16 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (16 * self.scale, 16 * self.scale), (0, 0),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+        else:  # Out
+            # Output shape (triangle pointing left)
+            g.add(dwg.line(
+                (16 * self.scale, 0), (0, 0),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (16 * self.scale, -16 * self.scale), (64 * self.scale, -16 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (64 * self.scale, -16 * self.scale), (80 * self.scale, 0),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (80 * self.scale, 0), (64 * self.scale, 16 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (64 * self.scale, 16 * self.scale), (16 * self.scale, 16 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (16 * self.scale, 16 * self.scale), (16 * self.scale, -16 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+        
+        # Add text
+        text_data = {
+            'x': (48 if direction == 'In' else 80 if direction == 'Out' else 100) * self.scale,  # Position text after shape
+            'y': 0,
+            'text': io_pin['net_name'],
+            'justification': 'Left',  # Always left-justified after the shape
+            'size_multiplier': 1  # Use size 1 (1.0x) for IO pins
+        }
+        self._add_symbol_text(dwg, text_data)
+        
+        # Add the group to the drawing
+        dwg.add(g)
