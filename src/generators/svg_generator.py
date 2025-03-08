@@ -28,7 +28,7 @@ class SVGGenerator:
         }
     }
     
-    def __init__(self, stroke_width: float = 1.0, dot_size_multiplier: float = 0.75, scale: float = 0.1, font_size: float = 22.0, export_json: bool = False, no_text: bool = False):
+    def __init__(self, stroke_width: float = 1.0, dot_size_multiplier: float = 0.75, scale: float = 0.1, font_size: float = 22.0, export_json: bool = False, no_text: bool = False, no_symbol_text: bool = False):
         self.stroke_width = stroke_width
         self.dot_size_multiplier = dot_size_multiplier  # Controls size of junction dots relative to stroke width
         self.scale = scale  # Scale factor for coordinates (default: 0.1 = 10x scale down)
@@ -36,6 +36,7 @@ class SVGGenerator:
         self.symbols_cache: Dict[str, Dict] = {}  # Cache for parsed symbol data
         self.export_json = export_json  # Whether to export debug JSON files
         self.no_text = no_text  # Whether to skip rendering text elements
+        self.no_symbol_text = no_symbol_text  # Whether to skip rendering symbol text elements
         # Font size multiplier mapping
         self.size_multipliers = {
             0: 0.625,
@@ -591,79 +592,146 @@ class SVGGenerator:
                     **arc_attrs
                 ))
             
-            # Add instance name if text position is defined and text rendering is enabled
+            # Add instance name if text rendering is enabled
             instance_name = symbol.get('instance_name', '')
             if instance_name and not self.no_text:
-                # Find text entry with property_id=0 (instance name position)
+                # First try to find text entry with property_id=0 (instance name position)
+                instance_text = None
                 for text in symbols_data[symbol_name].get('texts', []):
                     if text.get('property_id') == 0:
-                        # Get size multiplier (already converted from index)
-                        size_multiplier = text.get('size_multiplier', 1.5)  # Default to 1.5x
-                        font_size = self.font_size * size_multiplier
+                        instance_text = text
+                        break
+                
+                # If no property-based text found, use WINDOW 0 text if available
+                if not instance_text:
+                    for text in symbols_data[symbol_name].get('texts', []):
+                        if text.get('window') == 0:
+                            instance_text = text
+                            break
+                
+                # If we found a text entry, use it to position the instance name
+                if instance_text:
+                    # Transform text position according to symbol transformation
+                    text_x = instance_text['x']
+                    text_y = instance_text['y']
+                    
+                    # Apply mirroring to position if needed
+                    if rotation_type == 'M':
+                        text_x = -text_x
                         
-                        # Get original justification
-                        justification = text.get('justification', 'Left')
+                    # Apply rotation to position
+                    if angle == 90:
+                        text_x, text_y = -text_y, text_x
+                    elif angle == 180:
+                        text_x, text_y = -text_x, -text_y
+                    elif angle == 270:
+                        text_x, text_y = text_y, -text_x
+                    
+                    # Create text data
+                    text_data = {
+                        'x': symbol['x'] + text_x,
+                        'y': symbol['y'] + text_y,
+                        'text': instance_name,
+                        'justification': instance_text.get('justification', 'Left'),
+                        'size_multiplier': instance_text.get('size_multiplier', 2)
+                    }
+                    self._add_symbol_text(dwg, text_data)
+                else:
+                    # Default position if no text entry found
+                    text_data = {
+                        'x': symbol['x'],
+                        'y': symbol['y'] - 16,  # Above the symbol
+                        'text': instance_name,
+                        'justification': 'Center',
+                        'size_multiplier': 2
+                    }
+                    self._add_symbol_text(dwg, text_data)
+            
+            # Add other symbol texts if enabled
+            if not self.no_symbol_text:
+                for text in symbols_data[symbol_name].get('texts', []):
+                    # Skip instance name text entries
+                    if text.get('property_id') == 0 or text.get('window') == 0:
+                        continue
+                    
+                    # Transform text position according to symbol transformation
+                    text_x = text['x']
+                    text_y = text['y']
+                    
+                    # Apply mirroring to position if needed
+                    if rotation_type == 'M':
+                        text_x = -text_x
                         
-                        # Flip justification if mirrored
-                        if rotation_type == 'M':
-                            # Flip horizontal justification
-                            justification = {
-                                'Left': 'Right',
-                                'Right': 'Left',
-                                'Center': 'Center',
-                                'Top': 'Top',
-                                'Bottom': 'Bottom'
-                            }[justification]
-                        
-                        # Set text alignment based on flipped justification
-                        if justification == 'Left':
-                            text_anchor = 'start'
-                        elif justification == 'Right':
-                            text_anchor = 'end'
-                        else:  # Center, Top, Bottom all use middle horizontal alignment
-                            text_anchor = 'middle'
-                        
-                        # Adjust vertical position based on justification
-                        # For Left/Center/Right, move up by half the font size to center vertically
-                        # For Top/Bottom, adjust by a third of the font size
-                        if justification in ['Left', 'Center', 'Right']:
-                            y_offset = font_size * 0.3  # Move up to center vertically
-                        elif justification == 'Top':
-                            y_offset = font_size * 0.6  # Move down
-                        else:  # Bottom
-                            y_offset = font_size * 0.0  # Move up
-                        
-                        # Transform text position according to symbol transformation
-                        text_x = text['x']
-                        text_y = text['y']
-                        
-                        # Apply mirroring to position if needed
-                        if rotation_type == 'M':
-                            text_x = -text_x
-                            
-                        # Apply rotation to position
-                        if angle == 90:
-                            text_x, text_y = -text_y, text_x
-                        elif angle == 180:
-                            text_x, text_y = -text_x, -text_y
-                        elif angle == 270:
-                            text_x, text_y = text_y, -text_x
-                        
-                        # Create text element with transformed position but no rotation/mirroring
-                        text_element = self._create_multiline_text(
-                            dwg,
-                            instance_name,
-                            (symbol['x'] + text_x) * self.scale,
-                            (symbol['y'] + text_y) * self.scale + y_offset,
-                            font_size,
-                            text_anchor
-                        )
-                        # Add text directly to drawing, not to the transformed group
-                        dwg.add(text_element)
-                        break  # Only use the first instance name text entry
+                    # Apply rotation to position
+                    if angle == 90:
+                        text_x, text_y = -text_y, text_x
+                    elif angle == 180:
+                        text_x, text_y = -text_x, -text_y
+                    elif angle == 270:
+                        text_x, text_y = text_y, -text_x
+                    
+                    # Create text data
+                    text_data = {
+                        'x': symbol['x'] + text_x,
+                        'y': symbol['y'] + text_y,
+                        'text': text.get('text', ''),
+                        'justification': text.get('justification', 'Left'),
+                        'size_multiplier': text.get('size_multiplier', 0)  # Default to size 0 for symbol texts
+                    }
+                    self._add_symbol_text(dwg, text_data)
             
             # Add the group to the drawing
             dwg.add(g)
+
+    def _add_symbol_text(self, dwg, text_data: Dict):
+        """Add a text element to the SVG drawing.
+        
+        Args:
+            dwg: SVG drawing object
+            text_data: Dictionary containing text properties:
+                - x: X coordinate
+                - y: Y coordinate
+                - text: Text content
+                - justification: Text alignment ('Left', 'Right', 'Center', 'Top', 'Bottom')
+                - size_multiplier: Font size multiplier index (0-7)
+        """
+        # Get text properties with defaults
+        x = text_data.get('x', 0)
+        y = text_data.get('y', 0)
+        content = text_data.get('text', '')
+        justification = text_data.get('justification', 'Left')
+        size_multiplier = text_data.get('size_multiplier', 2)  # Default to size 2 (1.5x)
+        
+        # Calculate font size
+        font_size = self.font_size * self.size_multipliers[size_multiplier]
+        
+        # Set text alignment
+        if justification == 'Left':
+            text_anchor = 'start'
+        elif justification == 'Right':
+            text_anchor = 'end'
+        else:  # Center, Top, Bottom all use middle horizontal alignment
+            text_anchor = 'middle'
+        
+        # Adjust vertical position based on justification
+        if justification in ['Left', 'Center', 'Right']:
+            y_offset = font_size * 0.3  # Move up to center vertically
+        elif justification == 'Top':
+            y_offset = font_size * 0.6  # Move down
+        else:  # Bottom
+            y_offset = font_size * 0.0  # Move up
+        
+        # Create text element
+        text_element = self._create_multiline_text(
+            dwg,
+            content,
+            x * self.scale,
+            y * self.scale + y_offset,
+            font_size,
+            text_anchor
+        )
+        # Add text to drawing
+        dwg.add(text_element)
 
     def _create_multiline_text(self, dwg, text_content: str, x: float, y: float, 
                             font_size: float, text_anchor: str = 'start', 
