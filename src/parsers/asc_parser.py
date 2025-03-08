@@ -285,7 +285,9 @@ class ASCParser:
     
     def _parse_text(self, line: str):
         """Parse a TEXT line and extract position, justification, and content.
-        Format: TEXT x y justification size ;content
+        Format: TEXT x y justification size !spice_directive
+               TEXT x y justification size ;comment
+        
         Justification can be: Left, Center, Right, Top, Bottom
         Size is an index that maps to a font size multiplier:
         0 -> 0.625x
@@ -309,9 +311,25 @@ class ASCParser:
             7: 7.0
         }
 
-        # Find the semicolon that separates attributes from text content
+        # Find the first ! or ; that separates attributes from text content
         try:
-            attrs, content = line.split(';', 1)
+            # Split on first ! or ;
+            attrs = line
+            content = ""
+            content_type = "comment"  # default type
+            
+            # Look for SPICE directive first (!)
+            if '!' in line:
+                attrs, content = line.split('!', 1)
+                content_type = "spice"
+            # Then look for comment (;)
+            elif ';' in line:
+                attrs, content = line.split(';', 1)
+                content_type = "comment"
+            else:
+                print(f"Warning: Text line has no content marker (! or ;): {line}")
+                return
+                
             attrs_parts = attrs.split()
             
             if len(attrs_parts) >= 4:  # TEXT + x + y + justification + size
@@ -333,8 +351,9 @@ class ASCParser:
                         'x': x,
                         'y': y,
                         'justification': justification,
-                        'text': content.strip(),
-                        'size_multiplier': size_multiplier  # Store actual multiplier value
+                        'text': content.strip().replace('\\n', '\n'),  # Convert literal \n to newlines
+                        'size_multiplier': size_multiplier,  # Store actual multiplier value
+                        'type': content_type  # Store whether this is a SPICE directive or comment
                     }
                     self.texts.append(text)
                 except ValueError as e:

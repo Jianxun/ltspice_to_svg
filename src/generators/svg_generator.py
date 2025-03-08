@@ -650,13 +650,13 @@ class SVGGenerator:
                             text_x, text_y = text_y, -text_x
                         
                         # Create text element with transformed position but no rotation/mirroring
-                        text_element = dwg.text(
+                        text_element = self._create_multiline_text(
+                            dwg,
                             instance_name,
-                            insert=((symbol['x'] + text_x) * self.scale, (symbol['y'] + text_y) * self.scale + y_offset),
-                            font_family='Arial',
-                            font_size=f'{font_size}px',
-                            text_anchor=text_anchor,
-                            fill='black'  # Ensure text is visible
+                            (symbol['x'] + text_x) * self.scale,
+                            (symbol['y'] + text_y) * self.scale + y_offset,
+                            font_size,
+                            text_anchor
                         )
                         # Add text directly to drawing, not to the transformed group
                         dwg.add(text_element)
@@ -664,6 +664,48 @@ class SVGGenerator:
             
             # Add the group to the drawing
             dwg.add(g)
+
+    def _create_multiline_text(self, dwg, text_content: str, x: float, y: float, 
+                            font_size: float, text_anchor: str = 'start', 
+                            line_spacing: float = 1.2) -> svgwrite.container.Group:
+        """Create a group of text elements for multiline text.
+        
+        Args:
+            dwg: SVG drawing object
+            text_content: The text to render, may contain newlines
+            x: X coordinate
+            y: Y coordinate
+            font_size: Font size in pixels
+            text_anchor: Text alignment ('start', 'middle', or 'end')
+            line_spacing: Line spacing multiplier (1.2 = 120% of font size)
+            
+        Returns:
+            A group containing text elements for each line
+        """
+        # Create a group to hold all text elements
+        group = dwg.g()
+        
+        # Split text into lines
+        lines = text_content.split('\n')
+        
+        # Calculate line height
+        line_height = font_size * line_spacing
+        
+        # Add each line as a separate text element
+        for i, line in enumerate(lines):
+            # Calculate y position for this line
+            line_y = y + (i * line_height)
+            
+            # Create text element
+            text_element = dwg.text(line,
+                                  insert=(x, line_y),
+                                  font_family='Arial',
+                                  font_size=f'{font_size}px',
+                                  text_anchor=text_anchor,
+                                  fill='black')
+            group.add(text_element)
+            
+        return group
 
     def _add_texts(self, dwg, texts):
         """Add text elements to the SVG drawing.
@@ -673,6 +715,10 @@ class SVGGenerator:
         - Right: Right-aligned, vertically centered
         - Top: Top-aligned, horizontally centered
         - Bottom: Bottom-aligned, horizontally centered
+        
+        Also handles two types of text:
+        - SPICE directives (prefixed with ! in file)
+        - Comments (prefixed with ; in file)
         
         Font size is calculated by multiplying the base font size with the size_multiplier from the ASC file.
         Horizontal alignment is handled using text-anchor.
@@ -709,13 +755,16 @@ class SVGGenerator:
             else:  # Bottom
                 y_offset = font_size * 0.0  # Move up
             
-            # Add text element with all attributes
-            text_element = dwg.text(
-                text['text'],
-                insert=(x, y + y_offset),
-                font_family='Arial',
-                font_size=f'{font_size}px',
-                text_anchor=text_anchor,
-                fill='black'  # Ensure text is visible
+            # Use the text content directly without adding prefix markers
+            content = text['text']
+            
+            # Create multiline text element
+            text_element = self._create_multiline_text(
+                dwg,
+                content,
+                x,
+                y + y_offset,
+                font_size,
+                text_anchor
             )
             dwg.add(text_element)
