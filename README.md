@@ -106,10 +106,14 @@ python src/ltspice_to_svg.py ./schematics/miller_ota.asc --export-json
 - Text position adjustment for mirrored symbols
 
 ### Text Formatting
-- Multiple font sizes (8 levels)
+- Multiple font sizes with semantic defaults:
+  - Instance names: 1.5x base size
+  - Node numbers: 0.625x base size
+  - Symbol-specific text: 1.0x base size
 - Text alignment (Left, Center, Right, Top, Bottom)
-- Upright text regardless of symbol rotation
-- Optional text rendering
+- Proper text positioning based on symbol attributes
+- Automatic fallback positions for missing text entries
+- Optional text rendering with --no-text flag
 
 ## Contributing
 

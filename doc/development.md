@@ -86,14 +86,19 @@ ltspice_to_svg/
   - 5: 3.5x base size
   - 6: 5.0x base size
   - 7: 7.0x base size
+- Text rendering is handled by a clean interface:
+  - Single dictionary input for text properties
+  - Caller handles transformations (rotation, mirroring)
+  - Renderer focuses on text placement and styling
 - Text alignment options:
   - Left: Left-aligned, vertically centered
   - Center: Horizontally and vertically centered
   - Right: Right-aligned, vertically centered
   - Top: Top-aligned, horizontally centered
   - Bottom: Bottom-aligned, horizontally centered
-- Instance names remain upright regardless of symbol rotation
-- Text justification is flipped when symbols are mirrored
+- Instance names and symbol texts:
+  - Position is determined by WINDOW or property_id attributes
+  - Falls back to default position above symbol if no position specified
 
 ##### T-Junction Detection
 - Identifies points where 3 or more wires meet

@@ -1,0 +1,182 @@
+{
+  "wires": [],
+  "symbols": [],
+  "texts": [
+    {
+      "x": -592,
+      "y": -384,
+      "justification": "Left",
+      "text": ".tran 0 1ms 0 0.1ms",
+      "size_multiplier": 0.625,
+      "type": "spice"
+    },
+    {
+      "x": -592,
+      "y": -352,
+      "justification": "Left",
+      "text": ".param Vdd=3.3",
+      "size_multiplier": 0.625,
+      "type": "spice"
+    },
+    {
+      "x": -592,
+      "y": -320,
+      "justification": "Left",
+      "text": ".options plotwinsize=0",
+      "size_multiplier": 0.625,
+      "type": "spice"
+    },
+    {
+      "x": -592,
+      "y": -288,
+      "justification": "Left",
+      "text": "Simulation directives above",
+      "size_multiplier": 0.625,
+      "type": "comment"
+    },
+    {
+      "x": -384,
+      "y": -384,
+      "justification": "Left",
+      "text": "Font Size 7 (7.0x)",
+      "size_multiplier": 7.0,
+      "type": "comment"
+    },
+    {
+      "x": -384,
+      "y": -320,
+      "justification": "Left",
+      "text": "Font Size 6 (5.0x)",
+      "size_multiplier": 3.5,
+      "type": "comment"
+    },
+    {
+      "x": -384,
+      "y": -272,
+      "justification": "Left",
+      "text": "Font Size 5 (3.5x)",
+      "size_multiplier": 2.0,
+      "type": "comment"
+    },
+    {
+      "x": -384,
+      "y": -224,
+      "justification": "Left",
+      "text": "Font Size 4 (2.5x)",
+      "size_multiplier": 1.5,
+      "type": "comment"
+    },
+    {
+      "x": -384,
+      "y": -192,
+      "justification": "Left",
+      "text": "Font Size 3 (2.0x)",
+      "size_multiplier": 1.5,
+      "type": "comment"
+    },
+    {
+      "x": -384,
+      "y": -160,
+      "justification": "Left",
+      "text": "Font Size 2 (1.5x)",
+      "size_multiplier": 1.0,
+      "type": "comment"
+    },
+    {
+      "x": -384,
+      "y": -128,
+      "justification": "Left",
+      "text": "Font Size 1 (1.0x)",
+      "size_multiplier": 1.0,
+      "type": "comment"
+    },
+    {
+      "x": -384,
+      "y": -96,
+      "justification": "Left",
+      "text": "Font Size 0 (0.625x)",
+      "size_multiplier": 0.625,
+      "type": "comment"
+    },
+    {
+      "x": -40,
+      "y": -192,
+      "justification": "Left",
+      "text": "Left Justified\nMulti-line\nText",
+      "size_multiplier": 1.0,
+      "type": "comment"
+    },
+    {
+      "x": 216,
+      "y": -192,
+      "justification": "Center",
+      "text": "Center Justified\nMulti-line\nText",
+      "size_multiplier": 1.0,
+      "type": "comment"
+    },
+    {
+      "x": 472,
+      "y": -192,
+      "justification": "Right",
+      "text": "Right Justified\nMulti-line\nText",
+      "size_multiplier": 1.0,
+      "type": "comment"
+    },
+    {
+      "x": 216,
+      "y": -248,
+      "justification": "Top",
+      "text": "Top Justified",
+      "size_multiplier": 1.0,
+      "type": "comment"
+    },
+    {
+      "x": 216,
+      "y": -96,
+      "justification": "Bottom",
+      "text": "Bottom Justified",
+      "size_multiplier": 1.0,
+      "type": "comment"
+    },
+    {
+      "x": 152,
+      "y": -48,
+      "justification": "Left",
+      "text": "Different justification modes above",
+      "size_multiplier": 0.625,
+      "type": "comment"
+    },
+    {
+      "x": -384,
+      "y": -72,
+      "justification": "Left",
+      "text": "Font sizes decrease from top to bottom",
+      "size_multiplier": 0.625,
+      "type": "comment"
+    },
+    {
+      "x": -136,
+      "y": -8,
+      "justification": "Left",
+      "text": "This is a comment\nwith multiple lines\nto test comment rendering",
+      "size_multiplier": 1.5,
+      "type": "comment"
+    },
+    {
+      "x": -584,
+      "y": 8,
+      "justification": "Left",
+      "text": "A#$%^&*()_+-={}[]|\\\\:;\"'<>,.?/~`",
+      "size_multiplier": 1.5,
+      "type": "comment"
+    }
+  ],
+  "flags": [],
+  "io_pins": [],
+  "shapes": {
+    "lines": [],
+    "circles": [],
+    "rectangles": [],
+    "arcs": []
+  }
+}

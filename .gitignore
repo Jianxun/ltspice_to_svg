@@ -47,3 +47,7 @@ tools/
 # OS specific
 .DS_Store
 Thumbs.db 
+
+MOSbius_LTspice_Library/
+
+.cursorrules

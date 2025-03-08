@@ -162,4 +162,86 @@ def test_svg_generator():
         # Check font size
         font_size = text.get('size', font_size)  # Use text size if provided
         scaled_font_size = font_size * scale
-        assert f'font-size="{scaled_font_size}px"' in svg_content 
+        assert f'font-size="{scaled_font_size}px"' in svg_content
+
+def test_schematic_shapes():
+    """Test shape parsing and rendering with test_sch_shapes.asc file."""
+    # Parse schematic
+    asc_file = PROJECT_ROOT / 'tests' / 'test_schematic_shapes' / 'test_sch_shapes.asc'
+    asc_parser = ASCParser(str(asc_file))
+    schematic_data = asc_parser.parse()
+    
+    # Verify wires are parsed
+    assert len(schematic_data['wires']) == 3
+    wire = schematic_data['wires'][0]
+    assert all(k in wire for k in ['x1', 'y1', 'x2', 'y2'])
+    assert wire['x1'] == 0 and wire['y1'] == -160  # First wire coordinates
+    
+    # Verify ground flag is parsed
+    assert len(schematic_data['flags']) == 1
+    flag = schematic_data['flags'][0]
+    assert flag['net_name'] == '0'  # Ground flag
+    assert flag['x'] == 0 and flag['y'] == 96
+    
+    # Verify lines are parsed
+    assert len(schematic_data['lines']) == 5
+    for i, line in enumerate(schematic_data['lines']):
+        assert all(k in line for k in ['x1', 'y1', 'x2', 'y2', 'style'])
+        # Lines have styles from 4 down to 0 (default)
+        expected_style = 4 - i if i < 4 else 0
+        assert line['style'] == expected_style
+    
+    # Verify rectangle is parsed
+    assert len(schematic_data['rectangles']) == 1
+    rect = schematic_data['rectangles'][0]
+    assert all(k in rect for k in ['x1', 'y1', 'x2', 'y2', 'style'])
+    assert rect['style'] == 1
+    
+    # Verify circle is parsed
+    assert len(schematic_data['circles']) == 1
+    circle = schematic_data['circles'][0]
+    assert all(k in circle for k in ['x1', 'y1', 'x2', 'y2'])
+    
+    # Verify arc is parsed
+    assert len(schematic_data['arcs']) == 1
+    arc = schematic_data['arcs'][0]
+    assert all(k in arc for k in ['x1', 'y1', 'x2', 'y2', 'x3', 'y3', 'style'])
+    assert arc['style'] == 1
+    
+    # Generate SVG
+    svg_file = asc_file.with_suffix('.svg')
+    generator = SVGGenerator(stroke_width=3.0, dot_size_multiplier=1.5, scale=1.0, font_size=16.0)
+    generator.generate(schematic_data, str(svg_file), {})
+    
+    # Verify SVG file is created
+    assert svg_file.exists()
+    assert svg_file.stat().st_size > 0
+    
+    # Read SVG file to verify content
+    with open(svg_file, 'r') as f:
+        svg_content = f.read()
+        
+    # Verify basic SVG structure
+    assert '<?xml version="1.0" encoding="utf-8" ?>' in svg_content
+    assert '<svg' in svg_content
+    assert 'viewBox' in svg_content
+    
+    # Verify shape elements in SVG
+    # Lines
+    assert svg_content.count('<line') == 5  # 5 lines
+    assert 'stroke-dasharray' in svg_content  # At least one styled line
+    
+    # Rectangle
+    assert '<rect' in svg_content
+    assert 'stroke-dasharray' in svg_content  # Styled rectangle
+    
+    # Circle
+    assert '<circle' in svg_content or '<ellipse' in svg_content
+    
+    # Arc (path)
+    assert '<path' in svg_content
+    assert 'A' in svg_content  # Arc command in path
+    
+    # Clean up generated SVG
+    if svg_file.exists():
+        svg_file.unlink() 
