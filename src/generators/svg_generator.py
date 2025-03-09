@@ -37,6 +37,7 @@ class SVGGenerator:
         self.export_json = export_json  # Whether to export debug JSON files
         self.no_text = no_text  # Whether to skip rendering text elements
         self.no_symbol_text = no_symbol_text  # Whether to skip rendering symbol text elements
+        self.text_centering_compensation = 0.35  # Controls text centering compensation (0.25 = 25% of font size)
         # Font size multiplier mapping
         self.size_multipliers = {
             0: 0.625,
@@ -954,40 +955,21 @@ class SVGGenerator:
         dwg.add(g)
 
     def _add_io_pin(self, dwg, io_pin: Dict):
-        """Add an IO pin flag to the SVG drawing with direction-specific shapes.
+        """Add an IO pin flag to the SVG drawing with direction-specific shapes."""
+        print(f"\n[DEBUG] _add_io_pin: Start rendering IO pin '{io_pin['net_name']}'")
+        print(f"[DEBUG] _add_io_pin: Pin position: ({io_pin['x']}, {io_pin['y']}), orientation: {io_pin['orientation']}°")
+        print(f"[DEBUG] _add_io_pin: Scale factor: {self.scale}")
         
-        Each IO pin is rendered with a distinctive shape based on its direction:
-        - Input (In): Right-pointing triangle (48x96 units)
-        - Output (Out): Left-pointing triangle with stem (48x96 units)
-        - Bidirectional (BiDir): Double-ended arrow (48x100 units)
-        
-        The shapes are based on the reference .asy files:
-        - io_pin_input.asy: Right-pointing triangle
-        - io_pin_output.asy: Left-pointing triangle with stem
-        - io_pin_bi_dir.asy: Double-ended arrow
-        
-        Text is positioned at (0, 52) relative to the pin point and center-justified,
-        using size 2 (1.5x) font.
-        
-        Args:
-            dwg: SVG drawing object
-            io_pin: Dictionary containing IO pin properties:
-                - x: X coordinate
-                - y: Y coordinate
-                - direction: Pin direction ('In', 'Out', or 'BiDir')
-                - net_name: Name of the net/signal
-                - orientation: Rotation angle in degrees
-        """
-        print(f"[DEBUG] _add_io_pin: Start rendering IO pin '{io_pin['net_name']}'")
-        # Create a group for the IO pin
+        # Create a group for the IO pin shape only
         g = dwg.g()
         
-        # Apply translation and rotation
+        # Apply translation and rotation for the shape
         transform = [
             f"translate({io_pin['x'] * self.scale},{io_pin['y'] * self.scale})",
             f"rotate({io_pin['orientation']})"
         ]
         g.attribs['transform'] = ' '.join(transform)
+        print(f"[DEBUG] _add_io_pin: Shape group transform: {g.attribs['transform']}")
         
         # Add shape based on direction
         if io_pin['direction'] == 'BiDir':
@@ -1065,28 +1047,59 @@ class SVGGenerator:
                 stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
             ))
         
-        # Calculate font size
+        # Add the shape group to the drawing
+        dwg.add(g)
+        
+        # Calculate absolute text position and rotation
+        orientation = io_pin['orientation']
+        text_distance = 52  # Distance from pin point
         font_size = self.font_size * self.size_multipliers[2]  # Size 2 (1.5x)
         
-        # Create a group for the text with additional rotation
-        # When the flag is in nominal orientation (0°), the text should be vertical (90°)
-        # For other orientations, we need to add 90° to maintain the vertical text
-        text_group = dwg.g()
-        text_group.attribs['transform'] = f'rotate(90)'
+        # Calculate text position based on pin orientation
+        if orientation == 0:  # Right
+            text_x = io_pin['x'] * self.scale
+            text_y = (io_pin['y'] + text_distance) * self.scale
+            text_rotation = -90
+            # For vertical text, shift right by compensation factor of the font size
+            text_x += font_size * self.text_centering_compensation
+        elif orientation == 90:  # Up
+            text_x = (io_pin['x'] - text_distance) * self.scale
+            text_y = io_pin['y'] * self.scale
+            text_rotation = 0
+            # For horizontal text, shift down by compensation factor of the font size
+            text_y += font_size * self.text_centering_compensation
+        elif orientation == 180:  # Left
+            text_x = io_pin['x'] * self.scale
+            text_y = (io_pin['y'] - text_distance) * self.scale
+            text_rotation = -90
+            # For vertical text, shift right by compensation factor of the font size
+            text_x += font_size * self.text_centering_compensation
+        else:  # 270, Down
+            text_x = (io_pin['x'] + text_distance) * self.scale
+            text_y = io_pin['y'] * self.scale
+            text_rotation = 0
+            # For horizontal text, shift down by compensation factor of the font size
+            text_y += font_size * self.text_centering_compensation
+            
+        print(f"[DEBUG] _add_io_pin: Text absolute position: ({text_x}, {text_y})")
+        print(f"[DEBUG] _add_io_pin: Text rotation: {text_rotation}°")
+        print(f"[DEBUG] _add_io_pin: Font size: {font_size}px")
         
-        # Add text at (0, 52) relative to pin point, center-justified
-        # The text coordinates are relative to the transformed group
-        print(f"[DEBUG] _add_io_pin: Adding text element for '{io_pin['net_name']}'")
+        # Create text group with rotation only
+        text_group = dwg.g()
+        if text_rotation != 0:
+            text_group.attribs['transform'] = f'rotate({text_rotation} {text_x} {text_y})'
+        
+        # Add text element
         text_element = dwg.text(
             io_pin['net_name'],
-            insert=(0, 52 * self.scale),  # Position vertically per reference
+            insert=(text_x, text_y),
             font_family='Arial',
             font_size=f'{font_size}px',
             text_anchor='middle',  # Center-justified
             fill='black'
         )
-        text_group.add(text_element)
-        g.add(text_group)
         
-        # Add the group to the drawing
-        dwg.add(g)
+        # Add text to group and group to drawing
+        text_group.add(text_element)
+        dwg.add(text_group)
