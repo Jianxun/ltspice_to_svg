@@ -35,6 +35,28 @@ ltspice_to_svg/
 - Automatically adds GND symbols for ground flags
 - Caches parsed data to avoid re-parsing
 
+##### Flag and Wire Direction Handling
+- Wire directions are calculated using a 90-degree grid system:
+  - 0°: Left (negative X)
+  - 90°: Up (negative Y)
+  - 180°: Right (positive X)
+  - 270°: Down (positive Y)
+- Flag orientation rules:
+  1. Single wire connection:
+     - Flag points in the same direction as the wire
+  2. Two opposite wires:
+     - Vertical wires (90° or 270°): Flag points right (180°)
+     - Horizontal wires (0° or 180°): Flag points down (270°)
+  3. Default cases:
+     - No connected wires: Points left (0°)
+     - Non-opposite wire pairs: Points left (0°)
+     - More than two wires: Points left (0°)
+- Implementation considerations:
+  - Wire direction calculation uses atan2 for angle computation
+  - Angles are normalized to the 90-degree grid system
+  - Flag orientation ensures consistent rendering across the schematic
+  - Special handling for ground flags and IO pins to maintain visual consistency
+
 #### ASY Parser (`asy_parser.py`)
 - Parses symbol definition files
 - Extracts geometric elements:
