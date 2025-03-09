@@ -1068,6 +1068,12 @@ class SVGGenerator:
         # Calculate font size
         font_size = self.font_size * self.size_multipliers[2]  # Size 2 (1.5x)
         
+        # Create a group for the text with additional rotation
+        # When the flag is in nominal orientation (0°), the text should be vertical (90°)
+        # For other orientations, we need to add 90° to maintain the vertical text
+        text_group = dwg.g()
+        text_group.attribs['transform'] = f'rotate(90)'
+        
         # Add text at (0, 52) relative to pin point, center-justified
         # The text coordinates are relative to the transformed group
         print(f"[DEBUG] _add_io_pin: Adding text element for '{io_pin['net_name']}'")
@@ -1079,7 +1085,8 @@ class SVGGenerator:
             text_anchor='middle',  # Center-justified
             fill='black'
         )
-        g.add(text_element)
+        text_group.add(text_element)
+        g.add(text_group)
         
         # Add the group to the drawing
         dwg.add(g)

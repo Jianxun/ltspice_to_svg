@@ -33,10 +33,22 @@ def test_flag_parsing():
     assert len(gnd_flags) == 4  # Four ground flags
     
     # Verify IO pins
+    expected_directions = {
+        'BUS01': 'BiDir',
+        'BUS02': 'In',
+        'BUS03': 'BiDir',
+        'BUS04': 'BiDir',
+        'BUS05': 'BiDir',
+        'BUS06': 'BiDir',
+        'BUS07': 'BiDir',
+        'BUS08': 'BiDir',
+        'BUS09': 'BiDir',
+        'BUS10': 'BiDir'
+    }
     for i in range(10):
         bus_name = f'BUS{i+1:02d}'
         pin = next(p for p in io_pins if p['net_name'] == bus_name)
-        assert pin['direction'] == 'BiDir'
+        assert pin['direction'] == expected_directions[bus_name], f"Wrong direction for {bus_name}"
     
     # Verify net labels
     net1 = next(f for f in net_labels if f['net_name'] == 'net1')
