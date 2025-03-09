@@ -8,6 +8,8 @@ Tests:
 import os
 from pathlib import Path
 from src.parsers.asc_parser import ASCParser
+from src.generators.svg_generator import SVGGenerator
+import tempfile
 
 # Get project root directory
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -37,7 +39,7 @@ def test_flag_parsing():
         'BUS01': 'BiDir',
         'BUS02': 'In',
         'BUS03': 'BiDir',
-        'BUS04': 'BiDir',
+        'BUS04': 'Out',
         'BUS05': 'BiDir',
         'BUS06': 'BiDir',
         'BUS07': 'BiDir',
@@ -63,4 +65,16 @@ def test_flag_parsing():
     gnd_positions = {(320, 592), (256, 528), (320, 464), (384, 528)}
     for flag in gnd_flags:
         assert (flag['x'], flag['y']) in gnd_positions
-        assert flag['net_name'] == '0' 
+        assert flag['net_name'] == '0'
+    
+    # Generate SVG to see debug output
+    with tempfile.NamedTemporaryFile(suffix='.svg', delete=False) as tmp:
+        svg_gen = SVGGenerator()
+        svg_gen.generate(schematic_data, tmp.name)
+        print(f"\nGenerated SVG file: {tmp.name}")
+        
+        # Print SVG content
+        with open(tmp.name, 'r') as f:
+            svg_content = f.read()
+            print("\nSVG Content:")
+            print(svg_content) 

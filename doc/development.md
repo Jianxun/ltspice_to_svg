@@ -67,6 +67,93 @@ ltspice_to_svg/
 - Handles text elements for pin labels and properties
 - Supports symbol-specific text positioning
 
+##### WINDOW Line Parsing Strategy
+WINDOW lines in LTspice symbol files define text positioning and properties for various symbol attributes.
+
+1. **Format**
+```
+WINDOW <type> <x> <y> <justification> [size_multiplier]
+```
+
+2. **Window Types**
+- `WINDOW 0`: Instance name position (e.g., "M1", "R1")
+- `WINDOW 3`: Component value position (e.g., "1k", "10u")
+- Other types may exist for symbol-specific text
+
+3. **Parameters**
+- `x, y`: Relative coordinates from symbol origin
+- `justification`: Text alignment
+  - Basic: Left, Right, Center
+  - Vertical variants: Top, Bottom
+  - Combined: VTop, VBottom (for vertical text)
+- `size_multiplier`: Optional font size index (0-7)
+
+4. **Implementation Structure**
+```python
+# Enums for type safety
+class WindowType(Enum):
+    INSTANCE_NAME = 0  # Component name (M1, R1, etc.)
+    VALUE = 3         # Component value (1k, 10u, etc.)
+
+class TextJustification(Enum):
+    LEFT = "Left"
+    RIGHT = "Right"
+    CENTER = "Center"
+    TOP = "Top"
+    BOTTOM = "Bottom"
+    VTOP = "VTop"      # Vertical text, top aligned
+    VBOTTOM = "VBottom"  # Vertical text, bottom aligned
+
+# Data structure for parsed window data
+@dataclass
+class WindowData:
+    window_type: WindowType
+    x: float
+    y: float
+    justification: TextJustification
+    size_multiplier: int = 2  # Default size multiplier
+    is_vertical: bool = False  # Derived from justification
+```
+
+5. **Parsing Process**
+- Split line into components
+- Validate window type and convert to enum
+- Parse coordinates as floats
+- Convert justification string to enum
+- Handle optional size multiplier
+- Detect vertical text variants
+- Store structured data for symbol rendering
+
+6. **Integration with Symbol Rendering**
+- Calculate absolute position from symbol origin
+- Apply symbol rotation and mirroring
+- Handle vertical text orientation
+- Apply text justification rules
+- Set font size based on multiplier
+- Render text with proper attributes
+
+7. **Error Handling**
+- Validate line format and required fields
+- Handle missing optional parameters
+- Provide default values where appropriate
+- Log warnings for unknown window types
+- Skip malformed lines gracefully
+
+8. **Example Usage**
+```python
+# Example WINDOW lines from symbol files
+WINDOW 0 36 8 Left 2    # Instance name for capacitor
+WINDOW 3 36 56 Left 2   # Value for capacitor
+WINDOW 0 8 -48 Left 2   # Instance name for NMOS
+```
+
+9. **Considerations**
+- Text rotation must account for both symbol rotation and text orientation
+- Vertical variants (VTop, VBottom) need special handling
+- Text position should be adjusted based on justification
+- Symbol mirroring affects text position and orientation
+- Font size multiplier affects text positioning calculations
+
 ### SVG Generation
 
 #### SVG Generator (`svg_generator.py`)
@@ -77,6 +164,33 @@ ltspice_to_svg/
   - T-junction detection and dot placement
   - Text rendering with proper alignment
   - Built-in symbol definitions (GND, etc.)
+
+##### Recent Developments
+- Text positioning improvements:
+  - Added configurable text centering compensation (default: 0.35 = 35% of font size)
+  - Added configurable net label distance from origin (default: 12 units)
+  - Fixed text orientation for net labels at 180° to prevent upside-down text
+  - Improved IO pin text positioning with proper rotation and alignment
+  - Added debug logging for text positioning and transformations
+
+##### Current Issues and TODOs
+1. Symbol Text Rendering
+   - Need to improve handling of symbol names and values
+   - Better support needed for different text positions based on symbol type
+   - Consider symbol-specific text placement rules
+
+2. WINDOW Line Parsing
+   - Current parser needs enhancement to properly handle WINDOW lines in symbol files
+   - WINDOW attributes affect text positioning and visibility
+   - Need to implement proper parsing of:
+     - WINDOW 0: Instance name position
+     - WINDOW 3: Value position
+     - Other WINDOW types for symbol-specific text
+
+3. Text Alignment
+   - Current implementation uses SVG's text-anchor for horizontal alignment
+   - Vertical alignment is handled through manual position adjustments
+   - Consider implementing more robust text alignment system
 
 ##### Coordinate System
 - LTspice uses a coordinate system where:
