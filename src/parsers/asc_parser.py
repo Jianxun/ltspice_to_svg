@@ -5,6 +5,7 @@ Extracts wire and symbol information from the schematic.
 import re
 from typing import Dict, List, Tuple, Set
 from . import shape_parser
+import math
 
 class ASCParser:
     def __init__(self, file_path: str):
@@ -120,19 +121,6 @@ class ASCParser:
             else:
                 i += 1  # Make sure we still increment for empty lines
                 
-        # Add GND symbols for ground flags
-        for flag in self.flags:
-            if flag['net_name'] == '0':
-                # Create a GND symbol at the flag's position
-                gnd_symbol = {
-                    'symbol_name': 'GND',
-                    'instance_name': 'GND',
-                    'x': flag['x'],
-                    'y': flag['y'],
-                    'rotation': 'R0'
-                }
-                self.symbols.append(gnd_symbol)
-                
         print(f"Found {len(self.wires)} wires, {len(self.symbols)} symbols, {len(self.texts)} text elements, "
               f"{len(self.flags)} flags, {len(self.io_pins)} IO pins")
         if any([self._lines, self._circles, self._rectangles, self._arcs]):
@@ -219,10 +207,16 @@ class ASCParser:
                 # Join remaining parts as net name (in case it contains spaces)
                 net_name = ' '.join(parts[3:])
                 
+                # Calculate orientation based on connected wires
+                orientation = self._calculate_flag_orientation(x, y)
+                
+                # Create flag with type and orientation
                 flag = {
                     'x': x,
                     'y': y,
-                    'net_name': net_name
+                    'net_name': net_name,
+                    'type': 'gnd' if net_name == '0' else 'net_label',
+                    'orientation': orientation
                 }
                 self.flags.append(flag)
                 self._flag_positions.add((x, y))
@@ -244,9 +238,9 @@ class ASCParser:
         if len(flag_parts) >= 4 and len(iopin_parts) >= 4:  # FLAG/IOPIN + x + y + net_name/direction
             try:
                 # Convert coordinates to integers
-                x, y = map(int, flag_parts[1:3])
+                flag_x, flag_y = map(int, flag_parts[1:3])
                 # Skip if we've already seen a flag at this position
-                if (x, y) in self._flag_positions:
+                if (flag_x, flag_y) in self._flag_positions:
                     return
                 
                 # Get net name from flag
@@ -257,25 +251,31 @@ class ASCParser:
                 
                 # Verify IOPIN coordinates match FLAG coordinates
                 iopin_x, iopin_y = map(int, iopin_parts[1:3])
-                if (x, y) != (iopin_x, iopin_y):
-                    print(f"Warning: IOPIN coordinates ({iopin_x}, {iopin_y}) don't match FLAG coordinates ({x}, {y})")
+                if (flag_x, flag_y) != (iopin_x, iopin_y):
+                    print(f"Warning: IOPIN coordinates ({iopin_x}, {iopin_y}) don't match FLAG coordinates ({flag_x}, {flag_y})")
                     return
                 
-                # Add flag
+                # Calculate orientation based on connected wires
+                orientation = self._calculate_flag_orientation(flag_x, flag_y)
+                
+                # Add flag with orientation
                 flag = {
-                    'x': x,
-                    'y': y,
-                    'net_name': net_name
+                    'x': flag_x,
+                    'y': flag_y,
+                    'net_name': net_name,
+                    'type': 'net_label',
+                    'orientation': orientation
                 }
                 self.flags.append(flag)
-                self._flag_positions.add((x, y))
+                self._flag_positions.add((flag_x, flag_y))
                 
-                # Add IO pin with all required information
+                # Add IO pin with orientation
                 io_pin = {
-                    'x': x,
-                    'y': y,
+                    'x': flag_x,
+                    'y': flag_y,
                     'net_name': net_name,
-                    'direction': direction
+                    'direction': direction,
+                    'orientation': orientation
                 }
                 self.io_pins.append(io_pin)
                 print(f"Added IO pin: {io_pin}")
@@ -376,3 +376,90 @@ class ASCParser:
             parsed_data['io_pins'] = self.io_pins
         with open(output_path, 'w') as f:
             json.dump(parsed_data, f, indent=2) 
+
+    def _get_wire_direction(self, x1: int, y1: int, x2: int, y2: int) -> int:
+        """Calculate wire direction in degrees (0, 90, 180, 270).
+        
+        Args:
+            x1, y1: Start coordinates
+            x2, y2: End coordinates
+            
+        Returns:
+            Direction in degrees:
+            - 0: left (x2 < x1)
+            - 90: up (y2 < y1)
+            - 180: right (x2 > x1)
+            - 270: down (y2 > y1)
+        """
+        dx = x2 - x1
+        dy = y2 - y1
+        
+        # Calculate angle in degrees from atan2
+        # atan2(dy, dx) gives angle from positive x-axis
+        angle = math.degrees(math.atan2(dy, dx))
+        
+        # Convert to 0-360 range
+        angle = angle % 360
+        
+        # Round to nearest 90 degrees
+        direction = round(angle / 90) * 90
+        
+        # Rotate 90° counterclockwise
+        direction = (direction + 90) % 360
+        
+        return direction 
+
+    def _get_connected_wires(self, x: int, y: int) -> List[Dict]:
+        """Find all wires connected to a point.
+        
+        Args:
+            x, y: Point coordinates
+            
+        Returns:
+            List of connected wire dictionaries
+        """
+        connected = []
+        for wire in self.wires:
+            if (wire['x1'] == x and wire['y1'] == y) or (wire['x2'] == x and wire['y2'] == y):
+                connected.append(wire)
+        return connected
+
+    def _calculate_flag_orientation(self, x: int, y: int) -> int:
+        """Calculate flag orientation based on connected wires.
+        
+        Args:
+            x, y: Flag coordinates
+            
+        Returns:
+            Orientation in degrees (0, 90, 180, 270)
+            - 0: left
+            - 90: up
+            - 180: right
+            - 270: down
+        """
+        connected_wires = self._get_connected_wires(x, y)
+        
+        if not connected_wires:
+            return 0  # Default orientation
+            
+        # Get all wire directions
+        wire_directions = []
+        for wire in connected_wires:
+            if wire['x1'] == x and wire['y1'] == y:
+                direction = self._get_wire_direction(x, y, wire['x2'], wire['y2'])
+            else:
+                direction = self._get_wire_direction(x, y, wire['x1'], wire['y1'])
+            wire_directions.append(direction)
+            
+        # Check if all wires are vertical (90 or 270)
+        all_vertical = all(d in [90, 270] for d in wire_directions)
+        # Check if all wires are horizontal (0 or 180)
+        all_horizontal = all(d in [0, 180] for d in wire_directions)
+        
+        if all_vertical:
+            return 270  # Orient flag horizontally right
+        elif all_horizontal:
+            return 90  # Orient flag vertically up
+        else:
+            # Mixed directions - use first wire's direction
+            return wire_directions[0] 
