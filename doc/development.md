@@ -68,91 +68,123 @@ ltspice_to_svg/
 - Supports symbol-specific text positioning
 
 ##### WINDOW Line Parsing Strategy
-WINDOW lines in LTspice symbol files define text positioning and properties for various symbol attributes.
+WINDOW lines serve two different purposes in LTspice files:
 
-1. **Format**
+1. **In Symbol Files (.asy)**
+   - Define default text rendering rules for component attributes
+   - WINDOW 0: Default position/style for component name (e.g., "R1", "M1")
+   - WINDOW 3: Default position/style for component value (e.g., "1k", "10u")
+   - Part of symbol's template/definition
+   - Example:
+     ```
+     WINDOW 0 36 8 Left 2    # Default name position
+     WINDOW 3 36 56 Left 2   # Default value position
+     ```
+
+2. **In Schematic Files (.asc)**
+   - Follow SYMBOL lines to override default text rendering
+   - Customize text position/style for specific component instances
+   - If no override provided, use defaults from symbol definition
+   - Example:
+     ```
+     SYMBOL res 96 208 R0
+     WINDOW 0 36 8 Center 2  # Override name position
+     SYMATTR InstName R1
+     SYMATTR Value 1k
+     ```
+
+3. **Format**
 ```
 WINDOW <type> <x> <y> <justification> [size_multiplier]
 ```
-
-2. **Window Types**
-- `WINDOW 0`: Instance name position (e.g., "M1", "R1")
-- `WINDOW 3`: Component value position (e.g., "1k", "10u")
-- Other types may exist for symbol-specific text
-
-3. **Parameters**
+- `type`: 0 (name) or 3 (value)
 - `x, y`: Relative coordinates from symbol origin
-- `justification`: Text alignment
-  - Basic: Left, Right, Center
-  - Vertical variants: Top, Bottom
-  - Combined: VTop, VBottom (for vertical text)
+- `justification`: Text alignment (Left, Right, Center, Top, Bottom, VTop, VBottom)
 - `size_multiplier`: Optional font size index (0-7)
 
-4. **Implementation Structure**
-```python
-# Enums for type safety
-class WindowType(Enum):
-    INSTANCE_NAME = 0  # Component name (M1, R1, etc.)
-    VALUE = 3         # Component value (1k, 10u, etc.)
+##### Implementation Plan
 
-class TextJustification(Enum):
-    LEFT = "Left"
-    RIGHT = "Right"
-    CENTER = "Center"
-    TOP = "Top"
-    BOTTOM = "Bottom"
-    VTOP = "VTop"      # Vertical text, top aligned
-    VBOTTOM = "VBottom"  # Vertical text, bottom aligned
+1. **Symbol File Parsing (asy_parser.py)**
+   - [ ] Update symbol data structure to store WINDOW defaults
+   - [ ] Parse WINDOW lines into window_defaults dictionary
+   - [ ] Associate defaults with symbol definition
+   - [ ] Test with various symbol files
 
-# Data structure for parsed window data
-@dataclass
-class WindowData:
-    window_type: WindowType
-    x: float
-    y: float
-    justification: TextJustification
-    size_multiplier: int = 2  # Default size multiplier
-    is_vertical: bool = False  # Derived from justification
-```
+2. **Schematic File Parsing (asc_parser.py)**
+   - [ ] Enhance SYMBOL parsing to track current symbol
+   - [ ] Parse WINDOW lines as overrides for current symbol
+   - [ ] Associate SYMATTR lines with correct symbol
+   - [ ] Test with sample schematics
 
-5. **Parsing Process**
-- Split line into components
-- Validate window type and convert to enum
-- Parse coordinates as floats
-- Convert justification string to enum
-- Handle optional size multiplier
-- Detect vertical text variants
-- Store structured data for symbol rendering
+3. **Data Structure Updates**
+   - [ ] Symbol definition format:
+     ```python
+     symbol_data = {
+         'lines': [...],
+         'circles': [...],
+         'window_defaults': {
+             0: {'x': 36, 'y': 8, 'justification': 'Left', 'size': 2},
+             3: {'x': 36, 'y': 56, 'justification': 'Left', 'size': 2}
+         }
+     }
+     ```
+   - [ ] Symbol instance format:
+     ```python
+     symbol = {
+         'symbol_name': 'res',
+         'instance_name': 'R1',
+         'value': '1k',
+         'x': 100, 'y': 200,
+         'rotation': 'R0',
+         'window_overrides': {
+             0: {'x': 40, 'y': 10, 'justification': 'Center', 'size': 2},
+             3: None  # use default
+         }
+     }
+     ```
 
-6. **Integration with Symbol Rendering**
-- Calculate absolute position from symbol origin
-- Apply symbol rotation and mirroring
-- Handle vertical text orientation
-- Apply text justification rules
-- Set font size based on multiplier
-- Render text with proper attributes
+4. **Text Rendering (svg_generator.py)**
+   - [ ] Add text style resolution function
+   - [ ] Update symbol rendering to handle text
+   - [ ] Implement position transformation
+   - [ ] Add justification handling
+   - [ ] Test with various rotations
 
-7. **Error Handling**
-- Validate line format and required fields
-- Handle missing optional parameters
-- Provide default values where appropriate
-- Log warnings for unknown window types
-- Skip malformed lines gracefully
+5. **Testing Strategy**
+   - [ ] Create test symbols with various WINDOW configurations
+   - [ ] Create test schematics with overrides
+   - [ ] Test rotation handling
+   - [ ] Test text alignment
+   - [ ] Verify style inheritance
 
-8. **Example Usage**
-```python
-# Example WINDOW lines from symbol files
-WINDOW 0 36 8 Left 2    # Instance name for capacitor
-WINDOW 3 36 56 Left 2   # Value for capacitor
-WINDOW 0 8 -48 Left 2   # Instance name for NMOS
-```
+6. **Incremental Testing Steps**
+   a. Basic WINDOW parsing in symbol files
+      - Parse format correctly
+      - Store in symbol definition
+      - Verify data structure
+   
+   b. Basic WINDOW parsing in schematics
+      - Associate with correct symbol
+      - Merge with symbol data
+      - Verify override behavior
+   
+   c. Simple text rendering
+      - Basic position and rotation
+      - Verify text content
+      - Check alignment
+   
+   d. Complex cases
+      - Multiple rotations
+      - Different justifications
+      - Size variations
+      - Override scenarios
 
-9. **Considerations**
-- Text rotation must account for both symbol rotation and text orientation
-- Vertical variants (VTop, VBottom) need special handling
-- Text position should be adjusted based on justification
-- Symbol mirroring affects text position and orientation
-- Font size multiplier affects text positioning calculations
+7. **Validation**
+   - [ ] Compare output with LTspice rendering
+   - [ ] Verify text positioning accuracy
+   - [ ] Check rotation handling
+   - [ ] Validate override behavior
+   - [ ] Test error cases
 
 ### SVG Generation
 
@@ -232,9 +264,39 @@ WINDOW 0 8 -48 Left 2   # Instance name for NMOS
   - Right: Right-aligned, vertically centered
   - Top: Top-aligned, horizontally centered
   - Bottom: Bottom-aligned, horizontally centered
-- Instance names and symbol texts:
-  - Position is determined by WINDOW or property_id attributes
-  - Falls back to default position above symbol if no position specified
+  - VTop: Vertically oriented, top-aligned
+  - VBottom: Vertically oriented, bottom-aligned
+
+##### WINDOW Text Rendering
+- WINDOW entries in symbol files define text positioning and styling
+- Two main types of WINDOW entries:
+  - WINDOW 0: Instance name text settings
+  - WINDOW 3: Value text settings
+- Text rendering rules:
+  1. Instance names (WINDOW 0):
+     - Always rendered if present in symbol
+     - Uses WINDOW override from schematic if available
+     - Falls back to WINDOW default from symbol file
+     - Uses default position if no WINDOW settings found
+  2. Values (WINDOW 3):
+     - Only rendered if WINDOW 3 exists in symbol file or schematic override
+     - Uses WINDOW override from schematic if available
+     - Falls back to WINDOW default from symbol file
+     - No default rendering if WINDOW 3 is not defined
+- WINDOW attributes:
+  - x, y: Position relative to symbol origin
+  - justification: Text alignment style
+  - size: Font size multiplier index (0-7)
+
+##### Text Transformation
+- Text positions are transformed according to symbol rotation and mirroring:
+  1. Apply mirroring (if any)
+  2. Apply rotation (0°, 90°, 180°, 270°)
+  3. Apply final translation to symbol position
+- Vertical text (VTop/VBottom) is handled by:
+  1. Creating a separate text group
+  2. Rotating text 90° around its anchor point
+  3. Converting VTop/VBottom to Top/Bottom for standard alignment
 
 ##### T-Junction Detection
 - Identifies points where 3 or more wires meet
