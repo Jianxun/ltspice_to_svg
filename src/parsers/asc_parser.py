@@ -258,17 +258,6 @@ class ASCParser:
                 # Calculate orientation based on connected wires
                 orientation = self._calculate_flag_orientation(flag_x, flag_y)
                 
-                # Add flag with orientation
-                flag = {
-                    'x': flag_x,
-                    'y': flag_y,
-                    'net_name': net_name,
-                    'type': 'net_label',
-                    'orientation': orientation
-                }
-                self.flags.append(flag)
-                self._flag_positions.add((flag_x, flag_y))
-                
                 # Add IO pin with orientation
                 io_pin = {
                     'x': flag_x,
@@ -279,6 +268,7 @@ class ASCParser:
                 }
                 self.io_pins.append(io_pin)
                 print(f"Added IO pin: {io_pin}")
+                self._flag_positions.add((flag_x, flag_y))  # Still track position to avoid duplicates
                 
             except ValueError as e:
                 print(f"Warning: Invalid flag/iopin data in lines: {flag_line} / {iopin_line} - {e}")
@@ -432,34 +422,59 @@ class ASCParser:
             
         Returns:
             Orientation in degrees (0, 90, 180, 270)
-            - 0: left
+            - 0: left (default)
             - 90: up
-            - 180: right
-            - 270: down
+            - 180: right (used for flags between vertical wires)
+            - 270: down (used for flags between horizontal wires)
+            
+        Rules:
+        1. Single wire: Use wire's direction
+        2. Two opposite wires:
+           - For vertical wires (90° or 270°): orient flag right (180°)
+           - For horizontal wires (0° or 180°): orient flag down (270°)
+        3. Other cases: default to left (0°)
         """
         connected_wires = self._get_connected_wires(x, y)
         
         if not connected_wires:
-            return 0  # Default orientation
+            return 0  # Default orientation (left)
             
-        # Get all wire directions
-        wire_directions = []
-        for wire in connected_wires:
+        if len(connected_wires) == 1:
+            # Single wire case - use wire's direction
+            wire = connected_wires[0]
+            # If flag is at start of wire, calculate direction from flag to other end
             if wire['x1'] == x and wire['y1'] == y:
                 direction = self._get_wire_direction(x, y, wire['x2'], wire['y2'])
             else:
                 direction = self._get_wire_direction(x, y, wire['x1'], wire['y1'])
-            wire_directions.append(direction)
+            return direction
             
-        # Check if all wires are vertical (90 or 270)
-        all_vertical = all(d in [90, 270] for d in wire_directions)
-        # Check if all wires are horizontal (0 or 180)
-        all_horizontal = all(d in [0, 180] for d in wire_directions)
-        
-        if all_vertical:
-            return 270  # Orient flag horizontally right
-        elif all_horizontal:
-            return 90  # Orient flag vertically up
+        elif len(connected_wires) == 2:
+            # Two wire case
+            wire1, wire2 = connected_wires
+            
+            # Get directions of both wires
+            if wire1['x1'] == x and wire1['y1'] == y:
+                dir1 = self._get_wire_direction(x, y, wire1['x2'], wire1['y2'])
+            else:
+                dir1 = self._get_wire_direction(x, y, wire1['x1'], wire1['y1'])
+                
+            if wire2['x1'] == x and wire2['y1'] == y:
+                dir2 = self._get_wire_direction(x, y, wire2['x2'], wire2['y2'])
+            else:
+                dir2 = self._get_wire_direction(x, y, wire2['x1'], wire2['y1'])
+            
+            # Check if wires are in opposite directions
+            if abs(dir1 - dir2) == 180:
+                # For vertical wires (90 or 270), orient flag right (180°)
+                if dir1 in [90, 270]:
+                    return 180
+                # For horizontal wires (0 or 180), orient flag down (270°)
+                else:
+                    return 270
+            
+            return 0  # Default for non-opposite directions (left)
+            
         else:
-            # Mixed directions - use first wire's direction
-            return wire_directions[0] 
+            # More than two wires - default to left
+            return 0 

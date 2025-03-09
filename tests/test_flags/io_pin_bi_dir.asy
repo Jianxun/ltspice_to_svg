@@ -1,0 +1,12 @@
+Version 4
+SymbolType BLOCK
+LINE Normal 16 16 0 0
+LINE Normal -16 84 -16 16
+LINE Normal 16 16 16 84
+LINE Normal 0 0 -16 16
+LINE Normal 0 100 -16 84
+LINE Normal 0 100 16 84
+TEXT 0 52 VCenter 2 PIN_NAME
+PIN 0 0 NONE 8
+PINATTR PinName pin
+PINATTR SpiceOrder 1

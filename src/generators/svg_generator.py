@@ -167,7 +167,7 @@ class SVGGenerator:
                 stroke_width=self.stroke_width,
                 stroke_linecap='round'
             ))
-        
+            
         # Add T-junction dots with scaling
         for x, y in t_junctions:
             dwg.add(dwg.circle(
@@ -176,16 +176,16 @@ class SVGGenerator:
                 fill='black',
                 stroke='none'
             ))
-        
+            
         # Add shapes
         self._add_shapes(dwg, self.shapes)
-        
+            
         # Add symbols
         self._add_symbols(dwg, self.symbols, self.symbol_data)
         
         # Add text elements
         self._add_texts(dwg, self.texts)
-        
+            
         # Add flags
         if not self.no_text:
             # Add net labels
@@ -708,6 +708,7 @@ class SVGGenerator:
                 - justification: Text alignment ('Left', 'Right', 'Center', 'Top', 'Bottom')
                 - size_multiplier: Font size multiplier index (0-7)
         """
+        print(f"[DEBUG] _add_symbol_text: Rendering text '{text_data['text']}'")
         # Get text properties with defaults
         x = text_data.get('x', 0)
         y = text_data.get('y', 0)
@@ -851,44 +852,122 @@ class SVGGenerator:
             dwg.add(text_element)
 
     def _add_net_label(self, dwg, flag: Dict):
-        """Add a net label flag to the SVG drawing."""
-        text_data = {
-            'x': flag['x'],
-            'y': flag['y'],
-            'text': flag['net_name'],
-            'justification': 'Bottom',  # Always bottom-justified for net labels
-            'size_multiplier': 1  # Use size 1 (1.0x) for net labels
-        }
-        self._add_symbol_text(dwg, text_data)
+        """Add a net label flag to the SVG drawing.
+        
+        Based on net_label.asy reference:
+        - Text is positioned 16 units above the pin point
+        - Text is center-justified
+        - Text uses size 2 (1.5x) font
+        
+        Args:
+            dwg: SVG drawing object
+            flag: Dictionary containing flag properties:
+                - x: X coordinate
+                - y: Y coordinate
+                - net_name: Name of the net/signal
+                - orientation: Rotation angle in degrees
+        """
+        print(f"[DEBUG] _add_net_label: Rendering text '{flag['net_name']}'")
+        # Create a group for the net label
+        g = dwg.g()
+        
+        # Apply translation and rotation
+        transform = [
+            f"translate({flag['x'] * self.scale},{flag['y'] * self.scale})",
+            f"rotate({flag['orientation']})"
+        ]
+        g.attribs['transform'] = ' '.join(transform)
+        
+        # Calculate font size
+        font_size = self.font_size * self.size_multipliers[2]  # Size 2 (1.5x)
+        
+        # Add text 16 units above the pin point
+        # The text coordinates are relative to the transformed group
+        text_element = dwg.text(
+            flag['net_name'],
+            insert=(0, (-16 + font_size * 0.3) * self.scale),  # Adjust y-coordinate for vertical centering
+            font_family='Arial',
+            font_size=f'{font_size}px',
+            text_anchor='middle',  # Center-justified
+            fill='black'
+        )
+        g.add(text_element)
+        
+        # Add the group to the drawing
+        dwg.add(g)
 
     def _add_gnd_flag(self, dwg, flag: Dict):
-        """Add a ground flag to the SVG drawing."""
+        """Add a ground flag to the SVG drawing with a V shape.
+        
+        The ground flag is rendered with a V shape pointing in the direction of the flag's orientation.
+        The shape is based on the gnd.asy reference file:
+        - Horizontal line at top: (-16,0) to (16,0)
+        - Two diagonal lines forming a V:
+          - Left line: (-16,0) to (0,16)
+          - Right line: (16,0) to (0,16)
+        
+        Args:
+            dwg: SVG drawing object
+            flag: Dictionary containing flag properties:
+                - x: X coordinate
+                - y: Y coordinate
+                - orientation: Rotation angle in degrees
+        """
+        # Create a group for the ground flag
+        g = dwg.g()
+        
+        # Apply translation and rotation
+        transform = [
+            f"translate({flag['x'] * self.scale},{flag['y'] * self.scale})",
+            f"rotate({flag['orientation']})"
+        ]
+        g.attribs['transform'] = ' '.join(transform)
+        
+        # Add V shape
+        # Horizontal line
+        g.add(dwg.line(
+            (-16 * self.scale, 0), (16 * self.scale, 0),
+            stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+        ))
+        # Left diagonal line
+        g.add(dwg.line(
+            (-16 * self.scale, 0), (0, 16 * self.scale),
+            stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+        ))
+        # Right diagonal line
+        g.add(dwg.line(
+            (16 * self.scale, 0), (0, 16 * self.scale),
+            stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+        ))
+        
         # Add GND text
         text_data = {
-            'x': flag['x'],
-            'y': flag['y'],
+            'x': 0,
+            'y': -8 * self.scale,  # Position text above the V shape
             'text': 'GND',
-            'justification': 'Bottom',  # Always bottom-justified for ground flags
+            'justification': 'Center',  # Center-justified above the V shape
             'size_multiplier': 1  # Use size 1 (1.0x) for ground flags
         }
         self._add_symbol_text(dwg, text_data)
+        
+        # Add the group to the drawing
+        dwg.add(g)
 
     def _add_io_pin(self, dwg, io_pin: Dict):
         """Add an IO pin flag to the SVG drawing with direction-specific shapes.
         
         Each IO pin is rendered with a distinctive shape based on its direction:
-        - Input (In): Right-pointing triangle with text on right side
-        - Output (Out): Left-pointing triangle with text on right side
-        - Bidirectional (BiDir): Double-ended arrow with text on right side
+        - Input (In): Right-pointing triangle (48x96 units)
+        - Output (Out): Left-pointing triangle with stem (48x96 units)
+        - Bidirectional (BiDir): Double-ended arrow (48x100 units)
         
-        The shapes are based on LTspice's built-in IO pin symbols and maintain
-        consistent dimensions:
-        - Input shape: 48x32 units
-        - Output shape: 80x32 units
-        - BiDir shape: 100x32 units
+        The shapes are based on the reference .asy files:
+        - io_pin_input.asy: Right-pointing triangle
+        - io_pin_output.asy: Left-pointing triangle with stem
+        - io_pin_bi_dir.asy: Double-ended arrow
         
-        Text is positioned to the right of each shape at a consistent height,
-        using standard font size (1.0x) and left justification.
+        Text is positioned at (0, 52) relative to the pin point and center-justified,
+        using size 2 (1.5x) font.
         
         Args:
             dwg: SVG drawing object
@@ -897,102 +976,110 @@ class SVGGenerator:
                 - y: Y coordinate
                 - direction: Pin direction ('In', 'Out', or 'BiDir')
                 - net_name: Name of the net/signal
+                - orientation: Rotation angle in degrees
         """
-        x = io_pin['x']
-        y = io_pin['y']
-        direction = io_pin['direction']
-        
+        print(f"[DEBUG] _add_io_pin: Start rendering IO pin '{io_pin['net_name']}'")
         # Create a group for the IO pin
         g = dwg.g()
         
-        # Apply translation
-        g.attribs['transform'] = f"translate({x * self.scale},{y * self.scale})"
+        # Apply translation and rotation
+        transform = [
+            f"translate({io_pin['x'] * self.scale},{io_pin['y'] * self.scale})",
+            f"rotate({io_pin['orientation']})"
+        ]
+        g.attribs['transform'] = ' '.join(transform)
         
         # Add shape based on direction
-        if direction == 'BiDir':
-            # BiDir shape (triangle with base on left)
-            g.add(dwg.line(
-                (0, 0), (16 * self.scale, -16 * self.scale),
-                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-            ))
-            g.add(dwg.line(
-                (16 * self.scale, -16 * self.scale), (84 * self.scale, -16 * self.scale),
-                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-            ))
-            g.add(dwg.line(
-                (84 * self.scale, -16 * self.scale), (100 * self.scale, 0),
-                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-            ))
-            g.add(dwg.line(
-                (100 * self.scale, 0), (84 * self.scale, 16 * self.scale),
-                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-            ))
-            g.add(dwg.line(
-                (84 * self.scale, 16 * self.scale), (16 * self.scale, 16 * self.scale),
-                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-            ))
+        if io_pin['direction'] == 'BiDir':
+            # BiDir shape from io_pin_bi_dir.asy
             g.add(dwg.line(
                 (16 * self.scale, 16 * self.scale), (0, 0),
                 stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
             ))
-        elif direction == 'In':
-            # Input shape (triangle pointing right)
             g.add(dwg.line(
-                (0, 0), (16 * self.scale, -16 * self.scale),
+                (-16 * self.scale, 84 * self.scale), (-16 * self.scale, 16 * self.scale),
                 stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
             ))
             g.add(dwg.line(
-                (16 * self.scale, -16 * self.scale), (48 * self.scale, -16 * self.scale),
+                (16 * self.scale, 16 * self.scale), (16 * self.scale, 84 * self.scale),
                 stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
             ))
             g.add(dwg.line(
-                (48 * self.scale, -16 * self.scale), (48 * self.scale, 16 * self.scale),
+                (0, 0), (-16 * self.scale, 16 * self.scale),
                 stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
             ))
             g.add(dwg.line(
-                (48 * self.scale, 16 * self.scale), (16 * self.scale, 16 * self.scale),
+                (0, 100 * self.scale), (-16 * self.scale, 84 * self.scale),
                 stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
             ))
             g.add(dwg.line(
-                (16 * self.scale, 16 * self.scale), (0, 0),
+                (0, 100 * self.scale), (16 * self.scale, 84 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+        elif io_pin['direction'] == 'In':
+            # Input shape from io_pin_input.asy
+            g.add(dwg.line(
+                (0, 0), (16 * self.scale, 16 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (16 * self.scale, 16 * self.scale), (16 * self.scale, 80 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (16 * self.scale, 80 * self.scale), (-16 * self.scale, 80 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (-16 * self.scale, 80 * self.scale), (-16 * self.scale, 16 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (-16 * self.scale, 16 * self.scale), (0, 0),
                 stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
             ))
         else:  # Out
-            # Output shape (triangle pointing left)
+            # Output shape from io_pin_output.asy
             g.add(dwg.line(
-                (16 * self.scale, 0), (0, 0),
+                (-16 * self.scale, 80 * self.scale), (0, 96 * self.scale),
                 stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
             ))
             g.add(dwg.line(
-                (16 * self.scale, -16 * self.scale), (64 * self.scale, -16 * self.scale),
+                (16 * self.scale, 16 * self.scale), (16 * self.scale, 80 * self.scale),
                 stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
             ))
             g.add(dwg.line(
-                (64 * self.scale, -16 * self.scale), (80 * self.scale, 0),
+                (16 * self.scale, 16 * self.scale), (-16 * self.scale, 16 * self.scale),
                 stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
             ))
             g.add(dwg.line(
-                (80 * self.scale, 0), (64 * self.scale, 16 * self.scale),
+                (-16 * self.scale, 80 * self.scale), (-16 * self.scale, 16 * self.scale),
                 stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
             ))
             g.add(dwg.line(
-                (64 * self.scale, 16 * self.scale), (16 * self.scale, 16 * self.scale),
+                (0, 96 * self.scale), (16 * self.scale, 80 * self.scale),
                 stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
             ))
             g.add(dwg.line(
-                (16 * self.scale, 16 * self.scale), (16 * self.scale, -16 * self.scale),
+                (0, 16 * self.scale), (0, 0),
                 stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
             ))
         
-        # Add text
-        text_data = {
-            'x': (48 if direction == 'In' else 80 if direction == 'Out' else 100) * self.scale,  # Position text after shape
-            'y': 0,
-            'text': io_pin['net_name'],
-            'justification': 'Left',  # Always left-justified after the shape
-            'size_multiplier': 1  # Use size 1 (1.0x) for IO pins
-        }
-        self._add_symbol_text(dwg, text_data)
+        # Calculate font size
+        font_size = self.font_size * self.size_multipliers[2]  # Size 2 (1.5x)
+        
+        # Add text at (0, 52) relative to pin point, center-justified
+        # The text coordinates are relative to the transformed group
+        print(f"[DEBUG] _add_io_pin: Adding text element for '{io_pin['net_name']}'")
+        text_element = dwg.text(
+            io_pin['net_name'],
+            insert=(0, 52 * self.scale),  # Position vertically per reference
+            font_family='Arial',
+            font_size=f'{font_size}px',
+            text_anchor='middle',  # Center-justified
+            fill='black'
+        )
+        g.add(text_element)
         
         # Add the group to the drawing
         dwg.add(g)
