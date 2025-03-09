@@ -37,7 +37,8 @@ class SVGGenerator:
         self.export_json = export_json  # Whether to export debug JSON files
         self.no_text = no_text  # Whether to skip rendering text elements
         self.no_symbol_text = no_symbol_text  # Whether to skip rendering symbol text elements
-        self.text_centering_compensation = 0.35  # Controls text centering compensation (0.25 = 25% of font size)
+        self.text_centering_compensation = 0.35  # Controls text centering compensation (0.35 = 35% of font size)
+        self.net_label_distance = 8  # Controls distance of net label text from origin (default: 12 units)
         # Font size multiplier mapping
         self.size_multipliers = {
             0: 0.625,
@@ -856,9 +857,10 @@ class SVGGenerator:
         """Add a net label flag to the SVG drawing.
         
         Based on net_label.asy reference:
-        - Text is positioned 16 units above the pin point
+        - Text is positioned self.net_label_distance units above the pin point
         - Text is center-justified
         - Text uses size 2 (1.5x) font
+        - Text orientation is normalized to 0° when net label is at 180° to avoid upside down text
         
         Args:
             dwg: SVG drawing object
@@ -882,17 +884,29 @@ class SVGGenerator:
         # Calculate font size
         font_size = self.font_size * self.size_multipliers[2]  # Size 2 (1.5x)
         
-        # Add text 16 units above the pin point
+        # Create text group with normalized rotation
+        text_group = dwg.g()
+        
+        # For 180° orientation, counter-rotate the text to make it appear as 0°
+        if flag['orientation'] == 180:
+            text_group.attribs['transform'] = f"rotate(-180)"
+        
+        # Add text self.net_label_distance units above the pin point
         # The text coordinates are relative to the transformed group
         text_element = dwg.text(
             flag['net_name'],
-            insert=(0, (-16 + font_size * 0.3) * self.scale),  # Adjust y-coordinate for vertical centering
+            insert=(0, -self.net_label_distance * self.scale),  # Position above the pin point
             font_family='Arial',
             font_size=f'{font_size}px',
             text_anchor='middle',  # Center-justified
             fill='black'
         )
-        g.add(text_element)
+        
+        # Add text to its group
+        text_group.add(text_element)
+        
+        # Add text group to main group
+        g.add(text_group)
         
         # Add the group to the drawing
         dwg.add(g)
