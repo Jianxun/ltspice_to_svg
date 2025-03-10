@@ -1,0 +1,140 @@
+{
+  "wires": [
+    {
+      "x1": -432,
+      "y1": -128,
+      "x2": -576,
+      "y2": -128
+    },
+    {
+      "x1": -576,
+      "y1": -80,
+      "x2": -576,
+      "y2": -128
+    },
+    {
+      "x1": -432,
+      "y1": -64,
+      "x2": -432,
+      "y2": -128
+    },
+    {
+      "x1": -576,
+      "y1": 32,
+      "x2": -576,
+      "y2": 0
+    },
+    {
+      "x1": -432,
+      "y1": 32,
+      "x2": -432,
+      "y2": 16
+    },
+    {
+      "x1": -432,
+      "y1": 32,
+      "x2": -576,
+      "y2": 32
+    },
+    {
+      "x1": -576,
+      "y1": 64,
+      "x2": -576,
+      "y2": 32
+    }
+  ],
+  "symbols": [
+    {
+      "symbol_name": "Voltage",
+      "instance_name": "V1",
+      "x": -576,
+      "y": -96,
+      "rotation": "R0"
+    },
+    {
+      "symbol_name": "Res",
+      "instance_name": "R1",
+      "x": -448,
+      "y": -80,
+      "rotation": "R0"
+    },
+    {
+      "symbol_name": "pin",
+      "instance_name": "X2",
+      "x": -304,
+      "y": -128,
+      "rotation": "R180"
+    },
+    {
+      "symbol_name": "pin",
+      "instance_name": "X3",
+      "x": -320,
+      "y": -112,
+      "rotation": "R270"
+    },
+    {
+      "symbol_name": "pin",
+      "instance_name": "X4",
+      "x": -320,
+      "y": -144,
+      "rotation": "R90"
+    },
+    {
+      "symbol_name": "pin",
+      "instance_name": "X5",
+      "x": -336,
+      "y": -128,
+      "rotation": "R0"
+    },
+    {
+      "symbol_name": "pin",
+      "instance_name": "X1",
+      "x": -240,
+      "y": -128,
+      "rotation": "M180"
+    },
+    {
+      "symbol_name": "pin",
+      "instance_name": "X6",
+      "x": -224,
+      "y": -112,
+      "rotation": "M270"
+    },
+    {
+      "symbol_name": "pin",
+      "instance_name": "X7",
+      "x": -224,
+      "y": -144,
+      "rotation": "M90"
+    },
+    {
+      "symbol_name": "pin",
+      "instance_name": "X8",
+      "x": -208,
+      "y": -128,
+      "rotation": "M0"
+    },
+    {
+      "symbol_name": "GND",
+      "instance_name": "GND",
+      "x": -576,
+      "y": 64,
+      "rotation": "R0"
+    }
+  ],
+  "texts": [],
+  "flags": [
+    {
+      "x": -576,
+      "y": 64,
+      "net_name": "0"
+    }
+  ],
+  "io_pins": [],
+  "shapes": {
+    "lines": [],
+    "circles": [],
+    "rectangles": [],
+    "arcs": []
+  }
+}

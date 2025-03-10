@@ -1,0 +1,34 @@
+Version 4
+SymbolType BLOCK
+LINE Normal 48 80 48 96
+LINE Normal 25 64 48 64
+LINE Normal 0 48 8 48
+LINE Normal 8 16 8 80
+LINE Normal 48 16 16 16
+LINE Normal 48 0 48 16
+LINE Normal 64 64 48 64
+LINE Normal 64 96 64 64
+LINE Normal 48 96 64 96
+LINE Normal 48 96 48 128
+LINE Normal 48 96 48 96
+LINE Normal 32 128 48 144
+LINE Normal 48 128 32 128
+LINE Normal -32 48 0 48
+LINE Normal 16 16 16 80
+LINE Normal 32 76 48 80
+LINE Normal 32 84 32 76
+LINE Normal 48 80 32 84
+LINE Normal 16 80 32 80
+LINE Normal 48 -16 48 0
+LINE Normal 64 128 48 144
+LINE Normal 48 128 64 128
+TEXT 16 109 Left 1 4x
+TEXT -20 40 Center 0 28
+TEXT 36 -8 Center 0 29
+WINDOW 0 -32 -16 Bottom 2
+PIN -32 48 NONE 8
+PINATTR PinName gate
+PINATTR SpiceOrder 1
+PIN 48 -16 NONE 8
+PINATTR PinName drain
+PINATTR SpiceOrder 2
