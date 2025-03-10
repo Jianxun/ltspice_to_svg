@@ -12,21 +12,7 @@ import math
 
 class SVGGenerator:
     # Built-in symbol geometries
-    BUILTIN_SYMBOLS = {
-        'GND': {
-            'lines': [
-                # Horizontal line
-                {'x1': -16, 'y1': 0, 'x2': 16, 'y2': 0},
-                # First V line
-                {'x1': 16, 'y1': 0, 'x2': 0, 'y2': 16},
-                # Second V line
-                {'x1': 0, 'y1': 16, 'x2': -16, 'y2': 0}
-            ],
-            'circles': [],
-            'rectangles': [],
-            'arcs': []
-        }
-    }
+    BUILTIN_SYMBOLS = {}  # Remove GND since it's handled as a flag
     
     def __init__(self, stroke_width: float = 1.0, dot_size_multiplier: float = 0.75, scale: float = 0.1, font_size: float = 22.0, export_json: bool = False, no_text: bool = False, no_symbol_text: bool = False):
         self.stroke_width = stroke_width
@@ -966,16 +952,6 @@ class SVGGenerator:
             (16 * self.scale, 0), (0, 16 * self.scale),
             stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
         ))
-        
-        # Add GND text
-        text_data = {
-            'x': 0,
-            'y': -8 * self.scale,  # Position text above the V shape
-            'text': 'GND',
-            'justification': 'Center',  # Center-justified above the V shape
-            'size_multiplier': 1  # Use size 1 (1.0x) for ground flags
-        }
-        self._add_symbol_text(dwg, g, text_data)
         
         # Add the group to the drawing
         dwg.add(g)
