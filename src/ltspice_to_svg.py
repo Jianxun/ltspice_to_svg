@@ -128,7 +128,6 @@ def convert_schematic(asc_file: str,
                            no_symbol_text=no_symbol_text)
     generator.generate(schematic_data, str(svg_file), symbols_data)
     
-    print(f"Generated SVG: {svg_file}")
     if no_text:
         print("Text rendering disabled")
     if no_symbol_text:

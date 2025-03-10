@@ -24,8 +24,6 @@ def parse_shape(line: str) -> Optional[Dict]:
     shape_type = parts[0]
     if shape_type not in SUPPORTED_SHAPES:
         return None
-        
-    print(f"Found {shape_type} entry: {line}")
     
     # Map shape types to their parser functions
     parser_map = {
@@ -35,13 +33,7 @@ def parse_shape(line: str) -> Optional[Dict]:
         'ARC': parse_arc
     }
     
-    shape_data = parser_map[shape_type](line)
-    if shape_data:
-        print(f"Adding {shape_type}: {shape_data}")
-    else:
-        print(f"Failed to parse {shape_type}")
-        
-    return shape_data
+    return parser_map[shape_type](line)
 
 def get_line_style(style_code: int) -> str:
     """Convert LTspice line style code to SVG dash array.
@@ -69,7 +61,6 @@ def parse_line(line: str) -> Dict:
     """Parse a LINE entry and extract coordinates.
     Format: LINE Normal x1 y1 x2 y2 [style]
     """
-    print(f"Parsing LINE: {line}")
     parts = line.split()
     if len(parts) >= 6 and parts[1] == 'Normal':  # LINE + Normal + 4 coordinates
         try:
@@ -90,19 +81,15 @@ def parse_line(line: str) -> Dict:
                         line_data['style'] = line_style
                 except ValueError:
                     pass
-            print(f"Successfully parsed LINE: {line_data}")
             return line_data
-        except ValueError as e:
-            print(f"Error parsing LINE coordinates: {e}")
-    else:
-        print(f"LINE format incorrect: {parts}")
+        except ValueError:
+            pass
     return None
 
 def parse_circle(line: str) -> Dict:
     """Parse a CIRCLE entry and extract coordinates.
     Format: CIRCLE Normal x1 y1 x2 y2 [style]
     """
-    print(f"Parsing CIRCLE: {line}")
     parts = line.split()
     if len(parts) >= 6 and parts[1] == 'Normal':  # CIRCLE + Normal + 4 coordinates
         try:
@@ -123,19 +110,15 @@ def parse_circle(line: str) -> Dict:
                         circle_data['style'] = line_style
                 except ValueError:
                     pass
-            print(f"Successfully parsed CIRCLE: {circle_data}")
             return circle_data
-        except ValueError as e:
-            print(f"Error parsing CIRCLE coordinates: {e}")
-    else:
-        print(f"CIRCLE format incorrect: {parts}")
+        except ValueError:
+            pass
     return None
 
 def parse_rectangle(line: str) -> Dict:
     """Parse a RECTANGLE entry and extract coordinates.
     Format: RECTANGLE Normal x1 y1 x2 y2 [style]
     """
-    print(f"Parsing RECTANGLE: {line}")
     parts = line.split()
     if len(parts) >= 6 and parts[1] == 'Normal':  # RECTANGLE + Normal + 4 coordinates
         try:
@@ -156,12 +139,9 @@ def parse_rectangle(line: str) -> Dict:
                         rect_data['style'] = line_style
                 except ValueError:
                     pass
-            print(f"Successfully parsed RECTANGLE: {rect_data}")
             return rect_data
-        except ValueError as e:
-            print(f"Error parsing RECTANGLE coordinates: {e}")
-    else:
-        print(f"RECTANGLE format incorrect: {parts}")
+        except ValueError:
+            pass
     return None
 
 def parse_arc(line: str) -> Dict:

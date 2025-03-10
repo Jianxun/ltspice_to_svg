@@ -26,7 +26,6 @@ def render_net_label(dwg: svgwrite.Drawing, flag: Dict, scale: float, font_size:
         size_multipliers: Dictionary mapping size indices to font size multipliers
         net_label_distance: Distance of net label text from origin
     """
-    print(f"[DEBUG] render_net_label: Rendering text '{flag['net_name']}'")
     # Create a group for the net label
     g = dwg.g()
     

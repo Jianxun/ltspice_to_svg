@@ -42,7 +42,6 @@ def _render_window_text(dwg: svgwrite.Drawing, group: svgwrite.container.Group,
                     'justification': window['justification'],
                     'size': window['size_multiplier']
                 }
-                print(f"[DEBUG] Using window default for {text}")
                 break
     
     # Create text data with position relative to symbol origin
@@ -54,7 +53,6 @@ def _render_window_text(dwg: svgwrite.Drawing, group: svgwrite.container.Group,
         'size_multiplier': window_settings['size'] if window_settings else default_settings['size_multiplier']
     }
     
-    print(f"[DEBUG] Rendering {text} with settings: {text_data}")
     _add_symbol_text(dwg, group, text_data, scale, font_size, size_multipliers)
 
 def render_symbol(dwg: svgwrite.Drawing, symbol: Dict, symbols_data: Dict[str, Dict], 
@@ -148,7 +146,6 @@ def render_symbol(dwg: svgwrite.Drawing, symbol: Dict, symbols_data: Dict[str, D
                 'justification': text['justification'],
                 'size_multiplier': text.get('size_multiplier', 2)  # Default to size 2 (1.5x)
             }
-            print(f"[DEBUG] Rendering symbol text '{text['text']}' with settings: {text_data}")
             _add_symbol_text(dwg, g, text_data, scale, font_size, size_multipliers, angle, rotation_type == 'M')
     
     # Add lines with scaling
@@ -229,7 +226,6 @@ def _add_symbol_text(dwg: svgwrite.Drawing, group: svgwrite.container.Group,
         rotation: Symbol rotation angle in degrees
         is_mirrored: Whether the symbol is mirrored
     """
-    print(f"[DEBUG] _add_symbol_text: Rendering text '{text_data['text']}'")
     # Get text properties with defaults
     x = text_data.get('x', 0)
     y = text_data.get('y', 0)

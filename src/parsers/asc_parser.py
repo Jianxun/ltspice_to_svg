@@ -40,7 +40,7 @@ class ASCParser:
             try:
                 with open(self.file_path, 'r', encoding=encoding) as f:
                     lines = f.readlines()
-                print(f"[DEBUG] Successfully read file with {encoding} encoding")
+                #print(f"[DEBUG] Successfully read file with {encoding} encoding")
                 break
             except UnicodeError as e:
                 print(f"[DEBUG] Failed to read with {encoding} encoding: {e}")
@@ -248,8 +248,7 @@ class ASCParser:
                     'orientation': orientation
                 }
                 self.io_pins.append(io_pin)
-                print(f"Added IO pin: {io_pin}")
-                self._flag_positions.add((flag_x, flag_y))  # Still track position to avoid duplicates
+                self._flag_positions.add((flag_x, flag_y))  # Track position to avoid duplicates
                 
             except ValueError as e:
                 print(f"Warning: Invalid flag/iopin data in lines: {flag_line} / {iopin_line} - {e}")

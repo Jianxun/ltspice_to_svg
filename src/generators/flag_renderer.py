@@ -74,10 +74,6 @@ def render_io_pin(dwg: svgwrite.Drawing, io_pin: Dict, scale: float, stroke_widt
         size_multipliers: Dictionary mapping size indices to font size multipliers
         text_centering_compensation: Factor for text centering compensation
     """
-    print(f"\n[DEBUG] render_io_pin: Start rendering IO pin '{io_pin['net_name']}'")
-    print(f"[DEBUG] render_io_pin: Pin position: ({io_pin['x']}, {io_pin['y']}), orientation: {io_pin['orientation']}°")
-    print(f"[DEBUG] render_io_pin: Scale factor: {scale}")
-    
     # Create a group for the IO pin shape only
     g = dwg.g()
     
@@ -87,7 +83,6 @@ def render_io_pin(dwg: svgwrite.Drawing, io_pin: Dict, scale: float, stroke_widt
         f"rotate({io_pin['orientation']})"
     ]
     g.attribs['transform'] = ' '.join(transform)
-    print(f"[DEBUG] render_io_pin: Shape group transform: {g.attribs['transform']}")
     
     # Add shape based on direction
     if io_pin['direction'] == 'BiDir':
@@ -199,10 +194,6 @@ def render_io_pin(dwg: svgwrite.Drawing, io_pin: Dict, scale: float, stroke_widt
         # For horizontal text, shift down by compensation factor of the font size
         text_y += font_size * text_centering_compensation
         
-    print(f"[DEBUG] render_io_pin: Text absolute position: ({text_x}, {text_y})")
-    print(f"[DEBUG] render_io_pin: Text rotation: {text_rotation}°")
-    print(f"[DEBUG] render_io_pin: Font size: {font_size}px")
-    
     # Create text group with rotation only
     text_group = dwg.g()
     if text_rotation != 0:
