@@ -46,12 +46,23 @@ def _render_window_text(dwg: svgwrite.Drawing, group: svgwrite.container.Group,
                 }
                 break
     
+    # Get justification from window settings or default
+    justification = window_settings['justification'] if window_settings else default_settings['justification']
+    
+    # Flip horizontal justification if mirrored
+    if is_mirrored:
+        if justification == 'Left':
+            justification = 'Right'
+        elif justification == 'Right':
+            justification = 'Left'
+        # Center, VTop, VBottom remain unchanged
+    
     # Create text data with position relative to symbol origin
     text_data = {
         'x': window_settings['x'] if window_settings else default_settings['x'],
         'y': window_settings['y'] if window_settings else default_settings['y'],
         'text': text,
-        'justification': window_settings['justification'] if window_settings else default_settings['justification'],
+        'justification': justification,
         'size_multiplier': window_settings['size'] if window_settings else default_settings['size_multiplier']
     }
     
