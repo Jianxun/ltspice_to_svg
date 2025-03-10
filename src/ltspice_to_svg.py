@@ -7,12 +7,10 @@ from pathlib import Path
 from parsers.asc_parser import ASCParser
 from parsers.asy_parser import ASYParser
 from generators.svg_generator import SVGGenerator
+from typing import Optional
 
-def find_symbol_file(symbol_name: str, schematic_dir: Path) -> Path:
-    """
-    Find a symbol file by searching in the following order:
-    1. Local directory (same as schematic)
-    2. LTspice library directory (from LTSPICE_LIB_PATH environment variable)
+def find_symbol_file(symbol_name: str, schematic_dir: str) -> Optional[str]:
+    """Find the symbol file for a given symbol name.
     
     Args:
         symbol_name: Name of the symbol to find
@@ -21,21 +19,17 @@ def find_symbol_file(symbol_name: str, schematic_dir: Path) -> Path:
     Returns:
         Path to the symbol file if found, None otherwise
     """
-    # Skip built-in symbols
-    if symbol_name in SVGGenerator.BUILTIN_SYMBOLS:
-        return None
+    # First check in the schematic directory
+    asy_file = os.path.join(schematic_dir, f"{symbol_name}.asy")
+    if os.path.exists(asy_file):
+        return asy_file
         
-    # First try local directory
-    local_symbol = schematic_dir / f"{symbol_name}.asy"
-    if local_symbol.exists():
-        return local_symbol
-        
-    # Then try LTspice library directory
-    ltspice_lib = os.environ.get('LTSPICE_LIB_PATH')
-    if ltspice_lib:
-        lib_symbol = Path(ltspice_lib) / f"{symbol_name}.asy"
-        if lib_symbol.exists():
-            return lib_symbol
+    # Then check in the LTspice symbol library
+    lib_path = os.getenv('LTSPICE_LIB_PATH')
+    if lib_path:
+        asy_file = os.path.join(lib_path, f"{symbol_name}.asy")
+        if os.path.exists(asy_file):
+            return asy_file
             
     return None
 
