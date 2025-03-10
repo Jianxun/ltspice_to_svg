@@ -6,6 +6,56 @@ import svgwrite
 from typing import Dict, List, Optional
 import math
 import warnings
+from .shape_renderer import (
+    _create_line,
+    _create_circle,
+    _create_rectangle,
+    _create_arc
+)
+
+def _render_window_text(dwg: svgwrite.Drawing, group: svgwrite.container.Group,
+                       symbols_data: Dict[str, Dict], symbol_name: str,
+                       text: str, property_id: int, default_settings: Dict,
+                       scale: float, font_size: float, size_multipliers: Dict[int, float]) -> None:
+    """Render text using window settings from symbol definition.
+    
+    Args:
+        dwg: SVG drawing object
+        group: SVG group object to add text to
+        symbols_data: Dictionary mapping symbol names to their drawing data
+        symbol_name: Name of the symbol
+        text: Text content to render
+        property_id: Window property ID (0 for instance name, 3 for value)
+        default_settings: Default text settings if no window found
+        scale: Scale factor for coordinates
+        font_size: Base font size in pixels
+        size_multipliers: Dictionary mapping size indices to font size multipliers
+    """
+    # Get window settings from symbol
+    window_settings = None
+    if 'windows' in symbols_data[symbol_name]:
+        for window in symbols_data[symbol_name]['windows']:
+            if window['property_id'] == property_id:
+                window_settings = {
+                    'x': window['x'],
+                    'y': window['y'],
+                    'justification': window['justification'],
+                    'size': window['size_multiplier']
+                }
+                print(f"[DEBUG] Using window default for {text}")
+                break
+    
+    # Create text data with position relative to symbol origin
+    text_data = {
+        'x': window_settings['x'] if window_settings else default_settings['x'],
+        'y': window_settings['y'] if window_settings else default_settings['y'],
+        'text': text,
+        'justification': window_settings['justification'] if window_settings else default_settings['justification'],
+        'size_multiplier': window_settings['size'] if window_settings else default_settings['size_multiplier']
+    }
+    
+    print(f"[DEBUG] Rendering {text} with settings: {text_data}")
+    _add_symbol_text(dwg, group, text_data, scale, font_size, size_multipliers)
 
 def render_symbol(dwg: svgwrite.Drawing, symbol: Dict, symbols_data: Dict[str, Dict], 
                  scale: float, stroke_width: float, font_size: float, 
@@ -69,76 +119,24 @@ def render_symbol(dwg: svgwrite.Drawing, symbol: Dict, symbols_data: Dict[str, D
     # Add instance name if text rendering is enabled
     instance_name = symbol.get('instance_name', '')
     if instance_name and not no_text:
-        # Get window settings for instance name (type 0)
-        window_settings = None
-        
-        # Only use window defaults from symbol
-        if 'windows' in symbols_data[symbol_name]:
-            for window in symbols_data[symbol_name]['windows']:
-                if window['property_id'] == 0:
-                    window_settings = {
-                        'x': window['x'],
-                        'y': window['y'],
-                        'justification': window['justification'],
-                        'size': window['size_multiplier']
-                    }
-                    print(f"[DEBUG] Using window default for {instance_name}")
-                    break
-        
-        if window_settings:
-            # Create text data with position relative to symbol origin
-            text_data = {
-                'x': window_settings['x'],
-                'y': window_settings['y'],
-                'text': instance_name,
-                'justification': window_settings['justification'],
-                'size_multiplier': window_settings['size']
-            }
-            print(f"[DEBUG] Rendering {instance_name} with window settings: {window_settings}")
-            _add_symbol_text(dwg, g, text_data, scale, font_size, size_multipliers)
-        else:
-            # Default position if no window settings found
-            text_data = {
-                'x': 0,
-                'y': -16,  # Above the symbol
-                'text': instance_name,
-                'justification': 'Center',
-                'size_multiplier': 2
-            }
-            print(f"[DEBUG] Rendering {instance_name} with default settings")
-            _add_symbol_text(dwg, g, text_data, scale, font_size, size_multipliers)
+        default_settings = {
+            'x': 0,
+            'y': -16,  # Above the symbol
+            'justification': 'Center',
+            'size_multiplier': 2
+        }
+        _render_window_text(dwg, g, symbols_data, symbol_name, instance_name, 0, default_settings, scale, font_size, size_multipliers)
     
     # Add value text if available
     value = symbol.get('value', '')
     if value and not no_text:
-        # Get window settings for value (type 3)
-        window_settings = None
-        
-        # Only use window defaults from symbol
-        if 'windows' in symbols_data[symbol_name]:
-            for window in symbols_data[symbol_name]['windows']:
-                if window['property_id'] == 3:
-                    window_settings = {
-                        'x': window['x'],
-                        'y': window['y'],
-                        'justification': window['justification'],
-                        'size': window['size_multiplier']
-                    }
-                    print(f"[DEBUG] Using window default for value {value}")
-                    break
-        
-        # Render value text if we have window settings
-        if window_settings:
-            # Create text data with position relative to symbol origin
-            text_data = {
-                'x': window_settings['x'],
-                'y': window_settings['y'],
-                'text': value,
-                'justification': window_settings['justification'],
-                'size_multiplier': window_settings['size']
-            }
-            print(f"[DEBUG] Rendering value {value} with window settings: {text_data}")
-            _add_symbol_text(dwg, g, text_data, scale, font_size, size_multipliers)
+        default_settings = {
+            'x': 0,
+            'y': 16,  # Below the symbol
+            'justification': 'Center',
+            'size_multiplier': 2
+        }
+        _render_window_text(dwg, g, symbols_data, symbol_name, value, 3, default_settings, scale, font_size, size_multipliers)
     
     # Add regular text elements from symbol definition
     if not no_symbol_text:
@@ -151,127 +149,69 @@ def render_symbol(dwg: svgwrite.Drawing, symbol: Dict, symbols_data: Dict[str, D
                 'size_multiplier': text.get('size_multiplier', 2)  # Default to size 2 (1.5x)
             }
             print(f"[DEBUG] Rendering symbol text '{text['text']}' with settings: {text_data}")
-            _add_symbol_text(dwg, g, text_data, scale, font_size, size_multipliers)
+            _add_symbol_text(dwg, g, text_data, scale, font_size, size_multipliers, angle, rotation_type == 'M')
     
     # Add lines with scaling
     for line in symbols_data[symbol_name]['lines']:
-        line_attrs = {
-            'stroke': 'black',
-            'stroke-width': stroke_width,
-            'stroke-linecap': 'round'
-        }
-        if 'style' in line:
-            from .shape_renderer import _scale_dash_array
-            scaled_style = _scale_dash_array(line['style'], stroke_width)
-            if scaled_style:
-                line_attrs['stroke-dasharray'] = scaled_style
-        g.add(dwg.line(
-            (line['x1'] * scale, line['y1'] * scale),
-            (line['x2'] * scale, line['y2'] * scale),
-            **line_attrs
-        ))
+        _create_line(
+            dwg,
+            line['x1'],
+            line['y1'],
+            line['x2'],
+            line['y2'],
+            stroke_width,
+            line.get('style'),
+            g
+        )
     
     # Add circles with scaling
     for circle in symbols_data[symbol_name].get('circles', []):
-        # Calculate center and radius from bounding box
-        cx = (circle['x1'] + circle['x2']) / 2 * scale
-        cy = (circle['y1'] + circle['y2']) / 2 * scale
-        rx = abs(circle['x2'] - circle['x1']) / 2 * scale
-        ry = abs(circle['y2'] - circle['y1']) / 2 * scale
-        
-        circle_attrs = {
-            'stroke': 'black',
-            'stroke-width': stroke_width,
-            'fill': 'none'
-        }
-        if 'style' in circle:
-            from .shape_renderer import _scale_dash_array
-            scaled_style = _scale_dash_array(circle['style'], stroke_width)
-            if scaled_style:
-                circle_attrs['stroke-dasharray'] = scaled_style
-        
-        # For perfect circles, use circle element
-        if abs(rx - ry) < 0.01:  # Allow small difference due to rounding
-            g.add(dwg.circle(
-                center=(cx, cy),
-                r=rx,  # Use rx as radius
-                **circle_attrs
-            ))
-        else:
-            # For ellipses, use ellipse element
-            g.add(dwg.ellipse(
-                center=(cx, cy),
-                r=(rx, ry),
-                **circle_attrs
-            ))
+        _create_circle(
+            dwg,
+            circle['x1'],
+            circle['y1'],
+            circle['x2'],
+            circle['y2'],
+            stroke_width,
+            circle.get('style'),
+            g
+        )
     
     # Add rectangles with scaling
     for rect in symbols_data[symbol_name].get('rectangles', []):
-        rect_attrs = {
-            'stroke': 'black',
-            'stroke-width': stroke_width,
-            'fill': 'none'
-        }
-        if 'style' in rect:
-            from .shape_renderer import _scale_dash_array
-            scaled_style = _scale_dash_array(rect['style'], stroke_width)
-            if scaled_style:
-                rect_attrs['stroke-dasharray'] = scaled_style
-        g.add(dwg.rect(
-            insert=(rect['x1'] * scale, rect['y1'] * scale),
-            size=(
-                (rect['x2'] - rect['x1']) * scale,
-                (rect['y2'] - rect['y1']) * scale
-            ),
-            **rect_attrs
-        ))
+        _create_rectangle(
+            dwg,
+            rect['x1'],
+            rect['y1'],
+            rect['x2'],
+            rect['y2'],
+            stroke_width,
+            rect.get('style'),
+            g
+        )
     
     # Add arcs with scaling
     for arc in symbols_data[symbol_name].get('arcs', []):
-        # Calculate center and radii
-        cx = (arc['x1'] + arc['x2']) / 2 * scale
-        cy = (arc['y1'] + arc['y2']) / 2 * scale
-        rx = abs(arc['x2'] - arc['x1']) / 2 * scale
-        ry = abs(arc['y2'] - arc['y1']) / 2 * scale
-        
-        # Get start and end angles
-        start_angle = arc['start_angle']
-        end_angle = arc['end_angle']
-        
-        # SVG arc flags
-        large_arc_flag = '1' if (end_angle - start_angle) % 360 > 180 else '0'
-        sweep_flag = '1'  # Always draw arc clockwise
-        
-        # Calculate start and end points
-        start_x = cx + rx * math.cos(math.radians(start_angle))
-        start_y = cy + ry * math.sin(math.radians(start_angle))
-        end_x = cx + rx * math.cos(math.radians(end_angle))
-        end_y = cy + ry * math.sin(math.radians(end_angle))
-        
-        # Create SVG path for arc
-        path_data = f"M {start_x},{start_y} A {rx},{ry} 0 {large_arc_flag} {sweep_flag} {end_x},{end_y}"
-        
-        arc_attrs = {
-            'stroke': 'black',
-            'stroke-width': stroke_width,
-            'fill': 'none'
-        }
-        if 'style' in arc:
-            from .shape_renderer import _scale_dash_array
-            scaled_style = _scale_dash_array(arc['style'], stroke_width)
-            if scaled_style:
-                arc_attrs['stroke-dasharray'] = scaled_style
-        g.add(dwg.path(
-            d=path_data,
-            **arc_attrs
-        ))
+        _create_arc(
+            dwg,
+            arc['x1'],
+            arc['y1'],
+            arc['x2'],
+            arc['y2'],
+            arc['start_angle'],
+            arc['end_angle'],
+            stroke_width,
+            arc.get('style'),
+            g
+        )
     
     # Add the group to the drawing
     dwg.add(g)
 
 def _add_symbol_text(dwg: svgwrite.Drawing, group: svgwrite.container.Group, 
                     text_data: Dict, scale: float, font_size: float, 
-                    size_multipliers: Dict[int, float]) -> None:
+                    size_multipliers: Dict[int, float], rotation: int = 0,
+                    is_mirrored: bool = False) -> None:
     """Add a text element to the SVG drawing.
     
     Args:
@@ -286,6 +226,8 @@ def _add_symbol_text(dwg: svgwrite.Drawing, group: svgwrite.container.Group,
         scale: Scale factor for coordinates
         font_size: Base font size in pixels
         size_multipliers: Dictionary mapping size indices to font size multipliers
+        rotation: Symbol rotation angle in degrees
+        is_mirrored: Whether the symbol is mirrored
     """
     print(f"[DEBUG] _add_symbol_text: Rendering text '{text_data['text']}'")
     # Get text properties with defaults
@@ -333,6 +275,34 @@ def _add_symbol_text(dwg: svgwrite.Drawing, group: svgwrite.container.Group,
         font_size,
         text_anchor
     )
+    
+    # Apply counter-rotation to keep text upright
+    if rotation != 0 or is_mirrored:
+        transforms = []
+        
+        # Handle vertical text first if needed
+        if justification in ['VTop', 'VBottom']:
+            transforms.append(f"rotate(90, {x * scale}, {y * scale})")
+        
+        # Handle symbol rotation and mirroring
+        if rotation != 0:
+            # Counter-rotate to keep text upright
+            transforms.append(f"rotate({-rotation}, {x * scale}, {y * scale})")
+        
+        if is_mirrored:
+            # For mirrored symbols:
+            # 1. Flip text anchor
+            if text_anchor == 'start':
+                text_anchor = 'end'
+            elif text_anchor == 'end':
+                text_anchor = 'start'
+            # 2. Add horizontal flip at the text position
+            # First translate to origin, then scale, then translate back
+            transforms.append(f"translate({x * scale}, {y * scale}) scale(-1, 1) translate({-x * scale}, {-y * scale})")
+        
+        # Apply all transforms in sequence
+        if transforms:
+            text_group.attribs['transform'] = ' '.join(transforms)
     
     # Add text to group and group to parent
     text_group.add(text_element)
