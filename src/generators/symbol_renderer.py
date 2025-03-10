@@ -16,7 +16,8 @@ from .shape_renderer import (
 def _render_window_text(dwg: svgwrite.Drawing, group: svgwrite.container.Group,
                        symbols_data: Dict[str, Dict], symbol_name: str,
                        text: str, property_id: int, default_settings: Dict,
-                       scale: float, font_size: float, size_multipliers: Dict[int, float]) -> None:
+                       scale: float, font_size: float, size_multipliers: Dict[int, float],
+                       is_mirrored: bool = False) -> None:
     """Render text using window settings from symbol definition.
     
     Args:
@@ -30,6 +31,7 @@ def _render_window_text(dwg: svgwrite.Drawing, group: svgwrite.container.Group,
         scale: Scale factor for coordinates
         font_size: Base font size in pixels
         size_multipliers: Dictionary mapping size indices to font size multipliers
+        is_mirrored: Whether the symbol is mirrored
     """
     # Get window settings from symbol
     window_settings = None
@@ -53,7 +55,7 @@ def _render_window_text(dwg: svgwrite.Drawing, group: svgwrite.container.Group,
         'size_multiplier': window_settings['size'] if window_settings else default_settings['size_multiplier']
     }
     
-    _add_symbol_text(dwg, group, text_data, scale, font_size, size_multipliers)
+    _add_symbol_text(dwg, group, text_data, scale, font_size, size_multipliers, is_mirrored=is_mirrored)
 
 def render_symbol(dwg: svgwrite.Drawing, symbol: Dict, symbols_data: Dict[str, Dict], 
                  scale: float, stroke_width: float, font_size: float, 
@@ -123,7 +125,7 @@ def render_symbol(dwg: svgwrite.Drawing, symbol: Dict, symbols_data: Dict[str, D
             'justification': 'Center',
             'size_multiplier': 2
         }
-        _render_window_text(dwg, g, symbols_data, symbol_name, instance_name, 0, default_settings, scale, font_size, size_multipliers)
+        _render_window_text(dwg, g, symbols_data, symbol_name, instance_name, 0, default_settings, scale, font_size, size_multipliers, rotation_type == 'M')
     
     # Add value text if available
     value = symbol.get('value', '')
@@ -134,7 +136,7 @@ def render_symbol(dwg: svgwrite.Drawing, symbol: Dict, symbols_data: Dict[str, D
             'justification': 'Center',
             'size_multiplier': 2
         }
-        _render_window_text(dwg, g, symbols_data, symbol_name, value, 3, default_settings, scale, font_size, size_multipliers)
+        _render_window_text(dwg, g, symbols_data, symbol_name, value, 3, default_settings, scale, font_size, size_multipliers, rotation_type == 'M')
     
     # Add regular text elements from symbol definition
     if not no_symbol_text:
@@ -223,7 +225,7 @@ def _add_symbol_text(dwg: svgwrite.Drawing, group: svgwrite.container.Group,
         scale: Scale factor for coordinates
         font_size: Base font size in pixels
         size_multipliers: Dictionary mapping size indices to font size multipliers
-        rotation: Symbol rotation angle in degrees
+        rotation: Symbol rotation angle in degrees (only used for regular symbol texts)
         is_mirrored: Whether the symbol is mirrored
     """
     # Get text properties with defaults
@@ -272,7 +274,7 @@ def _add_symbol_text(dwg: svgwrite.Drawing, group: svgwrite.container.Group,
         text_anchor
     )
     
-    # Apply counter-rotation to keep text upright
+    # Apply transformations
     if rotation != 0 or is_mirrored:
         transforms = []
         
@@ -280,11 +282,12 @@ def _add_symbol_text(dwg: svgwrite.Drawing, group: svgwrite.container.Group,
         if justification in ['VTop', 'VBottom']:
             transforms.append(f"rotate(90, {x * scale}, {y * scale})")
         
-        # Handle symbol rotation and mirroring
+        # Handle symbol rotation (only for regular symbol texts)
         if rotation != 0:
             # Counter-rotate to keep text upright
             transforms.append(f"rotate({-rotation}, {x * scale}, {y * scale})")
         
+        # Handle mirroring (for both regular and window texts)
         if is_mirrored:
             # For mirrored symbols:
             # 1. Flip text anchor
