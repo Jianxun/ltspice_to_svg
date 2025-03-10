@@ -33,15 +33,17 @@ class ASCParser:
         print(f"Parsing schematic: {self.file_path}")
         
         # Try different encodings
-        encodings = ['utf-16', 'utf-8', 'ascii']
+        encodings = ['utf-16le', 'utf-16', 'utf-8', 'ascii']
         lines = None
         
         for encoding in encodings:
             try:
                 with open(self.file_path, 'r', encoding=encoding) as f:
                     lines = f.readlines()
+                print(f"[DEBUG] Successfully read file with {encoding} encoding")
                 break
-            except UnicodeError:
+            except UnicodeError as e:
+                print(f"[DEBUG] Failed to read with {encoding} encoding: {e}")
                 continue
                 
         if lines is None:
@@ -67,8 +69,13 @@ class ASCParser:
                 elif first_word == 'SYMBOL':
                     self._parse_symbol(line)
                 elif first_word == 'SYMATTR':
-                    if len(parts) >= 3 and parts[1] == 'InstName':
-                        self._parse_instance_name(' '.join(parts[2:]))
+                    if len(parts) >= 3:
+                        if parts[1] == 'InstName':
+                            self._parse_instance_name(' '.join(parts[2:]))
+                        elif parts[1] == 'Value':
+                            self._parse_value(' '.join(parts[2:]))
+                elif first_word == 'WINDOW':
+                    self._parse_window(line)
                 elif first_word == 'TEXT':
                     self._parse_text(line)
                 elif first_word == 'FLAG':
@@ -355,6 +362,43 @@ class ASCParser:
         """Parse the instance name for the current symbol."""
         if self._current_symbol is not None:
             self._current_symbol['instance_name'] = instance_name
+    
+    def _parse_window(self, line: str):
+        """Parse a WINDOW line and extract properties.
+        Format: WINDOW property_id x y justification [size_multiplier]
+        """
+        parts = line.split()
+        if len(parts) >= 5:  # WINDOW + property_id + x + y + justification
+            try:
+                property_id = int(parts[1])
+                x = int(parts[2])
+                y = int(parts[3])
+                justification = parts[4]
+                window_data = {
+                    'x': x,
+                    'y': y,
+                    'justification': justification
+                }
+                # Add size multiplier if present
+                if len(parts) > 5:
+                    try:
+                        size_multiplier = int(parts[5])
+                        window_data['size'] = size_multiplier
+                    except ValueError:
+                        pass
+                
+                # Add window override to current symbol
+                if self._current_symbol is not None:
+                    if 'window_overrides' not in self._current_symbol:
+                        self._current_symbol['window_overrides'] = {}
+                    self._current_symbol['window_overrides'][property_id] = window_data
+            except ValueError:
+                print(f"Warning: Invalid window data in line: {line}")
+    
+    def _parse_value(self, value: str):
+        """Parse the value for the current symbol."""
+        if self._current_symbol is not None:
+            self._current_symbol['value'] = value
     
     def export_json(self, output_path: str):
         """Export the parsed data to a JSON file."""
