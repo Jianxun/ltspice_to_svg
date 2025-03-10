@@ -204,6 +204,11 @@ WINDOW <type> <x> <y> <justification> [size_multiplier]
   - Fixed text orientation for net labels at 180° to prevent upside-down text
   - Improved IO pin text positioning with proper rotation and alignment
   - Added debug logging for text positioning and transformations
+- Ground flag improvements:
+  - Removed GND text from ground flags for cleaner appearance
+  - Ground flags now only show the V-shaped symbol
+  - Removed GND from BUILTIN_SYMBOLS as it's handled as a flag
+  - Improved ground flag orientation handling
 
 ##### Current Issues and TODOs
 1. Symbol Text Rendering

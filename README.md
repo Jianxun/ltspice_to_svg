@@ -98,12 +98,14 @@ python src/ltspice_to_svg.py ./schematics/miller_ota.asc --export-json
 - Text elements with proper alignment and sizing
 - Instance names that remain upright regardless of symbol rotation
 - T-junction dots
-- Ground symbols and flags
+- Ground flags with V-shaped symbol (no text)
+- Net labels and IO pins with proper orientation
 
 ### Symbol Transformations
 - Rotation (0°, 90°, 180°, 270°)
 - Mirroring
 - Text position adjustment for mirrored symbols
+- Proper flag orientation based on connected wires
 
 ### Text Formatting
 - Multiple font sizes with semantic defaults:
@@ -114,6 +116,8 @@ python src/ltspice_to_svg.py ./schematics/miller_ota.asc --export-json
 - Proper text positioning based on symbol attributes
 - Automatic fallback positions for missing text entries
 - Optional text rendering with --no-text flag
+- Configurable text centering compensation
+- Configurable net label distance from origin
 
 ## Contributing
 
