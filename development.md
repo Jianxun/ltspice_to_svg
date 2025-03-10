@@ -160,4 +160,40 @@ Debug features can be enabled through SVGGenerator:
 4. **Documentation**
    - Add API documentation
    - Create usage examples
-   - Document common issues and solutions 
+   - Document common issues and solutions
+
+## Shape Rendering
+
+### Line Styles
+
+All shapes in the SVG output use round line caps (`stroke-linecap="round"`) for consistent appearance:
+- Solid lines use round caps for better visual quality
+- Dotted lines (style code 2) use round caps to create proper dots
+- Dashed lines (style code 1) use round caps for consistent ends
+
+For dotted/dashed styles:
+- Dots are created using a very small dash length (0.1) followed by a gap (2)
+- Dashes use a length of 4 times the stroke width
+- Gaps between elements are 2 times the stroke width
+
+Example style codes:
+```
+0: solid
+1: dash (4,2)
+2: dot (0.1,2)
+3: dash dot (4,2,0.1,2)
+4: dash dot dot (4,2,0.1,2,0.1,2)
+```
+
+Implementation details:
+- Rectangles with styles use SVG path elements to ensure proper line caps
+- Circles and ellipses with styles use the stroke-linecap attribute
+- Arcs with styles use SVG path elements with proper line caps
+
+### Scale Factor
+
+The default scale factor (0.1) may make shapes too small to be visible. Use a larger scale factor (e.g. 1.0) if shapes appear too small:
+
+```bash
+python ./src/ltspice_to_svg.py input.asc --scale 1.0
+``` 
