@@ -83,38 +83,12 @@ class ASCParser:
                     if not is_io_pin:
                         self._parse_flag(line)
                 # Parse shapes
-                elif first_word == 'LINE':
-                    print(f"Found LINE entry: {line}")
-                    shape_data = shape_parser.parse_line(line)
+                elif first_word in shape_parser.SUPPORTED_SHAPES:
+                    shape_data = shape_parser.parse_shape(line)
                     if shape_data:
-                        print(f"Adding LINE: {shape_data}")
-                        self._lines.append(shape_data)
-                    else:
-                        print("Failed to parse LINE")
-                elif first_word == 'CIRCLE':
-                    print(f"Found CIRCLE entry: {line}")
-                    shape_data = shape_parser.parse_circle(line)
-                    if shape_data:
-                        print(f"Adding CIRCLE: {shape_data}")
-                        self._circles.append(shape_data)
-                    else:
-                        print("Failed to parse CIRCLE")
-                elif first_word == 'RECTANGLE':
-                    print(f"Found RECTANGLE entry: {line}")
-                    shape_data = shape_parser.parse_rectangle(line)
-                    if shape_data:
-                        print(f"Adding RECTANGLE: {shape_data}")
-                        self._rectangles.append(shape_data)
-                    else:
-                        print("Failed to parse RECTANGLE")
-                elif first_word == 'ARC':
-                    print(f"Found ARC entry: {line}")
-                    shape_data = shape_parser.parse_arc(line)
-                    if shape_data:
-                        print(f"Adding ARC: {shape_data}")
-                        self._arcs.append(shape_data)
-                    else:
-                        print("Failed to parse ARC")
+                        # Add to appropriate list based on shape type
+                        shape_type = first_word.lower()
+                        getattr(self, f"_{shape_type}s").append(shape_data)
                 
                 i += 1
             else:

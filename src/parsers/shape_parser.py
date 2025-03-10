@@ -1,8 +1,47 @@
 """
 Common shape parsing functions for LTspice schematics and symbols.
 """
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 import math
+
+# List of shape types that can be parsed by this module
+SUPPORTED_SHAPES = ['LINE', 'CIRCLE', 'RECTANGLE', 'ARC']
+
+def parse_shape(line: str) -> Optional[Dict]:
+    """
+    Parse a shape line by detecting its type and calling the appropriate parser.
+    
+    Args:
+        line: The line to parse
+        
+    Returns:
+        Parsed shape data or None if parsing fails
+    """
+    parts = line.split()
+    if not parts:
+        return None
+        
+    shape_type = parts[0]
+    if shape_type not in SUPPORTED_SHAPES:
+        return None
+        
+    print(f"Found {shape_type} entry: {line}")
+    
+    # Map shape types to their parser functions
+    parser_map = {
+        'LINE': parse_line,
+        'CIRCLE': parse_circle,
+        'RECTANGLE': parse_rectangle,
+        'ARC': parse_arc
+    }
+    
+    shape_data = parser_map[shape_type](line)
+    if shape_data:
+        print(f"Adding {shape_type}: {shape_data}")
+    else:
+        print(f"Failed to parse {shape_type}")
+        
+    return shape_data
 
 def get_line_style(style_code: int) -> str:
     """Convert LTspice line style code to SVG dash array.
