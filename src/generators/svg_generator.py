@@ -498,6 +498,93 @@ class SVGGenerator:
             # Set the transform
             g.attribs['transform'] = ' '.join(transform)
             
+            # Add instance name if text rendering is enabled
+            instance_name = symbol.get('instance_name', '')
+            if instance_name and not self.no_text:
+                # Get window settings for instance name (type 0)
+                window_settings = None
+                
+                # Only use window defaults from symbol
+                if 'windows' in symbols_data[symbol_name]:
+                    for window in symbols_data[symbol_name]['windows']:
+                        if window['property_id'] == 0:
+                            window_settings = {
+                                'x': window['x'],
+                                'y': window['y'],
+                                'justification': window['justification'],
+                                'size': window['size_multiplier']
+                            }
+                            print(f"[DEBUG] Using window default for {instance_name}")
+                            break
+                
+                if window_settings:
+                    # Create text data with position relative to symbol origin
+                    text_data = {
+                        'x': window_settings['x'],
+                        'y': window_settings['y'],
+                        'text': instance_name,
+                        'justification': window_settings['justification'],
+                        'size_multiplier': window_settings['size']
+                    }
+                    print(f"[DEBUG] Rendering {instance_name} with window settings: {window_settings}")
+                    self._add_symbol_text(dwg, g, text_data)  # Pass both drawing and group
+                else:
+                    # Default position if no window settings found
+                    text_data = {
+                        'x': 0,
+                        'y': -16,  # Above the symbol
+                        'text': instance_name,
+                        'justification': 'Center',
+                        'size_multiplier': 2
+                    }
+                    print(f"[DEBUG] Rendering {instance_name} with default settings")
+                    self._add_symbol_text(dwg, g, text_data)  # Pass both drawing and group
+            
+            # Add value text if available
+            value = symbol.get('value', '')
+            if value and not self.no_text:
+                # Get window settings for value (type 3)
+                window_settings = None
+                
+                # Only use window defaults from symbol
+                if 'windows' in symbols_data[symbol_name]:
+                    for window in symbols_data[symbol_name]['windows']:
+                        if window['property_id'] == 3:
+                            window_settings = {
+                                'x': window['x'],
+                                'y': window['y'],
+                                'justification': window['justification'],
+                                'size': window['size_multiplier']
+                            }
+                            print(f"[DEBUG] Using window default for value {value}")
+                            break
+                
+                # Render value text if we have window settings
+                if window_settings:
+                    # Create text data with position relative to symbol origin
+                    text_data = {
+                        'x': window_settings['x'],
+                        'y': window_settings['y'],
+                        'text': value,
+                        'justification': window_settings['justification'],
+                        'size_multiplier': window_settings['size']
+                    }
+                    print(f"[DEBUG] Rendering value {value} with window settings: {text_data}")
+                    self._add_symbol_text(dwg, g, text_data)  # Pass both drawing and group
+            
+            # Add regular text elements from symbol definition
+            if not self.no_symbol_text:
+                for text in symbols_data[symbol_name].get('texts', []):
+                    text_data = {
+                        'x': text['x'],
+                        'y': text['y'],
+                        'text': text['text'],
+                        'justification': text['justification'],
+                        'size_multiplier': text.get('size_multiplier', 2)  # Default to size 2 (1.5x)
+                    }
+                    print(f"[DEBUG] Rendering symbol text '{text['text']}' with settings: {text_data}")
+                    self._add_symbol_text(dwg, g, text_data)  # Pass both drawing and group
+            
             # Add lines with scaling
             for line in symbols_data[symbol_name]['lines']:
                 line_attrs = {
@@ -607,128 +694,15 @@ class SVGGenerator:
                     **arc_attrs
                 ))
             
-            # Add instance name if text rendering is enabled
-            instance_name = symbol.get('instance_name', '')
-            if instance_name and not self.no_text:
-                # Get window settings for instance name (type 0)
-                window_settings = None
-                
-                # First try window overrides from schematic
-                if 'window_overrides' in symbol and 0 in symbol['window_overrides']:
-                    window_settings = symbol['window_overrides'][0]
-                    print(f"[DEBUG] Using window override for {instance_name}")
-                # Then try window defaults from symbol
-                elif 'windows' in symbols_data[symbol_name]:
-                    for window in symbols_data[symbol_name]['windows']:
-                        if window['property_id'] == 0:
-                            window_settings = {
-                                'x': window['x'],
-                                'y': window['y'],
-                                'justification': window['justification'],
-                                'size': window['size_multiplier']
-                            }
-                            print(f"[DEBUG] Using window default for {instance_name}")
-                            break
-                
-                if window_settings:
-                    # Transform text position according to symbol transformation
-                    text_x = window_settings['x']
-                    text_y = window_settings['y']
-                    
-                    # Apply rotation to position first
-                    if angle == 90:
-                        text_x, text_y = -text_y, text_x
-                    elif angle == 180:
-                        text_x, text_y = -text_x, -text_y
-                    elif angle == 270:
-                        text_x, text_y = text_y, -text_x
-                    
-                    # Then apply mirroring if needed
-                    if rotation_type == 'M':
-                        text_x = -text_x
-                    
-                    # Create text data
-                    text_data = {
-                        'x': symbol['x'] + text_x,
-                        'y': symbol['y'] + text_y,
-                        'text': instance_name,
-                        'justification': window_settings['justification'],
-                        'size_multiplier': window_settings['size']
-                    }
-                    print(f"[DEBUG] Rendering {instance_name} with window settings: {window_settings}")
-                    self._add_symbol_text(dwg, text_data)
-                else:
-                    # Default position if no window settings found
-                    text_data = {
-                        'x': symbol['x'],
-                        'y': symbol['y'] - 16,  # Above the symbol
-                        'text': instance_name,
-                        'justification': 'Center',
-                        'size_multiplier': 2
-                    }
-                    print(f"[DEBUG] Rendering {instance_name} with default settings")
-                    self._add_symbol_text(dwg, text_data)
-            
-            # Add value text if available
-            value = symbol.get('value', '')
-            if value and not self.no_text:
-                # Get window settings for value (type 3)
-                window_settings = None
-                
-                # First try window overrides from schematic
-                if 'window_overrides' in symbol and 3 in symbol['window_overrides']:
-                    window_settings = symbol['window_overrides'][3]
-                    print(f"[DEBUG] Using window override for value {value}")
-                # Then try window defaults from symbol
-                elif 'windows' in symbols_data[symbol_name]:
-                    for window in symbols_data[symbol_name]['windows']:
-                        if window['property_id'] == 3:
-                            window_settings = {
-                                'x': window['x'],
-                                'y': window['y'],
-                                'justification': window['justification'],
-                                'size': window['size_multiplier']
-                            }
-                            print(f"[DEBUG] Using window default for value {value}")
-                            break
-                
-                # Render value text if we have window settings
-                if window_settings:
-                    # Transform text position according to symbol transformation
-                    text_x = window_settings['x']
-                    text_y = window_settings['y']
-                    
-                    # Apply rotation to position first
-                    if angle == 90:
-                        text_x, text_y = -text_y, text_x
-                    elif angle == 180:
-                        text_x, text_y = -text_x, -text_y
-                    elif angle == 270:
-                        text_x, text_y = text_y, -text_x
-                    
-                    # Then apply mirroring if needed
-                    if rotation_type == 'M':
-                        text_x = -text_x
-                    
-                    # Create text data
-                    text_data = {
-                        'x': symbol['x'] + text_x,
-                        'y': symbol['y'] + text_y,
-                        'text': value,
-                        'justification': window_settings['justification'],
-                        'size_multiplier': window_settings['size']
-                    }
-                    print(f"[DEBUG] Rendering value {value} with window settings: {text_data}")
-                    self._add_symbol_text(dwg, text_data)
-            
             # Add the group to the drawing
             dwg.add(g)
 
-    def _add_symbol_text(self, dwg, text_data: Dict):
+    def _add_symbol_text(self, dwg, group, text_data: Dict):
         """Add a text element to the SVG drawing.
         
         Args:
             dwg: SVG drawing object
+            group: SVG group object to add text to
             text_data: Dictionary containing text properties:
                 - x: X coordinate
                 - y: Y coordinate
@@ -748,7 +722,7 @@ class SVGGenerator:
         font_size = self.font_size * self.size_multipliers[size_multiplier]
         
         # Create text group for rotation
-        text_group = dwg.g()
+        text_group = dwg.g()  # Use drawing to create group
         
         # Handle vertical text (VTop, VBottom)
         if justification in ['VTop', 'VBottom']:
@@ -775,7 +749,7 @@ class SVGGenerator:
         
         # Create text element
         text_element = self._create_multiline_text(
-            dwg,
+            dwg,  # Use drawing for text creation
             content,
             x * self.scale,
             y * self.scale + y_offset,
@@ -783,9 +757,9 @@ class SVGGenerator:
             text_anchor
         )
         
-        # Add text to group and group to drawing
+        # Add text to group and group to parent
         text_group.add(text_element)
-        dwg.add(text_group)
+        group.add(text_group)
 
     def _create_multiline_text(self, dwg, text_content: str, x: float, y: float, 
                             font_size: float, text_anchor: str = 'start', 
@@ -1001,7 +975,7 @@ class SVGGenerator:
             'justification': 'Center',  # Center-justified above the V shape
             'size_multiplier': 1  # Use size 1 (1.0x) for ground flags
         }
-        self._add_symbol_text(dwg, text_data)
+        self._add_symbol_text(dwg, g, text_data)
         
         # Add the group to the drawing
         dwg.add(g)
