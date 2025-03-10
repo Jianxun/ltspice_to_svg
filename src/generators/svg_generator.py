@@ -9,11 +9,13 @@ import json
 import os
 import warnings
 import math
+from .shape_renderer import render_shapes, _scale_dash_array
+from .net_label_renderer import render_net_label
+from .flag_renderer import render_flags
+from .symbol_renderer import render_symbol
+from .text_renderer import render_text
 
 class SVGGenerator:
-    # Built-in symbol geometries
-    BUILTIN_SYMBOLS = {}  # Remove GND since it's handled as a flag
-    
     def __init__(self, stroke_width: float = 1.0, dot_size_multiplier: float = 0.75, scale: float = 0.1, font_size: float = 22.0, export_json: bool = False, no_text: bool = False, no_symbol_text: bool = False):
         self.stroke_width = stroke_width
         self.dot_size_multiplier = dot_size_multiplier  # Controls size of junction dots relative to stroke width
@@ -39,44 +41,101 @@ class SVGGenerator:
         
     def generate(self, schematic_data: Dict, output_path: str, symbols_data: Optional[Dict] = None) -> None:
         """Generate SVG from schematic data."""
-        self.wires = schematic_data.get('wires', [])
-        self.symbols = schematic_data.get('symbols', [])
-        self.texts = schematic_data.get('texts', [])
-        self.flags = schematic_data.get('flags', [])
-        self.io_pins = schematic_data.get('io_pins', [])
-        self.shapes = schematic_data.get('shapes', {})
+        self.schematic_data = schematic_data
         self.symbol_data = symbols_data or {}
         
-        # Add built-in symbols only if they don't exist in the parsed data
-        for name, geometry in self.BUILTIN_SYMBOLS.items():
-            if name.upper() not in self.symbol_data:
-                self.symbol_data[name] = geometry
+        # Find T-junctions
+        t_junctions = self._find_t_junctions(self.schematic_data.get('wires', []), self.schematic_data.get('symbols', []))
         
-        # Find T-junctions and terminal points
-        t_junctions = self._find_t_junctions(self.wires, self.symbols)
-        terminal_points = self._get_symbol_terminals(self.symbols)
+
+        # Calculate viewBox dimensions
+        min_x, min_y, width, height = self._calculate_viewbox()
+        
+        # Create SVG
+        dwg = svgwrite.Drawing(output_path, profile='tiny', size=('100%', '100%'))
+        dwg.viewbox(min_x, min_y, width, height)
+            
+        # Add shapes using the shape renderer (includes wires and T-junctions)
+        shapes_data = self.schematic_data.get('shapes', {})
+        shapes_data['wires'] = self.schematic_data.get('wires', [])
+        shapes_data['t_junctions'] = t_junctions
+        render_shapes(dwg, shapes_data, self.scale, self.stroke_width, self.dot_size_multiplier)
+            
+        # Add symbols
+        for symbol in self.schematic_data.get('symbols', []):
+            render_symbol(
+                dwg,
+                symbol,
+                self.symbol_data,
+                self.scale,
+                self.stroke_width,
+                self.font_size,
+                self.size_multipliers,
+                self.no_text,
+                self.no_symbol_text
+            )
+        
+        # Add text elements
+        for text in self.schematic_data.get('texts', []):
+            render_text(dwg, text, self.scale, self.font_size, self.no_text)
+            
+        # Add flags
+        if not self.no_text:
+            render_flags(
+                dwg,
+                self.schematic_data.get('flags', []),
+                self.schematic_data.get('io_pins', []),
+                self.scale,
+                self.stroke_width,
+                self.font_size,
+                self.size_multipliers,
+                self.net_label_distance,
+                self.text_centering_compensation
+            )
+        
+        # Save the drawing
+        dwg.save()
         
         # Save debug data if requested
         if self.export_json:
-            output_dir = os.path.dirname(output_path)
-            base_name = os.path.splitext(os.path.basename(output_path))[0]
-            debug_data = {
-                'wires': self.wires,
-                'symbols': self.symbols,
-                'texts': self.texts,
-                'flags': self.flags,
-                'io_pins': self.io_pins,  # Include io_pins in debug data
-                'shapes': self.shapes,
-                'symbol_data': self.symbol_data,
-                't_junctions': [{'x': x, 'y': y} for x, y in t_junctions],
-                'terminal_points': [{'x': x, 'y': y} for x, y in terminal_points]
-            }
-            debug_file = os.path.join(output_dir, f"{base_name}_debug.json")
-            with open(debug_file, 'w') as f:
-                json.dump(debug_data, f, indent=2)
-            print(f"Exported debug data to {debug_file}")
+            self._export_json(output_path, t_junctions)
+                
+        # Print summary
+        print(f"Generated SVG: {output_path}")
+        if self.no_text:
+            print("Text rendering disabled")
+
+    def _export_json(self, output_path: str, t_junctions: List[Tuple[float, float]]) -> None:
+        """Export debug data to a JSON file.
         
-        # Calculate viewBox dimensions
+        Args:
+            output_path: Path to the output SVG file
+            t_junctions: List of (x, y) coordinates for T-junctions
+        """
+        output_dir = os.path.dirname(output_path)
+        base_name = os.path.splitext(os.path.basename(output_path))[0]
+        debug_data = {
+            'wires': self.schematic_data.get('wires', []),
+            'symbols': self.schematic_data.get('symbols', []),
+            'texts': self.schematic_data.get('texts', []),
+            'flags': self.schematic_data.get('flags', []),
+            'io_pins': self.schematic_data.get('io_pins', []),  # Include io_pins in debug data
+            'shapes': self.schematic_data.get('shapes', {}),
+            'symbol_data': self.symbol_data,
+            't_junctions': [{'x': x, 'y': y} for x, y in t_junctions]
+        }
+        debug_file = os.path.join(output_dir, f"{base_name}_debug.json")
+        with open(debug_file, 'w') as f:
+            json.dump(debug_data, f, indent=2)
+        print(f"Exported debug data to {debug_file}")
+
+    def _calculate_viewbox(self) -> Tuple[float, float, float, float]:
+        """Calculate the viewBox dimensions for the SVG.
+        
+        Returns:
+            Tuple containing (min_x, min_y, width, height) for the viewBox.
+            All values are already scaled according to self.scale.
+        """
         min_x = float('inf')
         max_x = float('-inf')
         min_y = float('inf')
@@ -84,7 +143,7 @@ class SVGGenerator:
         has_elements = False
 
         # Include wire coordinates
-        for wire in self.wires:
+        for wire in self.schematic_data.get('wires', []):
             has_elements = True
             min_x = min(min_x, wire['x1'], wire['x2'])
             max_x = max(max_x, wire['x1'], wire['x2'])
@@ -93,7 +152,7 @@ class SVGGenerator:
 
         # Include symbol coordinates with their extents
         symbol_extent = 100  # Typical size of LTspice symbols
-        for symbol in self.symbols:
+        for symbol in self.schematic_data.get('symbols', []):
             has_elements = True
             min_x = min(min_x, symbol['x'] - symbol_extent)
             max_x = max(max_x, symbol['x'] + symbol_extent)
@@ -101,7 +160,7 @@ class SVGGenerator:
             max_y = max(max_y, symbol['y'] + symbol_extent)
             
         # Include text coordinates
-        for text in self.texts:
+        for text in self.schematic_data.get('texts', []):
             has_elements = True
             min_x = min(min_x, text['x'] - 50)  # Add some margin for text
             max_x = max(max_x, text['x'] + 50)
@@ -109,7 +168,7 @@ class SVGGenerator:
             max_y = max(max_y, text['y'] + 20)
             
         # Include flag coordinates
-        for flag in self.flags:
+        for flag in self.schematic_data.get('flags', []):
             has_elements = True
             min_x = min(min_x, flag['x'] - 20)  # Add some margin for net names
             max_x = max(max_x, flag['x'] + 20)
@@ -117,7 +176,7 @@ class SVGGenerator:
             max_y = max(max_y, flag['y'] + 10)
 
         # Include shape coordinates
-        for shape_type, shapes in self.shapes.items():
+        for shape_type, shapes in self.schematic_data.get('shapes', {}).items():
             for shape in shapes:
                 has_elements = True
                 min_x = min(min_x, shape['x1'], shape['x2'])
@@ -142,134 +201,10 @@ class SVGGenerator:
         width = max_x - min_x
         height = max_y - min_y
 
-        # Create SVG
-        dwg = svgwrite.Drawing(output_path, profile='tiny', size=('100%', '100%'))
-        dwg.viewbox(min_x, min_y, width, height)
-        
-        # Add wires with scaling
-        for wire in self.wires:
-            dwg.add(dwg.line(
-                (wire['x1'] * self.scale, wire['y1'] * self.scale),
-                (wire['x2'] * self.scale, wire['y2'] * self.scale),
-                stroke='black',
-                stroke_width=self.stroke_width,
-                stroke_linecap='round'
-            ))
-            
-        # Add T-junction dots with scaling
-        for x, y in t_junctions:
-            dwg.add(dwg.circle(
-                center=(x * self.scale, y * self.scale),
-                r=self.stroke_width * self.dot_size_multiplier,
-                fill='black',
-                stroke='none'
-            ))
-            
-        # Add shapes
-        self._add_shapes(dwg, self.shapes)
-            
-        # Add symbols
-        self._add_symbols(dwg, self.symbols, self.symbol_data)
-        
-        # Add text elements
-        self._add_texts(dwg, self.texts)
-            
-        # Add flags
-        if not self.no_text:
-            # Add net labels
-            for flag in self.flags:
-                if flag['type'] == 'net_label':
-                    self._add_net_label(dwg, flag)
-                elif flag['type'] == 'gnd':
-                    self._add_gnd_flag(dwg, flag)
-            
-            # Add IO pins
-            for io_pin in self.io_pins:
-                self._add_io_pin(dwg, io_pin)
-        
-        # Save the drawing
-        dwg.save()
-        
-        # Print summary
-        print(f"Generated SVG: {output_path}")
-        if self.no_text:
-            print("Text rendering disabled")
-
-    def _get_symbol_terminals(self, symbols: List[Dict]) -> Set[Tuple[float, float]]:
-        """Get all terminal points of symbols to exclude from dot placement."""
-        terminal_points = set()
-        
-        for symbol in symbols:
-            x, y = symbol['x'], symbol['y']
-            
-            # For NMOS and PMOS: drain (64,64), source (64,-64), and gate (0,0) relative to symbol position
-            if symbol['symbol_name'] in ['NMOS', 'PMOS']:
-                terminal_points.add((x + 64, y + 64))  # drain
-                terminal_points.add((x + 64, y - 64))  # source
-                terminal_points.add((x, y))  # gate
-            # For VDD: bottom terminal (0,0) relative to symbol position
-            elif symbol['symbol_name'] == 'VDD':
-                terminal_points.add((x, y))
-            # For GND: top terminal (0,0) relative to symbol position
-            elif symbol['symbol_name'] == 'GND':
-                terminal_points.add((x, y))
-                
-        return terminal_points
-    
-    def _get_single_symbol_terminals(self, symbol: Dict) -> Set[Tuple[float, float]]:
-        """Get the terminal points of a single symbol."""
-        x, y = symbol['x'], symbol['y']
-        terminals = set()
-        
-        # Get base terminal points relative to symbol origin
-        base_terminals = []
-        if symbol['symbol_name'] in ['NMOS', 'PMOS']:
-            base_terminals = [
-                (64, 64),   # drain
-                (64, -64),  # source
-                (0, 0)      # gate
-            ]
-        elif symbol['symbol_name'] == 'VDD':
-            base_terminals = [(0, 0)]  # bottom terminal
-        elif symbol['symbol_name'] == 'GND':
-            base_terminals = [(0, 0)]  # top terminal
-            
-        if not base_terminals:
-            return terminals
-            
-        # Parse rotation value and type
-        rotation_str = symbol.get('rotation', 'R0')
-        rotation_type = rotation_str[0]  # 'R' or 'M'
-        try:
-            angle = int(rotation_str[1:])
-        except ValueError:
-            print(f"Warning: Invalid rotation value: {rotation_str}")
-            angle = 0
-            
-        # Transform each terminal point
-        for tx, ty in base_terminals:
-            # Apply mirroring if needed
-            if rotation_type == 'M':
-                tx = -tx  # Mirror across Y axis
-                
-            # Apply rotation
-            if angle == 90:
-                tx, ty = -ty, tx
-            elif angle == 180:
-                tx, ty = -tx, -ty
-            elif angle == 270:
-                tx, ty = ty, -tx
-                
-            # Add translated point
-            terminals.add((x + tx, y + ty))
-            
-        return terminals
+        return min_x, min_y, width, height
 
     def _find_t_junctions(self, wires: List[Dict], symbols: List[Dict]) -> List[Tuple[float, float]]:
-        """Find points where three or more wire ends meet, excluding symbol terminals."""
-        # Get terminal points to exclude
-        terminal_points = self._get_symbol_terminals(symbols)
-        
+        """Find points where three or more wire ends meet."""
         # Create a mapping of points to wire ends that meet there
         point_to_ends = defaultdict(int)
         
@@ -281,8 +216,8 @@ class SVGGenerator:
         # Find points where 3 or more wire ends meet
         t_junctions = []
         for point, count in point_to_ends.items():
-            # Only add points where 3 or more wires meet and not at symbol terminals
-            if count >= 3 and point not in terminal_points:
+            # Only add points where 3 or more wires meet
+            if count >= 3:
                 # Check if this is a real T-junction by counting unique wire directions
                 wire_directions = set()
                 for wire in wires:
@@ -309,799 +244,3 @@ class SVGGenerator:
                     t_junctions.append(point)
                     
         return t_junctions
-
-    def _scale_dash_array(self, dash_array: str, stroke_width: float) -> str:
-        """Scale a dash array pattern by the stroke width."""
-        if not dash_array:
-            return None
-        return ','.join(str(float(x) * stroke_width) for x in dash_array.split(','))
-
-    def _add_shapes(self, dwg, shapes: Dict[str, List[Dict]]):
-        """Add shapes from the schematic to the SVG."""
-        # Add lines
-        for line in shapes.get('lines', []):
-            style = {}
-            style['stroke'] = 'black'
-            style['stroke_width'] = self.stroke_width
-            style['stroke_linecap'] = 'round'
-            
-            if 'style' in line:
-                style['stroke_dasharray'] = self._scale_dash_array(line['style'], self.stroke_width)
-                
-            dwg.add(dwg.line(
-                (line['x1'] * self.scale, line['y1'] * self.scale),
-                (line['x2'] * self.scale, line['y2'] * self.scale),
-                **style
-            ))
-            
-        # Add circles
-        for circle in shapes.get('circles', []):
-            # Calculate radius from bounding box
-            rx = abs(circle['x2'] - circle['x1']) / 2
-            ry = abs(circle['y2'] - circle['y1']) / 2
-            cx = (circle['x1'] + circle['x2']) / 2
-            cy = (circle['y1'] + circle['y2']) / 2
-            
-            style = {}
-            style['stroke'] = 'black'
-            style['stroke_width'] = self.stroke_width
-            style['fill'] = 'none'
-            
-            if 'style' in circle:
-                style['stroke_dasharray'] = self._scale_dash_array(circle['style'], self.stroke_width)
-                
-            if rx == ry:  # Perfect circle
-                dwg.add(dwg.circle(
-                    center=(cx * self.scale, cy * self.scale),
-                    r=rx * self.scale,
-                    **style
-                ))
-            else:  # Ellipse
-                dwg.add(dwg.ellipse(
-                    center=(cx * self.scale, cy * self.scale),
-                    r=(rx * self.scale, ry * self.scale),
-                    **style
-                ))
-                
-        # Add rectangles
-        for rect in shapes.get('rectangles', []):
-            x = min(rect['x1'], rect['x2'])
-            y = min(rect['y1'], rect['y2'])
-            width = abs(rect['x2'] - rect['x1'])
-            height = abs(rect['y2'] - rect['y1'])
-            
-            style = {}
-            style['stroke'] = 'black'
-            style['stroke_width'] = self.stroke_width
-            style['fill'] = 'none'
-            
-            if 'style' in rect:
-                style['stroke_dasharray'] = self._scale_dash_array(rect['style'], self.stroke_width)
-                style['stroke_linecap'] = 'round'  # Add round line caps for dotted/dashed styles
-                
-                # For dotted/dashed rectangles, use path instead of rect to get proper line caps
-                # Create path data for the rectangle
-                path_data = [
-                    # Move to top-left corner
-                    ('M', [(x * self.scale, y * self.scale)]),
-                    # Draw top line
-                    ('L', [(x * self.scale + width * self.scale, y * self.scale)]),
-                    # Draw right line
-                    ('L', [(x * self.scale + width * self.scale, y * self.scale + height * self.scale)]),
-                    # Draw bottom line
-                    ('L', [(x * self.scale, y * self.scale + height * self.scale)]),
-                    # Close path (back to top-left)
-                    ('Z', [])
-                ]
-                dwg.add(dwg.path(d=path_data, **style))
-            else:
-                # For solid rectangles, use rect element
-                dwg.add(dwg.rect(
-                    insert=(x * self.scale, y * self.scale),
-                    size=(width * self.scale, height * self.scale),
-                    **style
-                ))
-            
-        # Add arcs
-        for arc in shapes.get('arcs', []):
-            # Calculate center and radius
-            cx = (arc['x1'] + arc['x2']) / 2
-            cy = (arc['y1'] + arc['y2']) / 2
-            rx = abs(arc['x2'] - arc['x1']) / 2
-            ry = abs(arc['y2'] - arc['y1']) / 2
-            
-            # Convert angles to radians for path calculation
-            start_angle = math.radians(arc['start_angle'])
-            end_angle = math.radians(arc['end_angle'])
-            
-            # Calculate start and end points
-            start_x = cx + rx * math.cos(start_angle)
-            start_y = cy + ry * math.sin(start_angle)
-            end_x = cx + rx * math.cos(end_angle)
-            end_y = cy + ry * math.sin(end_angle)
-            
-            # Determine if arc should be drawn clockwise or counterclockwise
-            large_arc = abs(end_angle - start_angle) > math.pi
-            sweep = end_angle > start_angle
-            
-            # Create path data
-            path_data = [
-                ('M', [(start_x * self.scale, start_y * self.scale)]),
-                ('A', [
-                    rx * self.scale, ry * self.scale,  # radii
-                    0,  # x-axis-rotation
-                    int(large_arc), int(sweep),  # large-arc and sweep flags
-                    end_x * self.scale, end_y * self.scale  # end point
-                ])
-            ]
-            
-            style = {}
-            style['stroke'] = 'black'
-            style['stroke_width'] = self.stroke_width
-            style['fill'] = 'none'
-            
-            if 'style' in arc:
-                style['stroke_dasharray'] = self._scale_dash_array(arc['style'], self.stroke_width)
-                
-            dwg.add(dwg.path(d=path_data, **style))
-
-    def _add_symbols(self, dwg, symbols: List[Dict], symbols_data: Dict[str, Dict]):
-        """Add symbols to the SVG drawing."""
-        for symbol in symbols:
-            symbol_name = symbol['symbol_name']
-            
-            # Skip if no drawing data available
-            if symbol_name not in symbols_data:
-                warnings.warn(f"No drawing data for symbol {symbol_name}")
-                continue
-                
-            # Create a group for the symbol
-            g = dwg.g()
-            
-            # Apply transformations
-            rotation_str = symbol.get('rotation', 'R0')
-            rotation_type = rotation_str[0]  # 'R' or 'M'
-            try:
-                angle = int(rotation_str[1:])
-            except ValueError:
-                print(f"Warning: Invalid rotation value: {rotation_str}")
-                angle = 0
-                
-            # Build transform string
-            transform = []
-            
-            # First translate to origin
-            transform.append(f"translate({symbol['x'] * self.scale},{symbol['y'] * self.scale})")
-            
-            # Then apply mirroring if needed
-            if rotation_type == 'M':
-                transform.append("scale(-1,1)")  # Mirror across Y axis
-                
-            # Then apply rotation
-            if angle != 0:
-                transform.append(f"rotate({angle})")
-                
-            # Set the transform
-            g.attribs['transform'] = ' '.join(transform)
-            
-            # Add instance name if text rendering is enabled
-            instance_name = symbol.get('instance_name', '')
-            if instance_name and not self.no_text:
-                # Get window settings for instance name (type 0)
-                window_settings = None
-                
-                # Only use window defaults from symbol
-                if 'windows' in symbols_data[symbol_name]:
-                    for window in symbols_data[symbol_name]['windows']:
-                        if window['property_id'] == 0:
-                            window_settings = {
-                                'x': window['x'],
-                                'y': window['y'],
-                                'justification': window['justification'],
-                                'size': window['size_multiplier']
-                            }
-                            print(f"[DEBUG] Using window default for {instance_name}")
-                            break
-                
-                if window_settings:
-                    # Create text data with position relative to symbol origin
-                    text_data = {
-                        'x': window_settings['x'],
-                        'y': window_settings['y'],
-                        'text': instance_name,
-                        'justification': window_settings['justification'],
-                        'size_multiplier': window_settings['size']
-                    }
-                    print(f"[DEBUG] Rendering {instance_name} with window settings: {window_settings}")
-                    self._add_symbol_text(dwg, g, text_data)  # Pass both drawing and group
-                else:
-                    # Default position if no window settings found
-                    text_data = {
-                        'x': 0,
-                        'y': -16,  # Above the symbol
-                        'text': instance_name,
-                        'justification': 'Center',
-                        'size_multiplier': 2
-                    }
-                    print(f"[DEBUG] Rendering {instance_name} with default settings")
-                    self._add_symbol_text(dwg, g, text_data)  # Pass both drawing and group
-            
-            # Add value text if available
-            value = symbol.get('value', '')
-            if value and not self.no_text:
-                # Get window settings for value (type 3)
-                window_settings = None
-                
-                # Only use window defaults from symbol
-                if 'windows' in symbols_data[symbol_name]:
-                    for window in symbols_data[symbol_name]['windows']:
-                        if window['property_id'] == 3:
-                            window_settings = {
-                                'x': window['x'],
-                                'y': window['y'],
-                                'justification': window['justification'],
-                                'size': window['size_multiplier']
-                            }
-                            print(f"[DEBUG] Using window default for value {value}")
-                            break
-                
-                # Render value text if we have window settings
-                if window_settings:
-                    # Create text data with position relative to symbol origin
-                    text_data = {
-                        'x': window_settings['x'],
-                        'y': window_settings['y'],
-                        'text': value,
-                        'justification': window_settings['justification'],
-                        'size_multiplier': window_settings['size']
-                    }
-                    print(f"[DEBUG] Rendering value {value} with window settings: {text_data}")
-                    self._add_symbol_text(dwg, g, text_data)  # Pass both drawing and group
-            
-            # Add regular text elements from symbol definition
-            if not self.no_symbol_text:
-                for text in symbols_data[symbol_name].get('texts', []):
-                    text_data = {
-                        'x': text['x'],
-                        'y': text['y'],
-                        'text': text['text'],
-                        'justification': text['justification'],
-                        'size_multiplier': text.get('size_multiplier', 2)  # Default to size 2 (1.5x)
-                    }
-                    print(f"[DEBUG] Rendering symbol text '{text['text']}' with settings: {text_data}")
-                    self._add_symbol_text(dwg, g, text_data)  # Pass both drawing and group
-            
-            # Add lines with scaling
-            for line in symbols_data[symbol_name]['lines']:
-                line_attrs = {
-                    'stroke': 'black',
-                    'stroke-width': self.stroke_width,
-                    'stroke-linecap': 'round'
-                }
-                if 'style' in line:
-                    scaled_style = self._scale_dash_array(line['style'], self.stroke_width)
-                    if scaled_style:
-                        line_attrs['stroke-dasharray'] = scaled_style
-                g.add(dwg.line(
-                    (line['x1'] * self.scale, line['y1'] * self.scale),
-                    (line['x2'] * self.scale, line['y2'] * self.scale),
-                    **line_attrs
-                ))
-            
-            # Add circles with scaling
-            for circle in symbols_data[symbol_name].get('circles', []):
-                # Calculate center and radius from bounding box
-                cx = (circle['x1'] + circle['x2']) / 2 * self.scale
-                cy = (circle['y1'] + circle['y2']) / 2 * self.scale
-                rx = abs(circle['x2'] - circle['x1']) / 2 * self.scale
-                ry = abs(circle['y2'] - circle['y1']) / 2 * self.scale
-                
-                circle_attrs = {
-                    'stroke': 'black',
-                    'stroke-width': self.stroke_width,
-                    'fill': 'none'
-                }
-                if 'style' in circle:
-                    scaled_style = self._scale_dash_array(circle['style'], self.stroke_width)
-                    if scaled_style:
-                        circle_attrs['stroke-dasharray'] = scaled_style
-                
-                # For perfect circles, use circle element
-                if abs(rx - ry) < 0.01:  # Allow small difference due to rounding
-                    g.add(dwg.circle(
-                        center=(cx, cy),
-                        r=rx,  # Use rx as radius
-                        **circle_attrs
-                    ))
-                else:
-                    # For ellipses, use ellipse element
-                    g.add(dwg.ellipse(
-                        center=(cx, cy),
-                        r=(rx, ry),
-                        **circle_attrs
-                    ))
-            
-            # Add rectangles with scaling
-            for rect in symbols_data[symbol_name].get('rectangles', []):
-                rect_attrs = {
-                    'stroke': 'black',
-                    'stroke-width': self.stroke_width,
-                    'fill': 'none'
-                }
-                if 'style' in rect:
-                    scaled_style = self._scale_dash_array(rect['style'], self.stroke_width)
-                    if scaled_style:
-                        rect_attrs['stroke-dasharray'] = scaled_style
-                g.add(dwg.rect(
-                    insert=(rect['x1'] * self.scale, rect['y1'] * self.scale),
-                    size=(
-                        (rect['x2'] - rect['x1']) * self.scale,
-                        (rect['y2'] - rect['y1']) * self.scale
-                    ),
-                    **rect_attrs
-                ))
-            
-            # Add arcs with scaling
-            for arc in symbols_data[symbol_name].get('arcs', []):
-                # Calculate center and radii
-                cx = (arc['x1'] + arc['x2']) / 2 * self.scale
-                cy = (arc['y1'] + arc['y2']) / 2 * self.scale
-                rx = abs(arc['x2'] - arc['x1']) / 2 * self.scale
-                ry = abs(arc['y2'] - arc['y1']) / 2 * self.scale
-                
-                # Get start and end angles
-                start_angle = arc['start_angle']
-                end_angle = arc['end_angle']
-                
-                # SVG arc flags
-                large_arc_flag = '1' if (end_angle - start_angle) % 360 > 180 else '0'
-                sweep_flag = '1'  # Always draw arc clockwise
-                
-                # Calculate start and end points
-                start_x = cx + rx * math.cos(math.radians(start_angle))
-                start_y = cy + ry * math.sin(math.radians(start_angle))
-                end_x = cx + rx * math.cos(math.radians(end_angle))
-                end_y = cy + ry * math.sin(math.radians(end_angle))
-                
-                # Create SVG path for arc
-                path_data = f"M {start_x},{start_y} A {rx},{ry} 0 {large_arc_flag} {sweep_flag} {end_x},{end_y}"
-                
-                arc_attrs = {
-                    'stroke': 'black',
-                    'stroke-width': self.stroke_width,
-                    'fill': 'none'
-                }
-                if 'style' in arc:
-                    scaled_style = self._scale_dash_array(arc['style'], self.stroke_width)
-                    if scaled_style:
-                        arc_attrs['stroke-dasharray'] = scaled_style
-                g.add(dwg.path(
-                    d=path_data,
-                    **arc_attrs
-                ))
-            
-            # Add the group to the drawing
-            dwg.add(g)
-
-    def _add_symbol_text(self, dwg, group, text_data: Dict):
-        """Add a text element to the SVG drawing.
-        
-        Args:
-            dwg: SVG drawing object
-            group: SVG group object to add text to
-            text_data: Dictionary containing text properties:
-                - x: X coordinate
-                - y: Y coordinate
-                - text: Text content
-                - justification: Text alignment ('Left', 'Right', 'Center', 'Top', 'Bottom', 'VTop', 'VBottom')
-                - size_multiplier: Font size multiplier index (0-7)
-        """
-        print(f"[DEBUG] _add_symbol_text: Rendering text '{text_data['text']}'")
-        # Get text properties with defaults
-        x = text_data.get('x', 0)
-        y = text_data.get('y', 0)
-        content = text_data.get('text', '')
-        justification = text_data.get('justification', 'Left')
-        size_multiplier = text_data.get('size_multiplier', 2)  # Default to size 2 (1.5x)
-        
-        # Calculate font size
-        font_size = self.font_size * self.size_multipliers[size_multiplier]
-        
-        # Create text group for rotation
-        text_group = dwg.g()  # Use drawing to create group
-        
-        # Handle vertical text (VTop, VBottom)
-        if justification in ['VTop', 'VBottom']:
-            # Rotate text 90 degrees for vertical orientation
-            text_group.attribs['transform'] = f"rotate(90, {x * self.scale}, {y * self.scale})"
-            # Convert VTop/VBottom to Top/Bottom for standard alignment
-            justification = 'Top' if justification == 'VTop' else 'Bottom'
-        
-        # Set text alignment
-        if justification == 'Left':
-            text_anchor = 'start'
-        elif justification == 'Right':
-            text_anchor = 'end'
-        else:  # Center, Top, Bottom all use middle horizontal alignment
-            text_anchor = 'middle'
-        
-        # Adjust vertical position based on justification
-        if justification in ['Left', 'Center', 'Right']:
-            y_offset = font_size * 0.3  # Move up to center vertically
-        elif justification == 'Top':
-            y_offset = font_size * 0.6  # Move down
-        else:  # Bottom
-            y_offset = font_size * 0.0  # Move up
-        
-        # Create text element
-        text_element = self._create_multiline_text(
-            dwg,  # Use drawing for text creation
-            content,
-            x * self.scale,
-            y * self.scale + y_offset,
-            font_size,
-            text_anchor
-        )
-        
-        # Add text to group and group to parent
-        text_group.add(text_element)
-        group.add(text_group)
-
-    def _create_multiline_text(self, dwg, text_content: str, x: float, y: float, 
-                            font_size: float, text_anchor: str = 'start', 
-                            line_spacing: float = 1.2) -> svgwrite.container.Group:
-        """Create a group of text elements for multiline text.
-        
-        Args:
-            dwg: SVG drawing object
-            text_content: The text to render, may contain newlines
-            x: X coordinate
-            y: Y coordinate
-            font_size: Font size in pixels
-            text_anchor: Text alignment ('start', 'middle', or 'end')
-            line_spacing: Line spacing multiplier (1.2 = 120% of font size)
-            
-        Returns:
-            A group containing text elements for each line
-        """
-        # Create a group to hold all text elements
-        group = dwg.g()
-        
-        # Split text into lines
-        lines = text_content.split('\n')
-        
-        # Calculate line height
-        line_height = font_size * line_spacing
-        
-        # Add each line as a separate text element
-        for i, line in enumerate(lines):
-            # Calculate y position for this line
-            line_y = y + (i * line_height)
-            
-            # Create text element
-            text_element = dwg.text(line,
-                                  insert=(x, line_y),
-                                  font_family='Arial',
-                                  font_size=f'{font_size}px',
-                                  text_anchor=text_anchor,
-                                  fill='black')
-            group.add(text_element)
-            
-        return group
-
-    def _add_texts(self, dwg, texts):
-        """Add text elements to the SVG drawing.
-        Handles LTspice text justification options:
-        - Left: Left-aligned, vertically centered
-        - Center: Horizontally and vertically centered
-        - Right: Right-aligned, vertically centered
-        - Top: Top-aligned, horizontally centered
-        - Bottom: Bottom-aligned, horizontally centered
-        
-        Also handles two types of text:
-        - SPICE directives (prefixed with ! in file)
-        - Comments (prefixed with ; in file)
-        
-        Font size is calculated by multiplying the base font size with the size_multiplier from the ASC file.
-        Horizontal alignment is handled using text-anchor.
-        Vertical alignment is handled by adjusting the y-coordinate.
-        """
-        # Skip text rendering if no_text is True
-        if self.no_text:
-            return
-            
-        for text in texts:
-            # Scale coordinates only (not font size)
-            x = text['x'] * self.scale
-            y = text['y'] * self.scale
-            
-            # Get size multiplier (already converted from index)
-            size_multiplier = text.get('size_multiplier', 1.5)  # Default to 1.5x
-            font_size = self.font_size * size_multiplier
-            
-            # Set text alignment based on justification
-            if text['justification'] == 'Left':
-                text_anchor = 'start'
-            elif text['justification'] == 'Right':
-                text_anchor = 'end'
-            else:  # Center, Top, Bottom all use middle horizontal alignment
-                text_anchor = 'middle'
-            
-            # Adjust vertical position based on justification
-            # For Left/Center/Right, move up by half the font size to center vertically
-            # For Top/Bottom, adjust by a third of the font size
-            if text['justification'] in ['Left', 'Center', 'Right']:
-                y_offset = font_size * 0.3  # Move up to center vertically
-            elif text['justification'] == 'Top':
-                y_offset = font_size * 0.6  # Move down
-            else:  # Bottom
-                y_offset = font_size * 0.0  # Move up
-            
-            # Use the text content directly without adding prefix markers
-            content = text['text']
-            
-            # Create multiline text element
-            text_element = self._create_multiline_text(
-                dwg,
-                content,
-                x,
-                y + y_offset,
-                font_size,
-                text_anchor
-            )
-            dwg.add(text_element)
-
-    def _add_net_label(self, dwg, flag: Dict):
-        """Add a net label flag to the SVG drawing.
-        
-        Based on net_label.asy reference:
-        - Text is positioned self.net_label_distance units above the pin point
-        - Text is center-justified
-        - Text uses size 2 (1.5x) font
-        - Text orientation is normalized to 0° when net label is at 180° to avoid upside down text
-        
-        Args:
-            dwg: SVG drawing object
-            flag: Dictionary containing flag properties:
-                - x: X coordinate
-                - y: Y coordinate
-                - net_name: Name of the net/signal
-                - orientation: Rotation angle in degrees
-        """
-        print(f"[DEBUG] _add_net_label: Rendering text '{flag['net_name']}'")
-        # Create a group for the net label
-        g = dwg.g()
-        
-        # Apply translation and rotation
-        transform = [
-            f"translate({flag['x'] * self.scale},{flag['y'] * self.scale})",
-            f"rotate({flag['orientation']})"
-        ]
-        g.attribs['transform'] = ' '.join(transform)
-        
-        # Calculate font size
-        font_size = self.font_size * self.size_multipliers[2]  # Size 2 (1.5x)
-        
-        # Create text group with normalized rotation
-        text_group = dwg.g()
-        
-        # For 180° orientation, counter-rotate the text to make it appear as 0°
-        if flag['orientation'] == 180:
-            text_group.attribs['transform'] = f"rotate(-180)"
-        
-        # Add text self.net_label_distance units above the pin point
-        # The text coordinates are relative to the transformed group
-        text_element = dwg.text(
-            flag['net_name'],
-            insert=(0, -self.net_label_distance * self.scale),  # Position above the pin point
-            font_family='Arial',
-            font_size=f'{font_size}px',
-            text_anchor='middle',  # Center-justified
-            fill='black'
-        )
-        
-        # Add text to its group
-        text_group.add(text_element)
-        
-        # Add text group to main group
-        g.add(text_group)
-        
-        # Add the group to the drawing
-        dwg.add(g)
-
-    def _add_gnd_flag(self, dwg, flag: Dict):
-        """Add a ground flag to the SVG drawing with a V shape.
-        
-        The ground flag is rendered with a V shape pointing in the direction of the flag's orientation.
-        The shape is based on the gnd.asy reference file:
-        - Horizontal line at top: (-16,0) to (16,0)
-        - Two diagonal lines forming a V:
-          - Left line: (-16,0) to (0,16)
-          - Right line: (16,0) to (0,16)
-        
-        Args:
-            dwg: SVG drawing object
-            flag: Dictionary containing flag properties:
-                - x: X coordinate
-                - y: Y coordinate
-                - orientation: Rotation angle in degrees
-        """
-        # Create a group for the ground flag
-        g = dwg.g()
-        
-        # Apply translation and rotation
-        transform = [
-            f"translate({flag['x'] * self.scale},{flag['y'] * self.scale})",
-            f"rotate({flag['orientation']})"
-        ]
-        g.attribs['transform'] = ' '.join(transform)
-        
-        # Add V shape
-        # Horizontal line
-        g.add(dwg.line(
-            (-16 * self.scale, 0), (16 * self.scale, 0),
-            stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-        ))
-        # Left diagonal line
-        g.add(dwg.line(
-            (-16 * self.scale, 0), (0, 16 * self.scale),
-            stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-        ))
-        # Right diagonal line
-        g.add(dwg.line(
-            (16 * self.scale, 0), (0, 16 * self.scale),
-            stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-        ))
-        
-        # Add the group to the drawing
-        dwg.add(g)
-
-    def _add_io_pin(self, dwg, io_pin: Dict):
-        """Add an IO pin flag to the SVG drawing with direction-specific shapes."""
-        print(f"\n[DEBUG] _add_io_pin: Start rendering IO pin '{io_pin['net_name']}'")
-        print(f"[DEBUG] _add_io_pin: Pin position: ({io_pin['x']}, {io_pin['y']}), orientation: {io_pin['orientation']}°")
-        print(f"[DEBUG] _add_io_pin: Scale factor: {self.scale}")
-        
-        # Create a group for the IO pin shape only
-        g = dwg.g()
-        
-        # Apply translation and rotation for the shape
-        transform = [
-            f"translate({io_pin['x'] * self.scale},{io_pin['y'] * self.scale})",
-            f"rotate({io_pin['orientation']})"
-        ]
-        g.attribs['transform'] = ' '.join(transform)
-        print(f"[DEBUG] _add_io_pin: Shape group transform: {g.attribs['transform']}")
-        
-        # Add shape based on direction
-        if io_pin['direction'] == 'BiDir':
-            # BiDir shape from io_pin_bi_dir.asy
-            g.add(dwg.line(
-                (16 * self.scale, 16 * self.scale), (0, 0),
-                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-            ))
-            g.add(dwg.line(
-                (-16 * self.scale, 84 * self.scale), (-16 * self.scale, 16 * self.scale),
-                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-            ))
-            g.add(dwg.line(
-                (16 * self.scale, 16 * self.scale), (16 * self.scale, 84 * self.scale),
-                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-            ))
-            g.add(dwg.line(
-                (0, 0), (-16 * self.scale, 16 * self.scale),
-                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-            ))
-            g.add(dwg.line(
-                (0, 100 * self.scale), (-16 * self.scale, 84 * self.scale),
-                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-            ))
-            g.add(dwg.line(
-                (0, 100 * self.scale), (16 * self.scale, 84 * self.scale),
-                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-            ))
-        elif io_pin['direction'] == 'In':
-            # Input shape from io_pin_input.asy
-            g.add(dwg.line(
-                (0, 0), (16 * self.scale, 16 * self.scale),
-                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-            ))
-            g.add(dwg.line(
-                (16 * self.scale, 16 * self.scale), (16 * self.scale, 80 * self.scale),
-                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-            ))
-            g.add(dwg.line(
-                (16 * self.scale, 80 * self.scale), (-16 * self.scale, 80 * self.scale),
-                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-            ))
-            g.add(dwg.line(
-                (-16 * self.scale, 80 * self.scale), (-16 * self.scale, 16 * self.scale),
-                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-            ))
-            g.add(dwg.line(
-                (-16 * self.scale, 16 * self.scale), (0, 0),
-                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-            ))
-        else:  # Out
-            # Output shape from io_pin_output.asy
-            g.add(dwg.line(
-                (-16 * self.scale, 80 * self.scale), (0, 96 * self.scale),
-                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-            ))
-            g.add(dwg.line(
-                (16 * self.scale, 16 * self.scale), (16 * self.scale, 80 * self.scale),
-                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-            ))
-            g.add(dwg.line(
-                (16 * self.scale, 16 * self.scale), (-16 * self.scale, 16 * self.scale),
-                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-            ))
-            g.add(dwg.line(
-                (-16 * self.scale, 80 * self.scale), (-16 * self.scale, 16 * self.scale),
-                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-            ))
-            g.add(dwg.line(
-                (0, 96 * self.scale), (16 * self.scale, 80 * self.scale),
-                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-            ))
-            g.add(dwg.line(
-                (0, 16 * self.scale), (0, 0),
-                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-            ))
-        
-        # Add the shape group to the drawing
-        dwg.add(g)
-        
-        # Calculate absolute text position and rotation
-        orientation = io_pin['orientation']
-        text_distance = 52  # Distance from pin point
-        font_size = self.font_size * self.size_multipliers[2]  # Size 2 (1.5x)
-        
-        # Calculate text position based on pin orientation
-        if orientation == 0:  # Right
-            text_x = io_pin['x'] * self.scale
-            text_y = (io_pin['y'] + text_distance) * self.scale
-            text_rotation = -90
-            # For vertical text, shift right by compensation factor of the font size
-            text_x += font_size * self.text_centering_compensation
-        elif orientation == 90:  # Up
-            text_x = (io_pin['x'] - text_distance) * self.scale
-            text_y = io_pin['y'] * self.scale
-            text_rotation = 0
-            # For horizontal text, shift down by compensation factor of the font size
-            text_y += font_size * self.text_centering_compensation
-        elif orientation == 180:  # Left
-            text_x = io_pin['x'] * self.scale
-            text_y = (io_pin['y'] - text_distance) * self.scale
-            text_rotation = -90
-            # For vertical text, shift right by compensation factor of the font size
-            text_x += font_size * self.text_centering_compensation
-        else:  # 270, Down
-            text_x = (io_pin['x'] + text_distance) * self.scale
-            text_y = io_pin['y'] * self.scale
-            text_rotation = 0
-            # For horizontal text, shift down by compensation factor of the font size
-            text_y += font_size * self.text_centering_compensation
-            
-        print(f"[DEBUG] _add_io_pin: Text absolute position: ({text_x}, {text_y})")
-        print(f"[DEBUG] _add_io_pin: Text rotation: {text_rotation}°")
-        print(f"[DEBUG] _add_io_pin: Font size: {font_size}px")
-        
-        # Create text group with rotation only
-        text_group = dwg.g()
-        if text_rotation != 0:
-            text_group.attribs['transform'] = f'rotate({text_rotation} {text_x} {text_y})'
-        
-        # Add text element
-        text_element = dwg.text(
-            io_pin['net_name'],
-            insert=(text_x, text_y),
-            font_family='Arial',
-            font_size=f'{font_size}px',
-            text_anchor='middle',  # Center-justified
-            fill='black'
-        )
-        
-        # Add text to group and group to drawing
-        text_group.add(text_element)
-        dwg.add(text_group)
