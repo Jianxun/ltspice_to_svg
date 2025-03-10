@@ -160,45 +160,24 @@ def render_symbol(dwg: svgwrite.Drawing, symbol: Dict, symbols_data: Dict[str, D
             }
             _add_symbol_text(dwg, g, text_data, scale, font_size, size_multipliers, angle, rotation_type == 'M')
     
-    # Add lines with scaling
-    for line in symbols_data[symbol_name].get('lines', []):
-        render_line(
-            dwg,
-            line,
-            scale,
-            stroke_width,
-            group=g
-        )
+    # Map shape types to their render functions
+    shape_renderers = {
+        'lines': render_line,
+        'circles': render_circle,
+        'rectangles': render_rectangle,
+        'arcs': render_arc
+    }
     
-    # Add circles with scaling
-    for circle in symbols_data[symbol_name].get('circles', []):
-        render_circle(
-            dwg,
-            circle,
-            scale,
-            stroke_width,
-            group=g
-        )
-    
-    # Add rectangles with scaling
-    for rect in symbols_data[symbol_name].get('rectangles', []):
-        render_rectangle(
-            dwg,
-            rect,
-            scale,
-            stroke_width,
-            group=g
-        )
-    
-    # Add arcs with scaling
-    for arc in symbols_data[symbol_name].get('arcs', []):
-        render_arc(
-            dwg,
-            arc,
-            scale,
-            stroke_width,
-            group=g
-        )
+    # Render all shapes in a single loop
+    for shape_type, render_func in shape_renderers.items():
+        for shape in symbols_data[symbol_name].get(shape_type, []):
+            render_func(
+                dwg,
+                shape,
+                scale,
+                stroke_width,
+                group=g
+            )
     
     # Add the group to the drawing
     dwg.add(g)
