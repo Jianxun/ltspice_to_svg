@@ -46,27 +46,27 @@ def _render_window_text(dwg: svgwrite.Drawing, group: svgwrite.container.Group,
                 }
                 break
     
-    # Get justification from window settings or default
-    justification = window_settings['justification'] if window_settings else default_settings['justification']
-    
-    # Flip horizontal justification if mirrored
-    if is_mirrored:
-        if justification == 'Left':
-            justification = 'Right'
-        elif justification == 'Right':
-            justification = 'Left'
-        # Center, VTop, VBottom remain unchanged
-    
-    # Create text data with position relative to symbol origin
-    text_data = {
-        'x': window_settings['x'] if window_settings else default_settings['x'],
-        'y': window_settings['y'] if window_settings else default_settings['y'],
-        'text': text,
-        'justification': justification,
-        'size_multiplier': window_settings['size'] if window_settings else default_settings['size_multiplier']
-    }
-    
-    _add_symbol_text(dwg, group, text_data, scale, font_size, size_multipliers, is_mirrored=is_mirrored)
+    # Only render text if window settings are found in symbol file
+    if window_settings:
+        # Get justification and handle mirroring
+        justification = window_settings['justification']
+        if is_mirrored:
+            if justification == 'Left':
+                justification = 'Right'
+            elif justification == 'Right':
+                justification = 'Left'
+            # Center, VTop, VBottom remain unchanged
+        
+        # Create text data with position from window settings
+        text_data = {
+            'x': window_settings['x'],
+            'y': window_settings['y'],
+            'text': text,
+            'justification': justification,
+            'size_multiplier': window_settings['size']
+        }
+        
+        _add_symbol_text(dwg, group, text_data, scale, font_size, size_multipliers, is_mirrored=is_mirrored)
 
 def render_symbol(dwg: svgwrite.Drawing, symbol: Dict, symbols_data: Dict[str, Dict], 
                  scale: float, stroke_width: float, font_size: float, 
@@ -162,7 +162,6 @@ def render_symbol(dwg: svgwrite.Drawing, symbol: Dict, symbols_data: Dict[str, D
     
     # Add lines with scaling
     for line in symbols_data[symbol_name].get('lines', []):
-        print(f"  Rendering line: ({line['x1']}, {line['y1']}) -> ({line['x2']}, {line['y2']})")
         render_line(
             dwg,
             line,
@@ -173,7 +172,6 @@ def render_symbol(dwg: svgwrite.Drawing, symbol: Dict, symbols_data: Dict[str, D
     
     # Add circles with scaling
     for circle in symbols_data[symbol_name].get('circles', []):
-        print(f"  Rendering circle: ({circle['x1']}, {circle['y1']}) -> ({circle['x2']}, {circle['y2']})")
         render_circle(
             dwg,
             circle,
@@ -184,7 +182,6 @@ def render_symbol(dwg: svgwrite.Drawing, symbol: Dict, symbols_data: Dict[str, D
     
     # Add rectangles with scaling
     for rect in symbols_data[symbol_name].get('rectangles', []):
-        print(f"  Rendering rectangle: ({rect['x1']}, {rect['y1']}) -> ({rect['x2']}, {rect['y2']})")
         render_rectangle(
             dwg,
             rect,
@@ -195,7 +192,6 @@ def render_symbol(dwg: svgwrite.Drawing, symbol: Dict, symbols_data: Dict[str, D
     
     # Add arcs with scaling
     for arc in symbols_data[symbol_name].get('arcs', []):
-        print(f"  Rendering arc: ({arc['x1']}, {arc['y1']}) -> ({arc['x2']}, {arc['y2']})")
         render_arc(
             dwg,
             arc,
