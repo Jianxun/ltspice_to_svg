@@ -3,7 +3,7 @@ Shape rendering functions for SVG generation.
 Handles rendering of lines, circles, rectangles, and arcs with proper scaling and styling.
 """
 import svgwrite
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 import math
 
 def _scale_dash_array(dash_array: str, stroke_width: float) -> str:
@@ -11,6 +11,167 @@ def _scale_dash_array(dash_array: str, stroke_width: float) -> str:
     if not dash_array:
         return None
     return ','.join(str(float(x) * stroke_width) for x in dash_array.split(','))
+
+def _create_line(dwg: svgwrite.Drawing, x1: float, y1: float, x2: float, y2: float,
+                stroke_width: float, style: Optional[str] = None,
+                group: Optional[svgwrite.container.Group] = None) -> svgwrite.base.BaseElement:
+    """Create a line element with optional style.
+    
+    Args:
+        dwg: SVG drawing object
+        x1, y1: Start point coordinates
+        x2, y2: End point coordinates
+        stroke_width: Width of the line
+        style: Optional dash style
+        group: Optional group to add the line to
+        
+    Returns:
+        The created line element
+    """
+    line_attrs = {
+        'stroke': 'black',
+        'stroke-width': stroke_width,
+        'stroke-linecap': 'round'
+    }
+    if style:
+        scaled_style = _scale_dash_array(style, stroke_width)
+        if scaled_style:
+            line_attrs['stroke-dasharray'] = scaled_style
+            
+    line = dwg.line((x1, y1), (x2, y2), **line_attrs)
+    if group:
+        group.add(line)
+    return line
+
+def _create_circle(dwg: svgwrite.Drawing, x1: float, y1: float, x2: float, y2: float,
+                  stroke_width: float, style: Optional[str] = None,
+                  group: Optional[svgwrite.container.Group] = None) -> svgwrite.base.BaseElement:
+    """Create a circle or ellipse element.
+    
+    Args:
+        dwg: SVG drawing object
+        x1, y1: First point of bounding box
+        x2, y2: Second point of bounding box
+        stroke_width: Width of the stroke
+        style: Optional dash style
+        group: Optional group to add the circle to
+        
+    Returns:
+        The created circle/ellipse element
+    """
+    # Calculate center and radii
+    cx = (x1 + x2) / 2
+    cy = (y1 + y2) / 2
+    rx = abs(x2 - x1) / 2
+    ry = abs(y2 - y1) / 2
+    
+    circle_attrs = {
+        'stroke': 'black',
+        'stroke-width': stroke_width,
+        'fill': 'none'
+    }
+    if style:
+        scaled_style = _scale_dash_array(style, stroke_width)
+        if scaled_style:
+            circle_attrs['stroke-dasharray'] = scaled_style
+    
+    # For perfect circles, use circle element
+    if abs(rx - ry) < 0.01:  # Allow small difference due to rounding
+        circle = dwg.circle(center=(cx, cy), r=rx, **circle_attrs)
+    else:
+        # For ellipses, use ellipse element
+        circle = dwg.ellipse(center=(cx, cy), r=(rx, ry), **circle_attrs)
+        
+    if group:
+        group.add(circle)
+    return circle
+
+def _create_rectangle(dwg: svgwrite.Drawing, x1: float, y1: float, x2: float, y2: float,
+                     stroke_width: float, style: Optional[str] = None,
+                     group: Optional[svgwrite.container.Group] = None) -> svgwrite.base.BaseElement:
+    """Create a rectangle element.
+    
+    Args:
+        dwg: SVG drawing object
+        x1, y1: First point of rectangle
+        x2, y2: Second point of rectangle
+        stroke_width: Width of the stroke
+        style: Optional dash style
+        group: Optional group to add the rectangle to
+        
+    Returns:
+        The created rectangle element
+    """
+    rect_attrs = {
+        'stroke': 'black',
+        'stroke-width': stroke_width,
+        'fill': 'none'
+    }
+    if style:
+        scaled_style = _scale_dash_array(style, stroke_width)
+        if scaled_style:
+            rect_attrs['stroke-dasharray'] = scaled_style
+            
+    rect = dwg.rect(
+        insert=(x1, y1),
+        size=(x2 - x1, y2 - y1),
+        **rect_attrs
+    )
+    if group:
+        group.add(rect)
+    return rect
+
+def _create_arc(dwg: svgwrite.Drawing, x1: float, y1: float, x2: float, y2: float,
+                start_angle: float, end_angle: float, stroke_width: float,
+                style: Optional[str] = None, group: Optional[svgwrite.container.Group] = None) -> svgwrite.base.BaseElement:
+    """Create an arc element.
+    
+    Args:
+        dwg: SVG drawing object
+        x1, y1: First point of bounding box
+        x2, y2: Second point of bounding box
+        start_angle: Start angle in degrees
+        end_angle: End angle in degrees
+        stroke_width: Width of the stroke
+        style: Optional dash style
+        group: Optional group to add the arc to
+        
+    Returns:
+        The created arc element
+    """
+    # Calculate center and radii
+    cx = (x1 + x2) / 2
+    cy = (y1 + y2) / 2
+    rx = abs(x2 - x1) / 2
+    ry = abs(y2 - y1) / 2
+    
+    # SVG arc flags
+    large_arc_flag = '1' if (end_angle - start_angle) % 360 > 180 else '0'
+    sweep_flag = '1'  # Always draw arc clockwise
+    
+    # Calculate start and end points
+    start_x = cx + rx * math.cos(math.radians(start_angle))
+    start_y = cy + ry * math.sin(math.radians(start_angle))
+    end_x = cx + rx * math.cos(math.radians(end_angle))
+    end_y = cy + ry * math.sin(math.radians(end_angle))
+    
+    # Create SVG path for arc
+    path_data = f"M {start_x},{start_y} A {rx},{ry} 0 {large_arc_flag} {sweep_flag} {end_x},{end_y}"
+    
+    arc_attrs = {
+        'stroke': 'black',
+        'stroke-width': stroke_width,
+        'fill': 'none'
+    }
+    if style:
+        scaled_style = _scale_dash_array(style, stroke_width)
+        if scaled_style:
+            arc_attrs['stroke-dasharray'] = scaled_style
+            
+    arc = dwg.path(d=path_data, **arc_attrs)
+    if group:
+        group.add(arc)
+    return arc
 
 def render_line(dwg: svgwrite.Drawing, line: Dict, scale: float, stroke_width: float) -> None:
     """Render a line shape.
