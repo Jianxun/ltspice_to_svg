@@ -2,7 +2,7 @@
 Parser for LTspice ASY symbol files.
 Extracts drawing information from the symbol file.
 """
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 from . import shape_parser
 
 class ASYParser:
@@ -49,19 +49,19 @@ class ASYParser:
                 first_word = parts[0]
 
                 if first_word == 'LINE':
-                    shape_data = shape_parser.parse_line(line)
+                    shape_data = shape_parser.parse_line(line, is_symbol=True)
                     if shape_data:
                         self.lines.append(shape_data)
                 elif first_word == 'CIRCLE':
-                    shape_data = shape_parser.parse_circle(line)
+                    shape_data = shape_parser.parse_circle(line, is_symbol=True)
                     if shape_data:
                         self.circles.append(shape_data)
                 elif first_word == 'RECTANGLE':
-                    shape_data = shape_parser.parse_rectangle(line)
+                    shape_data = shape_parser.parse_rectangle(line, is_symbol=True)
                     if shape_data:
                         self.rectangles.append(shape_data)
                 elif first_word == 'ARC':
-                    shape_data = shape_parser.parse_arc(line)
+                    shape_data = shape_parser.parse_arc(line, is_symbol=True)
                     if shape_data:
                         self.arcs.append(shape_data)
                 elif first_word == 'WINDOW':
@@ -152,4 +152,31 @@ class ASYParser:
         """Export the parsed data to a JSON file."""
         import json
         with open(output_path, 'w') as f:
-            json.dump(self.parse(), f, indent=2) 
+            json.dump(self.parse(), f, indent=2)
+
+def parse_shape(line: str) -> Optional[Dict]:
+    """Parse a shape line by detecting its type and calling the appropriate parser.
+    
+    Args:
+        line: The line to parse
+        
+    Returns:
+        Parsed shape data or None if parsing fails
+    """
+    parts = line.split()
+    if not parts:
+        return None
+        
+    shape_type = parts[0]
+    if shape_type not in shape_parser.SUPPORTED_SHAPES:
+        return None
+    
+    # Map shape types to their parser functions
+    parser_map = {
+        'LINE': lambda l: shape_parser.parse_line(l, is_symbol=True),
+        'CIRCLE': lambda l: shape_parser.parse_circle(l, is_symbol=True),
+        'RECTANGLE': lambda l: shape_parser.parse_rectangle(l, is_symbol=True),
+        'ARC': lambda l: shape_parser.parse_arc(l, is_symbol=True)
+    }
+    
+    return parser_map[shape_type](line) 

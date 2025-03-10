@@ -88,6 +88,20 @@
       "x": 768,
       "y": 304,
       "rotation": "R0"
+    },
+    {
+      "symbol_name": "CS_nMOS",
+      "instance_name": "X2",
+      "x": 1040,
+      "y": 256,
+      "rotation": "R90"
+    },
+    {
+      "symbol_name": "CS_nMOS",
+      "instance_name": "X3",
+      "x": 1216,
+      "y": 288,
+      "rotation": "M0"
     }
   ],
   "texts": [],
@@ -105,7 +119,16 @@
     "lines": [],
     "circles": [],
     "rectangles": [],
-    "arcs": []
+    "arcs": [],
+    "wires": [
+      {
+        "x1": 688,
+        "y1": 432,
+        "x2": 688,
+        "y2": 368
+      }
+    ],
+    "t_junctions": []
   },
   "symbol_data": {
     "cap": {
@@ -291,9 +314,35 @@
           "y2": 128
         }
       ],
-      "circles": [],
-      "rectangles": [],
-      "arcs": [],
+      "circles": [
+        {
+          "x1": -28,
+          "y1": 192,
+          "x2": 96,
+          "y2": 228,
+          "style": "0.1,2"
+        }
+      ],
+      "rectangles": [
+        {
+          "x1": -32,
+          "y1": -16,
+          "x2": 96,
+          "y2": 160,
+          "style": "0.1,2"
+        }
+      ],
+      "arcs": [
+        {
+          "x1": -28,
+          "y1": 288,
+          "x2": 96,
+          "y2": 260,
+          "start_angle": 334.17900802581073,
+          "end_angle": 178.26429541107166,
+          "style": "0.1,2"
+        }
+      ],
       "windows": [
         {
           "property_id": 0,
@@ -328,6 +377,5 @@
       ]
     }
   },
-  "t_junctions": [],
-  "terminal_points": []
+  "t_junctions": []
 }

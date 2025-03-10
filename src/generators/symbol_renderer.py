@@ -7,10 +7,10 @@ from typing import Dict, List, Optional
 import math
 import warnings
 from .shape_renderer import (
-    _create_line,
-    _create_circle,
-    _create_rectangle,
-    _create_arc
+    render_line,
+    render_circle,
+    render_rectangle,
+    render_arc
 )
 
 def _render_window_text(dwg: svgwrite.Drawing, group: svgwrite.container.Group,
@@ -77,16 +77,15 @@ def render_symbol(dwg: svgwrite.Drawing, symbol: Dict, symbols_data: Dict[str, D
         stroke_width: Width of lines
         font_size: Base font size in pixels
         size_multipliers: Dictionary mapping size indices to font size multipliers
-        no_text: Whether to skip rendering text elements
-        no_symbol_text: Whether to skip rendering symbol text elements
+        no_text: Whether to skip rendering text
+        no_symbol_text: Whether to skip rendering symbol text
     """
+    # Get symbol name and data
     symbol_name = symbol['symbol_name']
-    
-    # Skip if no drawing data available
     if symbol_name not in symbols_data:
-        warnings.warn(f"No drawing data for symbol {symbol_name}")
+        warnings.warn(f"Symbol {symbol_name} not found in symbols data")
         return
-        
+
     # Create a group for the symbol
     g = dwg.g()
     
@@ -151,57 +150,47 @@ def render_symbol(dwg: svgwrite.Drawing, symbol: Dict, symbols_data: Dict[str, D
             _add_symbol_text(dwg, g, text_data, scale, font_size, size_multipliers, angle, rotation_type == 'M')
     
     # Add lines with scaling
-    for line in symbols_data[symbol_name]['lines']:
-        _create_line(
+    for line in symbols_data[symbol_name].get('lines', []):
+        print(f"  Rendering line: ({line['x1']}, {line['y1']}) -> ({line['x2']}, {line['y2']})")
+        render_line(
             dwg,
-            line['x1'],
-            line['y1'],
-            line['x2'],
-            line['y2'],
+            line,
+            scale,
             stroke_width,
-            line.get('style'),
-            g
+            group=g
         )
     
     # Add circles with scaling
     for circle in symbols_data[symbol_name].get('circles', []):
-        _create_circle(
+        print(f"  Rendering circle: ({circle['x1']}, {circle['y1']}) -> ({circle['x2']}, {circle['y2']})")
+        render_circle(
             dwg,
-            circle['x1'],
-            circle['y1'],
-            circle['x2'],
-            circle['y2'],
+            circle,
+            scale,
             stroke_width,
-            circle.get('style'),
-            g
+            group=g
         )
     
     # Add rectangles with scaling
     for rect in symbols_data[symbol_name].get('rectangles', []):
-        _create_rectangle(
+        print(f"  Rendering rectangle: ({rect['x1']}, {rect['y1']}) -> ({rect['x2']}, {rect['y2']})")
+        render_rectangle(
             dwg,
-            rect['x1'],
-            rect['y1'],
-            rect['x2'],
-            rect['y2'],
+            rect,
+            scale,
             stroke_width,
-            rect.get('style'),
-            g
+            group=g
         )
     
     # Add arcs with scaling
     for arc in symbols_data[symbol_name].get('arcs', []):
-        _create_arc(
+        print(f"  Rendering arc: ({arc['x1']}, {arc['y1']}) -> ({arc['x2']}, {arc['y2']})")
+        render_arc(
             dwg,
-            arc['x1'],
-            arc['y1'],
-            arc['x2'],
-            arc['y2'],
-            arc['start_angle'],
-            arc['end_angle'],
+            arc,
+            scale,
             stroke_width,
-            arc.get('style'),
-            g
+            group=g
         )
     
     # Add the group to the drawing

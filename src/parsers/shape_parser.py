@@ -35,7 +35,7 @@ def parse_shape(line: str) -> Optional[Dict]:
     
     return parser_map[shape_type](line)
 
-def get_line_style(style_code: int) -> str:
+def get_line_style(style_code: int, is_symbol: bool = False) -> str:
     """Convert LTspice line style code to SVG dash array.
     0: solid
     1: dash
@@ -43,21 +43,30 @@ def get_line_style(style_code: int) -> str:
     3: dash dot
     4: dash dot dot
     
-    For dots, we use a nearly zero length to make them round.
+    For dots, we use a small length to make them round.
     For dashes, we use a length of 4 times the stroke width.
     The gap between elements is 2 times the stroke width.
+    
+    Args:
+        style_code: The style code from LTspice (0-4)
+        is_symbol: Whether this style is for a symbol shape (default: False)
     """
+    # For dots, use a small value relative to stroke width
+    dot_size = "0.1"  # This will be multiplied by stroke width
+    gap_size = "2"    # This will be multiplied by stroke width
+    dash_size = "4"   # This will be multiplied by stroke width
+    
     # These values will be multiplied by stroke-width in SVG
     style_map = {
         0: None,  # solid
-        1: "4,2",  # dash
-        2: "0.001,2",  # dot (nearly 0 length makes it round)
-        3: "4,2,0.001,2",  # dash dot
-        4: "4,2,0.001,2,0.001,2"  # dash dot dot
+        1: f"{dash_size},{gap_size}",  # dash
+        2: f"{dot_size},{gap_size}",  # dot
+        3: f"{dash_size},{gap_size},{dot_size},{gap_size}",  # dash dot
+        4: f"{dash_size},{gap_size},{dot_size},{gap_size},{dot_size},{gap_size}"  # dash dot dot
     }
     return style_map.get(style_code)
 
-def parse_line(line: str) -> Dict:
+def parse_line(line: str, is_symbol: bool = False) -> Dict:
     """Parse a LINE entry and extract coordinates.
     Format: LINE Normal x1 y1 x2 y2 [style]
     """
@@ -76,7 +85,7 @@ def parse_line(line: str) -> Dict:
             if len(parts) > 6:
                 try:
                     style_code = int(parts[6])
-                    line_style = get_line_style(style_code)
+                    line_style = get_line_style(style_code, is_symbol)
                     if line_style is not None:
                         line_data['style'] = line_style
                 except ValueError:
@@ -86,7 +95,7 @@ def parse_line(line: str) -> Dict:
             pass
     return None
 
-def parse_circle(line: str) -> Dict:
+def parse_circle(line: str, is_symbol: bool = False) -> Dict:
     """Parse a CIRCLE entry and extract coordinates.
     Format: CIRCLE Normal x1 y1 x2 y2 [style]
     """
@@ -105,7 +114,7 @@ def parse_circle(line: str) -> Dict:
             if len(parts) > 6:
                 try:
                     style_code = int(parts[6])
-                    line_style = get_line_style(style_code)
+                    line_style = get_line_style(style_code, is_symbol)
                     if line_style is not None:
                         circle_data['style'] = line_style
                 except ValueError:
@@ -115,7 +124,7 @@ def parse_circle(line: str) -> Dict:
             pass
     return None
 
-def parse_rectangle(line: str) -> Dict:
+def parse_rectangle(line: str, is_symbol: bool = False) -> Dict:
     """Parse a RECTANGLE entry and extract coordinates.
     Format: RECTANGLE Normal x1 y1 x2 y2 [style]
     """
@@ -134,7 +143,7 @@ def parse_rectangle(line: str) -> Dict:
             if len(parts) > 6:
                 try:
                     style_code = int(parts[6])
-                    line_style = get_line_style(style_code)
+                    line_style = get_line_style(style_code, is_symbol)
                     if line_style is not None:
                         rect_data['style'] = line_style
                 except ValueError:
@@ -144,7 +153,7 @@ def parse_rectangle(line: str) -> Dict:
             pass
     return None
 
-def parse_arc(line: str) -> Dict:
+def parse_arc(line: str, is_symbol: bool = False) -> Dict:
     """Parse an ARC entry and extract coordinates.
     Format: ARC Normal x1 y1 x2 y2 x3 y3 x4 y4 [style]
     where:
@@ -186,7 +195,7 @@ def parse_arc(line: str) -> Dict:
             if len(parts) > 10:
                 try:
                     style_code = int(parts[10])
-                    line_style = get_line_style(style_code)
+                    line_style = get_line_style(style_code, is_symbol)
                     if line_style is not None:
                         arc_data['style'] = line_style
                 except ValueError:
