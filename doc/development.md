@@ -35,6 +35,28 @@ ltspice_to_svg/
 - Automatically adds GND symbols for ground flags
 - Caches parsed data to avoid re-parsing
 
+##### Flag and Wire Direction Handling
+- Wire directions are calculated using a 90-degree grid system:
+  - 0°: Left (negative X)
+  - 90°: Up (negative Y)
+  - 180°: Right (positive X)
+  - 270°: Down (positive Y)
+- Flag orientation rules:
+  1. Single wire connection:
+     - Flag points in the same direction as the wire
+  2. Two opposite wires:
+     - Vertical wires (90° or 270°): Flag points right (180°)
+     - Horizontal wires (0° or 180°): Flag points down (270°)
+  3. Default cases:
+     - No connected wires: Points left (0°)
+     - Non-opposite wire pairs: Points left (0°)
+     - More than two wires: Points left (0°)
+- Implementation considerations:
+  - Wire direction calculation uses atan2 for angle computation
+  - Angles are normalized to the 90-degree grid system
+  - Flag orientation ensures consistent rendering across the schematic
+  - Special handling for ground flags and IO pins to maintain visual consistency
+
 #### ASY Parser (`asy_parser.py`)
 - Parses symbol definition files
 - Extracts geometric elements:
@@ -44,6 +66,125 @@ ltspice_to_svg/
   - Arcs with start/end angles
 - Handles text elements for pin labels and properties
 - Supports symbol-specific text positioning
+
+##### WINDOW Line Parsing Strategy
+WINDOW lines serve two different purposes in LTspice files:
+
+1. **In Symbol Files (.asy)**
+   - Define default text rendering rules for component attributes
+   - WINDOW 0: Default position/style for component name (e.g., "R1", "M1")
+   - WINDOW 3: Default position/style for component value (e.g., "1k", "10u")
+   - Part of symbol's template/definition
+   - Example:
+     ```
+     WINDOW 0 36 8 Left 2    # Default name position
+     WINDOW 3 36 56 Left 2   # Default value position
+     ```
+
+2. **In Schematic Files (.asc)**
+   - Follow SYMBOL lines to override default text rendering
+   - Customize text position/style for specific component instances
+   - If no override provided, use defaults from symbol definition
+   - Example:
+     ```
+     SYMBOL res 96 208 R0
+     WINDOW 0 36 8 Center 2  # Override name position
+     SYMATTR InstName R1
+     SYMATTR Value 1k
+     ```
+
+3. **Format**
+```
+WINDOW <type> <x> <y> <justification> [size_multiplier]
+```
+- `type`: 0 (name) or 3 (value)
+- `x, y`: Relative coordinates from symbol origin
+- `justification`: Text alignment (Left, Right, Center, Top, Bottom, VTop, VBottom)
+- `size_multiplier`: Optional font size index (0-7)
+
+##### Implementation Plan
+
+1. **Symbol File Parsing (asy_parser.py)**
+   - [ ] Update symbol data structure to store WINDOW defaults
+   - [ ] Parse WINDOW lines into window_defaults dictionary
+   - [ ] Associate defaults with symbol definition
+   - [ ] Test with various symbol files
+
+2. **Schematic File Parsing (asc_parser.py)**
+   - [ ] Enhance SYMBOL parsing to track current symbol
+   - [ ] Parse WINDOW lines as overrides for current symbol
+   - [ ] Associate SYMATTR lines with correct symbol
+   - [ ] Test with sample schematics
+
+3. **Data Structure Updates**
+   - [ ] Symbol definition format:
+     ```python
+     symbol_data = {
+         'lines': [...],
+         'circles': [...],
+         'window_defaults': {
+             0: {'x': 36, 'y': 8, 'justification': 'Left', 'size': 2},
+             3: {'x': 36, 'y': 56, 'justification': 'Left', 'size': 2}
+         }
+     }
+     ```
+   - [ ] Symbol instance format:
+     ```python
+     symbol = {
+         'symbol_name': 'res',
+         'instance_name': 'R1',
+         'value': '1k',
+         'x': 100, 'y': 200,
+         'rotation': 'R0',
+         'window_overrides': {
+             0: {'x': 40, 'y': 10, 'justification': 'Center', 'size': 2},
+             3: None  # use default
+         }
+     }
+     ```
+
+4. **Text Rendering (svg_generator.py)**
+   - [ ] Add text style resolution function
+   - [ ] Update symbol rendering to handle text
+   - [ ] Implement position transformation
+   - [ ] Add justification handling
+   - [ ] Test with various rotations
+
+5. **Testing Strategy**
+   - [ ] Create test symbols with various WINDOW configurations
+   - [ ] Create test schematics with overrides
+   - [ ] Test rotation handling
+   - [ ] Test text alignment
+   - [ ] Verify style inheritance
+
+6. **Incremental Testing Steps**
+   a. Basic WINDOW parsing in symbol files
+      - Parse format correctly
+      - Store in symbol definition
+      - Verify data structure
+   
+   b. Basic WINDOW parsing in schematics
+      - Associate with correct symbol
+      - Merge with symbol data
+      - Verify override behavior
+   
+   c. Simple text rendering
+      - Basic position and rotation
+      - Verify text content
+      - Check alignment
+   
+   d. Complex cases
+      - Multiple rotations
+      - Different justifications
+      - Size variations
+      - Override scenarios
+
+7. **Validation**
+   - [ ] Compare output with LTspice rendering
+   - [ ] Verify text positioning accuracy
+   - [ ] Check rotation handling
+   - [ ] Validate override behavior
+   - [ ] Test error cases
 
 ### SVG Generation
 
@@ -55,6 +196,38 @@ ltspice_to_svg/
   - T-junction detection and dot placement
   - Text rendering with proper alignment
   - Built-in symbol definitions (GND, etc.)
+
+##### Recent Developments
+- Text positioning improvements:
+  - Added configurable text centering compensation (default: 0.35 = 35% of font size)
+  - Added configurable net label distance from origin (default: 12 units)
+  - Fixed text orientation for net labels at 180° to prevent upside-down text
+  - Improved IO pin text positioning with proper rotation and alignment
+  - Added debug logging for text positioning and transformations
+- Ground flag improvements:
+  - Removed GND text from ground flags for cleaner appearance
+  - Ground flags now only show the V-shaped symbol
+  - Removed GND from BUILTIN_SYMBOLS as it's handled as a flag
+  - Improved ground flag orientation handling
+
+##### Current Issues and TODOs
+1. Symbol Text Rendering
+   - Need to improve handling of symbol names and values
+   - Better support needed for different text positions based on symbol type
+   - Consider symbol-specific text placement rules
+
+2. WINDOW Line Parsing
+   - Current parser needs enhancement to properly handle WINDOW lines in symbol files
+   - WINDOW attributes affect text positioning and visibility
+   - Need to implement proper parsing of:
+     - WINDOW 0: Instance name position
+     - WINDOW 3: Value position
+     - Other WINDOW types for symbol-specific text
+
+3. Text Alignment
+   - Current implementation uses SVG's text-anchor for horizontal alignment
+   - Vertical alignment is handled through manual position adjustments
+   - Consider implementing more robust text alignment system
 
 ##### Coordinate System
 - LTspice uses a coordinate system where:
@@ -86,14 +259,49 @@ ltspice_to_svg/
   - 5: 3.5x base size
   - 6: 5.0x base size
   - 7: 7.0x base size
+- Text rendering is handled by a clean interface:
+  - Single dictionary input for text properties
+  - Caller handles transformations (rotation, mirroring)
+  - Renderer focuses on text placement and styling
 - Text alignment options:
   - Left: Left-aligned, vertically centered
   - Center: Horizontally and vertically centered
   - Right: Right-aligned, vertically centered
   - Top: Top-aligned, horizontally centered
   - Bottom: Bottom-aligned, horizontally centered
-- Instance names remain upright regardless of symbol rotation
-- Text justification is flipped when symbols are mirrored
+  - VTop: Vertically oriented, top-aligned
+  - VBottom: Vertically oriented, bottom-aligned
+
+##### WINDOW Text Rendering
+- WINDOW entries in symbol files define text positioning and styling
+- Two main types of WINDOW entries:
+  - WINDOW 0: Instance name text settings
+  - WINDOW 3: Value text settings
+- Text rendering rules:
+  1. Instance names (WINDOW 0):
+     - Always rendered if present in symbol
+     - Uses WINDOW override from schematic if available
+     - Falls back to WINDOW default from symbol file
+     - Uses default position if no WINDOW settings found
+  2. Values (WINDOW 3):
+     - Only rendered if WINDOW 3 exists in symbol file or schematic override
+     - Uses WINDOW override from schematic if available
+     - Falls back to WINDOW default from symbol file
+     - No default rendering if WINDOW 3 is not defined
+- WINDOW attributes:
+  - x, y: Position relative to symbol origin
+  - justification: Text alignment style
+  - size: Font size multiplier index (0-7)
+
+##### Text Transformation
+- Text positions are transformed according to symbol rotation and mirroring:
+  1. Apply mirroring (if any)
+  2. Apply rotation (0°, 90°, 180°, 270°)
+  3. Apply final translation to symbol position
+- Vertical text (VTop/VBottom) is handled by:
+  1. Creating a separate text group
+  2. Rotating text 90° around its anchor point
+  3. Converting VTop/VBottom to Top/Bottom for standard alignment
 
 ##### T-Junction Detection
 - Identifies points where 3 or more wires meet

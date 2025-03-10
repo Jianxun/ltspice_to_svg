@@ -5,6 +5,7 @@ Extracts wire and symbol information from the schematic.
 import re
 from typing import Dict, List, Tuple, Set
 from . import shape_parser
+import math
 
 class ASCParser:
     def __init__(self, file_path: str):
@@ -32,15 +33,17 @@ class ASCParser:
         print(f"Parsing schematic: {self.file_path}")
         
         # Try different encodings
-        encodings = ['utf-16', 'utf-8', 'ascii']
+        encodings = ['utf-16le', 'utf-16', 'utf-8', 'ascii']
         lines = None
         
         for encoding in encodings:
             try:
                 with open(self.file_path, 'r', encoding=encoding) as f:
                     lines = f.readlines()
+                print(f"[DEBUG] Successfully read file with {encoding} encoding")
                 break
-            except UnicodeError:
+            except UnicodeError as e:
+                print(f"[DEBUG] Failed to read with {encoding} encoding: {e}")
                 continue
                 
         if lines is None:
@@ -66,8 +69,13 @@ class ASCParser:
                 elif first_word == 'SYMBOL':
                     self._parse_symbol(line)
                 elif first_word == 'SYMATTR':
-                    if len(parts) >= 3 and parts[1] == 'InstName':
-                        self._parse_instance_name(' '.join(parts[2:]))
+                    if len(parts) >= 3:
+                        if parts[1] == 'InstName':
+                            self._parse_instance_name(' '.join(parts[2:]))
+                        elif parts[1] == 'Value':
+                            self._parse_value(' '.join(parts[2:]))
+                elif first_word == 'WINDOW':
+                    self._parse_window(line)
                 elif first_word == 'TEXT':
                     self._parse_text(line)
                 elif first_word == 'FLAG':
@@ -93,19 +101,6 @@ class ASCParser:
                 i += 1
             else:
                 i += 1  # Make sure we still increment for empty lines
-                
-        # Add GND symbols for ground flags
-        for flag in self.flags:
-            if flag['net_name'] == '0':
-                # Create a GND symbol at the flag's position
-                gnd_symbol = {
-                    'symbol_name': 'GND',
-                    'instance_name': 'GND',
-                    'x': flag['x'],
-                    'y': flag['y'],
-                    'rotation': 'R0'
-                }
-                self.symbols.append(gnd_symbol)
                 
         print(f"Found {len(self.wires)} wires, {len(self.symbols)} symbols, {len(self.texts)} text elements, "
               f"{len(self.flags)} flags, {len(self.io_pins)} IO pins")
@@ -193,10 +188,16 @@ class ASCParser:
                 # Join remaining parts as net name (in case it contains spaces)
                 net_name = ' '.join(parts[3:])
                 
+                # Calculate orientation based on connected wires
+                orientation = self._calculate_flag_orientation(x, y)
+                
+                # Create flag with type and orientation
                 flag = {
                     'x': x,
                     'y': y,
-                    'net_name': net_name
+                    'net_name': net_name,
+                    'type': 'gnd' if net_name == '0' else 'net_label',
+                    'orientation': orientation
                 }
                 self.flags.append(flag)
                 self._flag_positions.add((x, y))
@@ -218,9 +219,9 @@ class ASCParser:
         if len(flag_parts) >= 4 and len(iopin_parts) >= 4:  # FLAG/IOPIN + x + y + net_name/direction
             try:
                 # Convert coordinates to integers
-                x, y = map(int, flag_parts[1:3])
+                flag_x, flag_y = map(int, flag_parts[1:3])
                 # Skip if we've already seen a flag at this position
-                if (x, y) in self._flag_positions:
+                if (flag_x, flag_y) in self._flag_positions:
                     return
                 
                 # Get net name from flag
@@ -231,35 +232,33 @@ class ASCParser:
                 
                 # Verify IOPIN coordinates match FLAG coordinates
                 iopin_x, iopin_y = map(int, iopin_parts[1:3])
-                if (x, y) != (iopin_x, iopin_y):
-                    print(f"Warning: IOPIN coordinates ({iopin_x}, {iopin_y}) don't match FLAG coordinates ({x}, {y})")
+                if (flag_x, flag_y) != (iopin_x, iopin_y):
+                    print(f"Warning: IOPIN coordinates ({iopin_x}, {iopin_y}) don't match FLAG coordinates ({flag_x}, {flag_y})")
                     return
                 
-                # Add flag
-                flag = {
-                    'x': x,
-                    'y': y,
-                    'net_name': net_name
-                }
-                self.flags.append(flag)
-                self._flag_positions.add((x, y))
+                # Calculate orientation based on connected wires
+                orientation = self._calculate_flag_orientation(flag_x, flag_y)
                 
-                # Add IO pin with all required information
+                # Add IO pin with orientation
                 io_pin = {
-                    'x': x,
-                    'y': y,
+                    'x': flag_x,
+                    'y': flag_y,
                     'net_name': net_name,
-                    'direction': direction
+                    'direction': direction,
+                    'orientation': orientation
                 }
                 self.io_pins.append(io_pin)
                 print(f"Added IO pin: {io_pin}")
+                self._flag_positions.add((flag_x, flag_y))  # Still track position to avoid duplicates
                 
             except ValueError as e:
                 print(f"Warning: Invalid flag/iopin data in lines: {flag_line} / {iopin_line} - {e}")
     
     def _parse_text(self, line: str):
         """Parse a TEXT line and extract position, justification, and content.
-        Format: TEXT x y justification size ;content
+        Format: TEXT x y justification size !spice_directive
+               TEXT x y justification size ;comment
+        
         Justification can be: Left, Center, Right, Top, Bottom
         Size is an index that maps to a font size multiplier:
         0 -> 0.625x
@@ -283,9 +282,25 @@ class ASCParser:
             7: 7.0
         }
 
-        # Find the semicolon that separates attributes from text content
+        # Find the first ! or ; that separates attributes from text content
         try:
-            attrs, content = line.split(';', 1)
+            # Split on first ! or ;
+            attrs = line
+            content = ""
+            content_type = "comment"  # default type
+            
+            # Look for SPICE directive first (!)
+            if '!' in line:
+                attrs, content = line.split('!', 1)
+                content_type = "spice"
+            # Then look for comment (;)
+            elif ';' in line:
+                attrs, content = line.split(';', 1)
+                content_type = "comment"
+            else:
+                print(f"Warning: Text line has no content marker (! or ;): {line}")
+                return
+                
             attrs_parts = attrs.split()
             
             if len(attrs_parts) >= 4:  # TEXT + x + y + justification + size
@@ -307,8 +322,9 @@ class ASCParser:
                         'x': x,
                         'y': y,
                         'justification': justification,
-                        'text': content.strip(),
-                        'size_multiplier': size_multiplier  # Store actual multiplier value
+                        'text': content.strip().replace('\\n', '\n'),  # Convert literal \n to newlines
+                        'size_multiplier': size_multiplier,  # Store actual multiplier value
+                        'type': content_type  # Store whether this is a SPICE directive or comment
                     }
                     self.texts.append(text)
                 except ValueError as e:
@@ -321,6 +337,43 @@ class ASCParser:
         if self._current_symbol is not None:
             self._current_symbol['instance_name'] = instance_name
     
+    def _parse_window(self, line: str):
+        """Parse a WINDOW line and extract properties.
+        Format: WINDOW property_id x y justification [size_multiplier]
+        """
+        parts = line.split()
+        if len(parts) >= 5:  # WINDOW + property_id + x + y + justification
+            try:
+                property_id = int(parts[1])
+                x = int(parts[2])
+                y = int(parts[3])
+                justification = parts[4]
+                window_data = {
+                    'x': x,
+                    'y': y,
+                    'justification': justification
+                }
+                # Add size multiplier if present
+                if len(parts) > 5:
+                    try:
+                        size_multiplier = int(parts[5])
+                        window_data['size'] = size_multiplier
+                    except ValueError:
+                        pass
+                
+                # Add window override to current symbol
+                if self._current_symbol is not None:
+                    if 'window_overrides' not in self._current_symbol:
+                        self._current_symbol['window_overrides'] = {}
+                    self._current_symbol['window_overrides'][property_id] = window_data
+            except ValueError:
+                print(f"Warning: Invalid window data in line: {line}")
+    
+    def _parse_value(self, value: str):
+        """Parse the value for the current symbol."""
+        if self._current_symbol is not None:
+            self._current_symbol['value'] = value
+    
     def export_json(self, output_path: str):
         """Export the parsed data to a JSON file."""
         import json
@@ -331,3 +384,115 @@ class ASCParser:
             parsed_data['io_pins'] = self.io_pins
         with open(output_path, 'w') as f:
             json.dump(parsed_data, f, indent=2) 
+
+    def _get_wire_direction(self, x1: int, y1: int, x2: int, y2: int) -> int:
+        """Calculate wire direction in degrees (0, 90, 180, 270).
+        
+        Args:
+            x1, y1: Start coordinates
+            x2, y2: End coordinates
+            
+        Returns:
+            Direction in degrees:
+            - 0: left (x2 < x1)
+            - 90: up (y2 < y1)
+            - 180: right (x2 > x1)
+            - 270: down (y2 > y1)
+        """
+        dx = x2 - x1
+        dy = y2 - y1
+        
+        # Calculate angle in degrees from atan2
+        # atan2(dy, dx) gives angle from positive x-axis
+        angle = math.degrees(math.atan2(dy, dx))
+        
+        # Convert to 0-360 range
+        angle = angle % 360
+        
+        # Round to nearest 90 degrees
+        direction = round(angle / 90) * 90
+        
+        # Rotate 90° counterclockwise
+        direction = (direction + 90) % 360
+        
+        return direction 
+
+    def _get_connected_wires(self, x: int, y: int) -> List[Dict]:
+        """Find all wires connected to a point.
+        
+        Args:
+            x, y: Point coordinates
+            
+        Returns:
+            List of connected wire dictionaries
+        """
+        connected = []
+        for wire in self.wires:
+            if (wire['x1'] == x and wire['y1'] == y) or (wire['x2'] == x and wire['y2'] == y):
+                connected.append(wire)
+        return connected
+
+    def _calculate_flag_orientation(self, x: int, y: int) -> int:
+        """Calculate flag orientation based on connected wires.
+        
+        Args:
+            x, y: Flag coordinates
+            
+        Returns:
+            Orientation in degrees (0, 90, 180, 270)
+            - 0: left (default)
+            - 90: up
+            - 180: right (used for flags between vertical wires)
+            - 270: down (used for flags between horizontal wires)
+            
+        Rules:
+        1. Single wire: Use wire's direction
+        2. Two opposite wires:
+           - For vertical wires (90° or 270°): orient flag right (180°)
+           - For horizontal wires (0° or 180°): orient flag down (270°)
+        3. Other cases: default to left (0°)
+        """
+        connected_wires = self._get_connected_wires(x, y)
+        
+        if not connected_wires:
+            return 0  # Default orientation (left)
+            
+        if len(connected_wires) == 1:
+            # Single wire case - use wire's direction
+            wire = connected_wires[0]
+            # If flag is at start of wire, calculate direction from flag to other end
+            if wire['x1'] == x and wire['y1'] == y:
+                direction = self._get_wire_direction(x, y, wire['x2'], wire['y2'])
+            else:
+                direction = self._get_wire_direction(x, y, wire['x1'], wire['y1'])
+            return direction
+            
+        elif len(connected_wires) == 2:
+            # Two wire case
+            wire1, wire2 = connected_wires
+            
+            # Get directions of both wires
+            if wire1['x1'] == x and wire1['y1'] == y:
+                dir1 = self._get_wire_direction(x, y, wire1['x2'], wire1['y2'])
+            else:
+                dir1 = self._get_wire_direction(x, y, wire1['x1'], wire1['y1'])
+                
+            if wire2['x1'] == x and wire2['y1'] == y:
+                dir2 = self._get_wire_direction(x, y, wire2['x2'], wire2['y2'])
+            else:
+                dir2 = self._get_wire_direction(x, y, wire2['x1'], wire2['y1'])
+            
+            # Check if wires are in opposite directions
+            if abs(dir1 - dir2) == 180:
+                # For vertical wires (90 or 270), orient flag right (180°)
+                if dir1 in [90, 270]:
+                    return 180
+                # For horizontal wires (0 or 180), orient flag down (270°)
+                else:
+                    return 270
+            
+            return 0  # Default for non-opposite directions (left)
+            
+        else:
+            # More than two wires - default to left
+            return 0 

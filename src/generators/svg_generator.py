@@ -12,23 +12,9 @@ import math
 
 class SVGGenerator:
     # Built-in symbol geometries
-    BUILTIN_SYMBOLS = {
-        'GND': {
-            'lines': [
-                # Horizontal line
-                {'x1': -16, 'y1': 0, 'x2': 16, 'y2': 0},
-                # First V line
-                {'x1': 16, 'y1': 0, 'x2': 0, 'y2': 16},
-                # Second V line
-                {'x1': 0, 'y1': 16, 'x2': -16, 'y2': 0}
-            ],
-            'circles': [],
-            'rectangles': [],
-            'arcs': []
-        }
-    }
+    BUILTIN_SYMBOLS = {}  # Remove GND since it's handled as a flag
     
-    def __init__(self, stroke_width: float = 1.0, dot_size_multiplier: float = 0.75, scale: float = 0.1, font_size: float = 22.0, export_json: bool = False, no_text: bool = False):
+    def __init__(self, stroke_width: float = 1.0, dot_size_multiplier: float = 0.75, scale: float = 0.1, font_size: float = 22.0, export_json: bool = False, no_text: bool = False, no_symbol_text: bool = False):
         self.stroke_width = stroke_width
         self.dot_size_multiplier = dot_size_multiplier  # Controls size of junction dots relative to stroke width
         self.scale = scale  # Scale factor for coordinates (default: 0.1 = 10x scale down)
@@ -36,6 +22,9 @@ class SVGGenerator:
         self.symbols_cache: Dict[str, Dict] = {}  # Cache for parsed symbol data
         self.export_json = export_json  # Whether to export debug JSON files
         self.no_text = no_text  # Whether to skip rendering text elements
+        self.no_symbol_text = no_symbol_text  # Whether to skip rendering symbol text elements
+        self.text_centering_compensation = 0.35  # Controls text centering compensation (0.35 = 35% of font size)
+        self.net_label_distance = 8  # Controls distance of net label text from origin (default: 12 units)
         # Font size multiplier mapping
         self.size_multipliers = {
             0: 0.625,
@@ -53,14 +42,14 @@ class SVGGenerator:
         self.wires = schematic_data.get('wires', [])
         self.symbols = schematic_data.get('symbols', [])
         self.texts = schematic_data.get('texts', [])
-        self.flags = schematic_data.get('flags', [])  # Add flags
-        self.io_pins = schematic_data.get('io_pins', [])  # Add io_pins
-        self.shapes = schematic_data.get('shapes', {})  # Add shapes
+        self.flags = schematic_data.get('flags', [])
+        self.io_pins = schematic_data.get('io_pins', [])
+        self.shapes = schematic_data.get('shapes', {})
         self.symbol_data = symbols_data or {}
         
         # Add built-in symbols only if they don't exist in the parsed data
         for name, geometry in self.BUILTIN_SYMBOLS.items():
-            if name.upper() not in self.symbol_data:  # Case-insensitive check
+            if name.upper() not in self.symbol_data:
                 self.symbol_data[name] = geometry
         
         # Find T-junctions and terminal points
@@ -185,6 +174,19 @@ class SVGGenerator:
         # Add text elements
         self._add_texts(dwg, self.texts)
             
+        # Add flags
+        if not self.no_text:
+            # Add net labels
+            for flag in self.flags:
+                if flag['type'] == 'net_label':
+                    self._add_net_label(dwg, flag)
+                elif flag['type'] == 'gnd':
+                    self._add_gnd_flag(dwg, flag)
+            
+            # Add IO pins
+            for io_pin in self.io_pins:
+                self._add_io_pin(dwg, io_pin)
+        
         # Save the drawing
         dwg.save()
         
@@ -482,6 +484,93 @@ class SVGGenerator:
             # Set the transform
             g.attribs['transform'] = ' '.join(transform)
             
+            # Add instance name if text rendering is enabled
+            instance_name = symbol.get('instance_name', '')
+            if instance_name and not self.no_text:
+                # Get window settings for instance name (type 0)
+                window_settings = None
+                
+                # Only use window defaults from symbol
+                if 'windows' in symbols_data[symbol_name]:
+                    for window in symbols_data[symbol_name]['windows']:
+                        if window['property_id'] == 0:
+                            window_settings = {
+                                'x': window['x'],
+                                'y': window['y'],
+                                'justification': window['justification'],
+                                'size': window['size_multiplier']
+                            }
+                            print(f"[DEBUG] Using window default for {instance_name}")
+                            break
+                
+                if window_settings:
+                    # Create text data with position relative to symbol origin
+                    text_data = {
+                        'x': window_settings['x'],
+                        'y': window_settings['y'],
+                        'text': instance_name,
+                        'justification': window_settings['justification'],
+                        'size_multiplier': window_settings['size']
+                    }
+                    print(f"[DEBUG] Rendering {instance_name} with window settings: {window_settings}")
+                    self._add_symbol_text(dwg, g, text_data)  # Pass both drawing and group
+                else:
+                    # Default position if no window settings found
+                    text_data = {
+                        'x': 0,
+                        'y': -16,  # Above the symbol
+                        'text': instance_name,
+                        'justification': 'Center',
+                        'size_multiplier': 2
+                    }
+                    print(f"[DEBUG] Rendering {instance_name} with default settings")
+                    self._add_symbol_text(dwg, g, text_data)  # Pass both drawing and group
+            
+            # Add value text if available
+            value = symbol.get('value', '')
+            if value and not self.no_text:
+                # Get window settings for value (type 3)
+                window_settings = None
+                
+                # Only use window defaults from symbol
+                if 'windows' in symbols_data[symbol_name]:
+                    for window in symbols_data[symbol_name]['windows']:
+                        if window['property_id'] == 3:
+                            window_settings = {
+                                'x': window['x'],
+                                'y': window['y'],
+                                'justification': window['justification'],
+                                'size': window['size_multiplier']
+                            }
+                            print(f"[DEBUG] Using window default for value {value}")
+                            break
+                
+                # Render value text if we have window settings
+                if window_settings:
+                    # Create text data with position relative to symbol origin
+                    text_data = {
+                        'x': window_settings['x'],
+                        'y': window_settings['y'],
+                        'text': value,
+                        'justification': window_settings['justification'],
+                        'size_multiplier': window_settings['size']
+                    }
+                    print(f"[DEBUG] Rendering value {value} with window settings: {text_data}")
+                    self._add_symbol_text(dwg, g, text_data)  # Pass both drawing and group
+            
+            # Add regular text elements from symbol definition
+            if not self.no_symbol_text:
+                for text in symbols_data[symbol_name].get('texts', []):
+                    text_data = {
+                        'x': text['x'],
+                        'y': text['y'],
+                        'text': text['text'],
+                        'justification': text['justification'],
+                        'size_multiplier': text.get('size_multiplier', 2)  # Default to size 2 (1.5x)
+                    }
+                    print(f"[DEBUG] Rendering symbol text '{text['text']}' with settings: {text_data}")
+                    self._add_symbol_text(dwg, g, text_data)  # Pass both drawing and group
+            
             # Add lines with scaling
             for line in symbols_data[symbol_name]['lines']:
                 line_attrs = {
@@ -591,79 +680,114 @@ class SVGGenerator:
                     **arc_attrs
                 ))
             
-            # Add instance name if text position is defined and text rendering is enabled
-            instance_name = symbol.get('instance_name', '')
-            if instance_name and not self.no_text:
-                # Find text entry with property_id=0 (instance name position)
-                for text in symbols_data[symbol_name].get('texts', []):
-                    if text.get('property_id') == 0:
-                        # Get size multiplier (already converted from index)
-                        size_multiplier = text.get('size_multiplier', 1.5)  # Default to 1.5x
-                        font_size = self.font_size * size_multiplier
-                        
-                        # Get original justification
-                        justification = text.get('justification', 'Left')
-                        
-                        # Flip justification if mirrored
-                        if rotation_type == 'M':
-                            # Flip horizontal justification
-                            justification = {
-                                'Left': 'Right',
-                                'Right': 'Left',
-                                'Center': 'Center',
-                                'Top': 'Top',
-                                'Bottom': 'Bottom'
-                            }[justification]
-                        
-                        # Set text alignment based on flipped justification
-                        if justification == 'Left':
-                            text_anchor = 'start'
-                        elif justification == 'Right':
-                            text_anchor = 'end'
-                        else:  # Center, Top, Bottom all use middle horizontal alignment
-                            text_anchor = 'middle'
-                        
-                        # Adjust vertical position based on justification
-                        # For Left/Center/Right, move up by half the font size to center vertically
-                        # For Top/Bottom, adjust by a third of the font size
-                        if justification in ['Left', 'Center', 'Right']:
-                            y_offset = font_size * 0.3  # Move up to center vertically
-                        elif justification == 'Top':
-                            y_offset = font_size * 0.6  # Move down
-                        else:  # Bottom
-                            y_offset = font_size * 0.0  # Move up
-                        
-                        # Transform text position according to symbol transformation
-                        text_x = text['x']
-                        text_y = text['y']
-                        
-                        # Apply mirroring to position if needed
-                        if rotation_type == 'M':
-                            text_x = -text_x
-                            
-                        # Apply rotation to position
-                        if angle == 90:
-                            text_x, text_y = -text_y, text_x
-                        elif angle == 180:
-                            text_x, text_y = -text_x, -text_y
-                        elif angle == 270:
-                            text_x, text_y = text_y, -text_x
-                        
-                        # Create text element with transformed position but no rotation/mirroring
-                        text_element = dwg.text(
-                            instance_name,
-                            insert=((symbol['x'] + text_x) * self.scale, (symbol['y'] + text_y) * self.scale + y_offset),
-                            font_family='Arial',
-                            font_size=f'{font_size}px',
-                            text_anchor=text_anchor,
-                            fill='black'  # Ensure text is visible
-                        )
-                        # Add text directly to drawing, not to the transformed group
-                        dwg.add(text_element)
-                        break  # Only use the first instance name text entry
-            
             # Add the group to the drawing
             dwg.add(g)
+
+    def _add_symbol_text(self, dwg, group, text_data: Dict):
+        """Add a text element to the SVG drawing.
+        
+        Args:
+            dwg: SVG drawing object
+            group: SVG group object to add text to
+            text_data: Dictionary containing text properties:
+                - x: X coordinate
+                - y: Y coordinate
+                - text: Text content
+                - justification: Text alignment ('Left', 'Right', 'Center', 'Top', 'Bottom', 'VTop', 'VBottom')
+                - size_multiplier: Font size multiplier index (0-7)
+        """
+        print(f"[DEBUG] _add_symbol_text: Rendering text '{text_data['text']}'")
+        # Get text properties with defaults
+        x = text_data.get('x', 0)
+        y = text_data.get('y', 0)
+        content = text_data.get('text', '')
+        justification = text_data.get('justification', 'Left')
+        size_multiplier = text_data.get('size_multiplier', 2)  # Default to size 2 (1.5x)
+        
+        # Calculate font size
+        font_size = self.font_size * self.size_multipliers[size_multiplier]
+        
+        # Create text group for rotation
+        text_group = dwg.g()  # Use drawing to create group
+        
+        # Handle vertical text (VTop, VBottom)
+        if justification in ['VTop', 'VBottom']:
+            # Rotate text 90 degrees for vertical orientation
+            text_group.attribs['transform'] = f"rotate(90, {x * self.scale}, {y * self.scale})"
+            # Convert VTop/VBottom to Top/Bottom for standard alignment
+            justification = 'Top' if justification == 'VTop' else 'Bottom'
+        
+        # Set text alignment
+        if justification == 'Left':
+            text_anchor = 'start'
+        elif justification == 'Right':
+            text_anchor = 'end'
+        else:  # Center, Top, Bottom all use middle horizontal alignment
+            text_anchor = 'middle'
+        
+        # Adjust vertical position based on justification
+        if justification in ['Left', 'Center', 'Right']:
+            y_offset = font_size * 0.3  # Move up to center vertically
+        elif justification == 'Top':
+            y_offset = font_size * 0.6  # Move down
+        else:  # Bottom
+            y_offset = font_size * 0.0  # Move up
+        
+        # Create text element
+        text_element = self._create_multiline_text(
+            dwg,  # Use drawing for text creation
+            content,
+            x * self.scale,
+            y * self.scale + y_offset,
+            font_size,
+            text_anchor
+        )
+        
+        # Add text to group and group to parent
+        text_group.add(text_element)
+        group.add(text_group)
+
+    def _create_multiline_text(self, dwg, text_content: str, x: float, y: float, 
+                            font_size: float, text_anchor: str = 'start', 
+                            line_spacing: float = 1.2) -> svgwrite.container.Group:
+        """Create a group of text elements for multiline text.
+        
+        Args:
+            dwg: SVG drawing object
+            text_content: The text to render, may contain newlines
+            x: X coordinate
+            y: Y coordinate
+            font_size: Font size in pixels
+            text_anchor: Text alignment ('start', 'middle', or 'end')
+            line_spacing: Line spacing multiplier (1.2 = 120% of font size)
+            
+        Returns:
+            A group containing text elements for each line
+        """
+        # Create a group to hold all text elements
+        group = dwg.g()
+        
+        # Split text into lines
+        lines = text_content.split('\n')
+        
+        # Calculate line height
+        line_height = font_size * line_spacing
+        
+        # Add each line as a separate text element
+        for i, line in enumerate(lines):
+            # Calculate y position for this line
+            line_y = y + (i * line_height)
+            
+            # Create text element
+            text_element = dwg.text(line,
+                                  insert=(x, line_y),
+                                  font_family='Arial',
+                                  font_size=f'{font_size}px',
+                                  text_anchor=text_anchor,
+                                  fill='black')
+            group.add(text_element)
+            
+        return group
 
     def _add_texts(self, dwg, texts):
         """Add text elements to the SVG drawing.
@@ -673,6 +797,10 @@ class SVGGenerator:
         - Right: Right-aligned, vertically centered
         - Top: Top-aligned, horizontally centered
         - Bottom: Bottom-aligned, horizontally centered
+        
+        Also handles two types of text:
+        - SPICE directives (prefixed with ! in file)
+        - Comments (prefixed with ; in file)
         
         Font size is calculated by multiplying the base font size with the size_multiplier from the ASC file.
         Horizontal alignment is handled using text-anchor.
@@ -709,13 +837,271 @@ class SVGGenerator:
             else:  # Bottom
                 y_offset = font_size * 0.0  # Move up
             
-            # Add text element with all attributes
-            text_element = dwg.text(
-                text['text'],
-                insert=(x, y + y_offset),
-                font_family='Arial',
-                font_size=f'{font_size}px',
-                text_anchor=text_anchor,
-                fill='black'  # Ensure text is visible
+            # Use the text content directly without adding prefix markers
+            content = text['text']
+            
+            # Create multiline text element
+            text_element = self._create_multiline_text(
+                dwg,
+                content,
+                x,
+                y + y_offset,
+                font_size,
+                text_anchor
             )
             dwg.add(text_element)
+
+    def _add_net_label(self, dwg, flag: Dict):
+        """Add a net label flag to the SVG drawing.
+        
+        Based on net_label.asy reference:
+        - Text is positioned self.net_label_distance units above the pin point
+        - Text is center-justified
+        - Text uses size 2 (1.5x) font
+        - Text orientation is normalized to 0° when net label is at 180° to avoid upside down text
+        
+        Args:
+            dwg: SVG drawing object
+            flag: Dictionary containing flag properties:
+                - x: X coordinate
+                - y: Y coordinate
+                - net_name: Name of the net/signal
+                - orientation: Rotation angle in degrees
+        """
+        print(f"[DEBUG] _add_net_label: Rendering text '{flag['net_name']}'")
+        # Create a group for the net label
+        g = dwg.g()
+        
+        # Apply translation and rotation
+        transform = [
+            f"translate({flag['x'] * self.scale},{flag['y'] * self.scale})",
+            f"rotate({flag['orientation']})"
+        ]
+        g.attribs['transform'] = ' '.join(transform)
+        
+        # Calculate font size
+        font_size = self.font_size * self.size_multipliers[2]  # Size 2 (1.5x)
+        
+        # Create text group with normalized rotation
+        text_group = dwg.g()
+        
+        # For 180° orientation, counter-rotate the text to make it appear as 0°
+        if flag['orientation'] == 180:
+            text_group.attribs['transform'] = f"rotate(-180)"
+        
+        # Add text self.net_label_distance units above the pin point
+        # The text coordinates are relative to the transformed group
+        text_element = dwg.text(
+            flag['net_name'],
+            insert=(0, -self.net_label_distance * self.scale),  # Position above the pin point
+            font_family='Arial',
+            font_size=f'{font_size}px',
+            text_anchor='middle',  # Center-justified
+            fill='black'
+        )
+        
+        # Add text to its group
+        text_group.add(text_element)
+        
+        # Add text group to main group
+        g.add(text_group)
+        
+        # Add the group to the drawing
+        dwg.add(g)
+
+    def _add_gnd_flag(self, dwg, flag: Dict):
+        """Add a ground flag to the SVG drawing with a V shape.
+        
+        The ground flag is rendered with a V shape pointing in the direction of the flag's orientation.
+        The shape is based on the gnd.asy reference file:
+        - Horizontal line at top: (-16,0) to (16,0)
+        - Two diagonal lines forming a V:
+          - Left line: (-16,0) to (0,16)
+          - Right line: (16,0) to (0,16)
+        
+        Args:
+            dwg: SVG drawing object
+            flag: Dictionary containing flag properties:
+                - x: X coordinate
+                - y: Y coordinate
+                - orientation: Rotation angle in degrees
+        """
+        # Create a group for the ground flag
+        g = dwg.g()
+        
+        # Apply translation and rotation
+        transform = [
+            f"translate({flag['x'] * self.scale},{flag['y'] * self.scale})",
+            f"rotate({flag['orientation']})"
+        ]
+        g.attribs['transform'] = ' '.join(transform)
+        
+        # Add V shape
+        # Horizontal line
+        g.add(dwg.line(
+            (-16 * self.scale, 0), (16 * self.scale, 0),
+            stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+        ))
+        # Left diagonal line
+        g.add(dwg.line(
+            (-16 * self.scale, 0), (0, 16 * self.scale),
+            stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+        ))
+        # Right diagonal line
+        g.add(dwg.line(
+            (16 * self.scale, 0), (0, 16 * self.scale),
+            stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+        ))
+        
+        # Add the group to the drawing
+        dwg.add(g)
+
+    def _add_io_pin(self, dwg, io_pin: Dict):
+        """Add an IO pin flag to the SVG drawing with direction-specific shapes."""
+        print(f"\n[DEBUG] _add_io_pin: Start rendering IO pin '{io_pin['net_name']}'")
+        print(f"[DEBUG] _add_io_pin: Pin position: ({io_pin['x']}, {io_pin['y']}), orientation: {io_pin['orientation']}°")
+        print(f"[DEBUG] _add_io_pin: Scale factor: {self.scale}")
+        
+        # Create a group for the IO pin shape only
+        g = dwg.g()
+        
+        # Apply translation and rotation for the shape
+        transform = [
+            f"translate({io_pin['x'] * self.scale},{io_pin['y'] * self.scale})",
+            f"rotate({io_pin['orientation']})"
+        ]
+        g.attribs['transform'] = ' '.join(transform)
+        print(f"[DEBUG] _add_io_pin: Shape group transform: {g.attribs['transform']}")
+        
+        # Add shape based on direction
+        if io_pin['direction'] == 'BiDir':
+            # BiDir shape from io_pin_bi_dir.asy
+            g.add(dwg.line(
+                (16 * self.scale, 16 * self.scale), (0, 0),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (-16 * self.scale, 84 * self.scale), (-16 * self.scale, 16 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (16 * self.scale, 16 * self.scale), (16 * self.scale, 84 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (0, 0), (-16 * self.scale, 16 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (0, 100 * self.scale), (-16 * self.scale, 84 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (0, 100 * self.scale), (16 * self.scale, 84 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+        elif io_pin['direction'] == 'In':
+            # Input shape from io_pin_input.asy
+            g.add(dwg.line(
+                (0, 0), (16 * self.scale, 16 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (16 * self.scale, 16 * self.scale), (16 * self.scale, 80 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (16 * self.scale, 80 * self.scale), (-16 * self.scale, 80 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (-16 * self.scale, 80 * self.scale), (-16 * self.scale, 16 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (-16 * self.scale, 16 * self.scale), (0, 0),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+        else:  # Out
+            # Output shape from io_pin_output.asy
+            g.add(dwg.line(
+                (-16 * self.scale, 80 * self.scale), (0, 96 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (16 * self.scale, 16 * self.scale), (16 * self.scale, 80 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (16 * self.scale, 16 * self.scale), (-16 * self.scale, 16 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (-16 * self.scale, 80 * self.scale), (-16 * self.scale, 16 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (0, 96 * self.scale), (16 * self.scale, 80 * self.scale),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+            g.add(dwg.line(
+                (0, 16 * self.scale), (0, 0),
+                stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
+            ))
+        
+        # Add the shape group to the drawing
+        dwg.add(g)
+        
+        # Calculate absolute text position and rotation
+        orientation = io_pin['orientation']
+        text_distance = 52  # Distance from pin point
+        font_size = self.font_size * self.size_multipliers[2]  # Size 2 (1.5x)
+        
+        # Calculate text position based on pin orientation
+        if orientation == 0:  # Right
+            text_x = io_pin['x'] * self.scale
+            text_y = (io_pin['y'] + text_distance) * self.scale
+            text_rotation = -90
+            # For vertical text, shift right by compensation factor of the font size
+            text_x += font_size * self.text_centering_compensation
+        elif orientation == 90:  # Up
+            text_x = (io_pin['x'] - text_distance) * self.scale
+            text_y = io_pin['y'] * self.scale
+            text_rotation = 0
+            # For horizontal text, shift down by compensation factor of the font size
+            text_y += font_size * self.text_centering_compensation
+        elif orientation == 180:  # Left
+            text_x = io_pin['x'] * self.scale
+            text_y = (io_pin['y'] - text_distance) * self.scale
+            text_rotation = -90
+            # For vertical text, shift right by compensation factor of the font size
+            text_x += font_size * self.text_centering_compensation
+        else:  # 270, Down
+            text_x = (io_pin['x'] + text_distance) * self.scale
+            text_y = io_pin['y'] * self.scale
+            text_rotation = 0
+            # For horizontal text, shift down by compensation factor of the font size
+            text_y += font_size * self.text_centering_compensation
+            
+        print(f"[DEBUG] _add_io_pin: Text absolute position: ({text_x}, {text_y})")
+        print(f"[DEBUG] _add_io_pin: Text rotation: {text_rotation}°")
+        print(f"[DEBUG] _add_io_pin: Font size: {font_size}px")
+        
+        # Create text group with rotation only
+        text_group = dwg.g()
+        if text_rotation != 0:
+            text_group.attribs['transform'] = f'rotate({text_rotation} {text_x} {text_y})'
+        
+        # Add text element
+        text_element = dwg.text(
+            io_pin['net_name'],
+            insert=(text_x, text_y),
+            font_family='Arial',
+            font_size=f'{font_size}px',
+            text_anchor='middle',  # Center-justified
+            fill='black'
+        )
+        
+        # Add text to group and group to drawing
+        text_group.add(text_element)
+        dwg.add(text_group)

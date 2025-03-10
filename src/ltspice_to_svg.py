@@ -42,7 +42,7 @@ def find_symbol_file(symbol_name: str, schematic_dir: Path) -> Path:
 def convert_schematic(asc_file: str, 
                      stroke_width: float = 3.0, dot_size_multiplier: float = 1.5,
                      scale: float = 1.0, font_size: float = 16.0, export_json: bool = False,
-                     no_text: bool = False):
+                     no_text: bool = False, no_symbol_text: bool = False):
     """
     Convert an LTspice schematic to SVG format.
     
@@ -54,6 +54,7 @@ def convert_schematic(asc_file: str,
         font_size: Font size in pixels (default: 16.0)
         export_json: Whether to export intermediate JSON files for debugging (default: False)
         no_text: Whether to skip rendering text elements (default: False)
+        no_symbol_text: Whether to skip rendering symbol text elements (default: False)
     """
     # Get the directory and base name of the schematic file
     asc_path = Path(asc_file)
@@ -78,7 +79,7 @@ def convert_schematic(asc_file: str,
     # Parse symbol files and collect their data
     symbols_data = {}
     missing_symbols = []
-    symbol_cache = {}  # Cache for parsed symbol files
+    symbol_cache = {}
     
     for symbol in schematic_data['symbols']:
         symbol_name = symbol['symbol_name']
@@ -123,13 +124,21 @@ def convert_schematic(asc_file: str,
     
     # Generate SVG in the same directory as the schematic
     svg_file = schematic_dir / f"{base_name}.svg"
+    
     generator = SVGGenerator(stroke_width=stroke_width, 
-                           dot_size_multiplier=dot_size_multiplier,
-                           scale=scale,
+                           dot_size_multiplier=dot_size_multiplier, 
+                           scale=scale, 
                            font_size=font_size,
                            export_json=export_json,
-                           no_text=no_text)
+                           no_text=no_text,
+                           no_symbol_text=no_symbol_text)
     generator.generate(schematic_data, str(svg_file), symbols_data)
+    
+    print(f"Generated SVG: {svg_file}")
+    if no_text:
+        print("Text rendering disabled")
+    if no_symbol_text:
+        print("Symbol text rendering disabled")
 
 if __name__ == "__main__":
     import argparse
@@ -150,6 +159,8 @@ if __name__ == "__main__":
                       help="Path to LTspice symbol library (overrides LTSPICE_LIB_PATH)")
     parser.add_argument("--no-text", action="store_true",
                       help="Skip rendering text elements")
+    parser.add_argument("--no-symbol-text", action="store_true",
+                      help="Skip rendering symbol text elements")
     
     args = parser.parse_args()
     
@@ -159,4 +170,4 @@ if __name__ == "__main__":
         
     convert_schematic(args.asc_file, args.stroke_width, args.dot_size, 
                      args.scale, args.font_size, args.export_json,
-                     args.no_text) 
+                     args.no_text, args.no_symbol_text) 

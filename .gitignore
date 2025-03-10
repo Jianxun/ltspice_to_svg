@@ -47,4 +47,6 @@ tools/
 # OS specific
 .DS_Store
 Thumbs.db 
-./MOSbius_LTspice_Library
+
+# LTspice libraries
+MOSbius_LTspice_Library/
