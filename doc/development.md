@@ -45,6 +45,29 @@ pip install pytest pytest-cov black mypy
 - Document public interfaces
 - Keep functions focused and small
 
+### 5. File Handling
+
+#### LTspice File Encoding
+
+When working with LTspice files (.asc and .asy):
+1. Always use proper encoding handling (UTF-16LE without BOM for special characters)
+2. Never modify files directly unless explicitly requested
+3. If a file becomes corrupted, use the normalization tool:
+   ```bash
+   ./tools/normalize_encoding.py <file_path>
+   ```
+
+The normalization tool will:
+- Create backups before making changes
+- Only modify files that need normalization
+- Provide clear feedback about actions taken
+
+Common scenarios requiring normalization:
+- Files that can't be opened in LTspice
+- Files with special characters in ASCII format
+- Files corrupted by different text editors
+- Files copied from different systems
+
 ## Development Workflow
 
 1. Create a feature branch:

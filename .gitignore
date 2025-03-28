@@ -49,4 +49,4 @@ tools/
 Thumbs.db 
 
 # LTspice libraries
-MOSbius_LTspice_Library/
+MOSbius_LTspice_Library

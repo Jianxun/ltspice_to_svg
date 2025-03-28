@@ -126,4 +126,80 @@ The default scale factor (0.1) may make shapes too small to be visible. Use a la
 
 ```bash
 python ./src/ltspice_to_svg.py input.asc --scale 1.0
-``` 
+```
+
+## File Encoding
+
+### LTspice File Encoding
+
+LTspice uses different encoding schemes for its schematic files (.asc) based on content:
+
+1. **ASCII Encoding**
+   - Used for schematics containing only ASCII characters
+   - Example: Simple schematics with basic components and text
+   - Most common for new schematics without special characters
+
+2. **UTF-16LE without BOM**
+   - Used when special characters are present (e.g., µ, Ω, °)
+   - No Byte Order Mark (BOM) at the start of the file
+   - Example: Schematics with component values using micro (µ) or ohm (Ω) symbols
+
+### Implementation Guidelines
+
+When working with LTspice files programmatically:
+
+1. **Reading Files**
+   ```python
+   # Try ASCII first (for simple schematics)
+   try:
+       with open('file.asc', 'r', encoding='ascii') as f:
+           text = f.read()
+   except UnicodeError:
+       # If ASCII fails, try UTF-16LE
+       with open('file.asc', 'rb') as f:
+           content = f.read()
+           # Skip BOM if present
+           if content.startswith(b'\xff\xfe'):
+               content = content[2:]
+           text = content.decode('utf-16')
+   ```
+
+2. **Writing Files**
+   ```python
+   # Always use UTF-16LE without BOM for compatibility
+   with open('file.asc', 'wb') as f:
+       f.write(text.encode('utf-16le'))
+   ```
+
+### Important Notes
+
+- Never add a BOM to LTspice files as it prevents LTspice from opening them correctly
+- The encoding choice is automatic based on content, not on how the file was created
+- When in doubt, use UTF-16LE without BOM to ensure compatibility
+- This applies to both .asc (schematic) and .asy (symbol) files
+
+### Encoding Normalization Tool
+
+If a file becomes corrupted due to improper encoding handling, use the `tools/normalize_encoding.py` script to fix it:
+
+```bash
+./tools/normalize_encoding.py <file_path>
+```
+
+The tool will:
+1. Analyze the file's current encoding
+2. Create a backup (.bak) before making changes
+3. Normalize to UTF-16LE without BOM if needed
+4. Report all changes made
+
+Common scenarios where normalization is needed:
+- Files with UTF-16LE BOM that can't be opened in LTspice
+- ASCII files containing special characters (µ, Ω, etc.)
+- Files corrupted by different text editors
+- Files copied from different systems/platforms
+
+Safety features:
+- Only modifies files that need normalization
+- Creates backups before changes
+- Only works on .asc and .asy files
+- Provides clear feedback about actions taken 
