@@ -23,7 +23,7 @@ class ASYParser:
             return self._parsed_data
 
         # Try different encodings
-        encodings = ['utf-16', 'utf-8', 'ascii']
+        encodings = ['ascii', 'utf-16le']  # Try ASCII first, then UTF-16LE
         lines = None
 
         for encoding in encodings:
