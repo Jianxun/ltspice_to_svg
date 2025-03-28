@@ -23,19 +23,22 @@ def test_symbol_finding():
     
     # Verify symbols are parsed
     symbols = schematic_data['symbols']
-    assert len(symbols) == 11  # Total number of symbols (V1, R1, X1-X8, GND)
+    assert len(symbols) == 10  # Total number of symbols (V1, R1, X1-X8)
     
     # Group symbols by type
     voltage_sources = [s for s in symbols if s['symbol_name'] == 'Voltage']
     resistors = [s for s in symbols if s['symbol_name'] == 'Res']
     pins = [s for s in symbols if s['symbol_name'] == 'pin']
-    grounds = [s for s in symbols if s['symbol_name'] == 'GND']
     
     # Verify symbol counts
     assert len(voltage_sources) == 1  # One voltage source
     assert len(resistors) == 1  # One resistor
     assert len(pins) == 8  # Eight pins
-    assert len(grounds) == 1  # One ground symbol
+    
+    # Verify ground flag
+    flags = schematic_data['flags']
+    gnd_flags = [f for f in flags if f['type'] == 'gnd']
+    assert len(gnd_flags) == 1  # One ground flag
     
     # Verify voltage source (from LTspice library)
     v1 = voltage_sources[0]
@@ -46,11 +49,6 @@ def test_symbol_finding():
     r1 = resistors[0]
     assert r1['instance_name'] == 'R1'
     assert r1['rotation'] == 'R0'
-    
-    # Verify ground symbol
-    gnd = grounds[0]
-    assert gnd['instance_name'] == 'GND'
-    assert gnd['rotation'] == 'R0'
     
     # Verify pins with different orientations
     pin_configs = {

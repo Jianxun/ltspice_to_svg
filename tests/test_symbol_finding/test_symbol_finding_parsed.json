@@ -113,13 +113,6 @@
       "x": -208,
       "y": -128,
       "rotation": "M0"
-    },
-    {
-      "symbol_name": "GND",
-      "instance_name": "GND",
-      "x": -576,
-      "y": 64,
-      "rotation": "R0"
     }
   ],
   "texts": [],
@@ -127,7 +120,9 @@
     {
       "x": -576,
       "y": 64,
-      "net_name": "0"
+      "net_name": "0",
+      "type": "gnd",
+      "orientation": 0
     }
   ],
   "io_pins": [],

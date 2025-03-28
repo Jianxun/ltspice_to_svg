@@ -25,21 +25,15 @@
       "y2": -160
     }
   ],
-  "symbols": [
-    {
-      "symbol_name": "GND",
-      "instance_name": "GND",
-      "x": 0,
-      "y": 96,
-      "rotation": "R0"
-    }
-  ],
+  "symbols": [],
   "texts": [],
   "flags": [
     {
       "x": 0,
       "y": 96,
-      "net_name": "0"
+      "net_name": "0",
+      "type": "gnd",
+      "orientation": 0
     }
   ],
   "io_pins": [],

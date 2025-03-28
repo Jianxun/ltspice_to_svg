@@ -52,7 +52,7 @@ def get_line_style(style_code: int, is_symbol: bool = False) -> str:
         is_symbol: Whether this style is for a symbol shape (default: False)
     """
     # For dots, use a small value relative to stroke width
-    dot_size = "0.1"  # This will be multiplied by stroke width
+    dot_size = "0.001"  # This will be multiplied by stroke width
     gap_size = "2"    # This will be multiplied by stroke width
     dash_size = "4"   # This will be multiplied by stroke width
     
