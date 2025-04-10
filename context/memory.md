@@ -1,58 +1,58 @@
-# Project: LTspice to SVG Converter
+# Project Memory
 
 ## Project Overview
-- Project name: LTspice to SVG Converter
-- Current focus: Refactoring the SVG Generator component to improve modularity and maintainability. Successfully completed Phase 4 with the isolation of flag rendering logic into a dedicated FlagRenderer class, including comprehensive test coverage.
-- Recent actions: Created FlagRenderer class to handle all flag-related rendering (net labels, ground flags, IO pins), moved flag rendering methods from SVGGenerator to FlagRenderer, added comprehensive test suite for FlagRenderer with all tests passing, updated SVGGenerator to use the new FlagRenderer class, fixed test assertions to handle floating-point precision in SVG coordinates.
+The project aims to convert LTspice schematics to SVG format. We are currently in the process of refactoring the codebase to improve its structure and maintainability.
 
-## Key Components
-1. SVGGenerator (src/generators/svg_generator.py)
-   - Main class for generating SVG output
-   - Now uses FlagRenderer for flag-related rendering
-   - Now uses TextRenderer for text-related rendering
-   - Cleaner and more focused after flag and text rendering extraction
+## Current State
+- We have analyzed the existing SVGGenerator implementation
+- Created a comprehensive refactor plan for SVGRenderer
+- Designed a modular architecture with specialized renderers
+- Simplified the logging system design
 
-2. FlagRenderer (src/renderers/flag_renderer.py)
-   - Handles all flag-related rendering
-   - Supports net labels, ground flags, and IO pins
-   - Manages text positioning and rotation
-   - Fully tested with comprehensive test suite
+## Architecture Design
+### New SVGRenderer Structure
+- Base renderer class for common functionality
+- Specialized renderers for different element types:
+  - WireRenderer
+  - SymbolRenderer
+  - TextRenderer
+  - ShapeRenderer
+- Main SVGRenderer class for orchestration
 
-3. TextRenderer (src/renderers/text_renderer.py)
-   - Handles all text-related rendering
-   - Supports multiline text
-   - Handles text rotation and positioning
-   - Manages font sizes and text alignment
-   - Fully tested with comprehensive test suite
+### Logging System
+- Simple, single-file logging
+- Focus on important events and errors
+- Minimal impact on code readability
+- Basic configuration in `src/utils/logger.py`
 
-4. ShapeRenderer (src/renderers/shape_renderer.py)
-   - Handles basic shape rendering
-   - Supports lines, rectangles, circles, etc.
+## Implementation Plan
+1. Create initial file structure
+2. Implement base renderer class
+3. Implement specialized renderers
+4. Implement main SVGRenderer class
+5. Setup testing structure
+6. Implement logging system
 
-## Recent Changes
-- Created TextRenderer class to handle all text-related rendering
-- Moved all text-related methods from SVGGenerator to TextRenderer
-- Updated SVGGenerator to use the new TextRenderer
-- Added comprehensive test suite for TextRenderer
-- Maintained all existing functionality while improving code organization
-- Successfully implemented and tested text rendering functionality with rotation and positioning
-- Configured LTSPICE_LIB_PATH environment variable for symbol finding
-- Completed symbol finding tests with proper environment setup
-- Organized test files into dedicated directories with results for manual inspection
-- Deprecated scale parameter from method signatures
-- Successfully generated SVG output for miller_ota schematic
-- Refactored symbol geometry rendering to use ShapeRenderer for better modularity
-- Removed scaling from coordinate calculations, using fixed scale=1.0 for future compatibility
-- Modified viewBox calculation to start from minimum coordinates
-- Removed scale multiplication from viewBox coordinates
-- Added padding to ensure elements near the edges are fully visible
+## Key Decisions
+1. Using SVGRenderer name to avoid conflicts with existing SVGGenerator
+2. Modular design with separate renderer classes
+3. Simplified logging system with single log file
+4. Explicit rendering control through method calls
+5. Clear separation of concerns between renderers
+
+## Technical Notes
+- All renderers will inherit from BaseRenderer
+- Each renderer will have its own file
+- Logging will be integrated at the base renderer level
+- Testing will be comprehensive for each component
+- Error handling will be consistent across renderers
 
 ## Next Steps
-- Implement support for custom symbol libraries
-- Add symbol caching mechanism for improved performance
-- Enhance error handling for missing symbols
-- Document symbol path configuration process
-- Plan migration path for removing scale parameter completely
+- Start implementation in new chat
+- Follow the implementation plan in order
+- Maintain clear separation between components
+- Keep logging simple and focused
+- Test each component thoroughly
 
 ## Project Structure
 - src/
