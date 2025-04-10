@@ -16,6 +16,17 @@
   - [X] Use stroke width = 3.0
   - [X] Use dot size multiplier = 1.5
   - [X] Update all test cases
+[X] Create test cases for line styles
+  - [X] Create new test file for line styles
+  - [X] Add test cases for all line style patterns
+  - [X] Add test cases for edge cases
+  - [X] Run and verify all tests pass
+  - [X] Add visual test case for all line styles
+[X] Create test cases for line styles
+  - [X] Create new test file for line styles
+  - [X] Add test cases for all line style patterns
+  - [X] Add test cases for edge cases
+  - [X] Run and verify all tests pass
 
 ## Current Tasks
 [ ] Implement SymbolRenderer class

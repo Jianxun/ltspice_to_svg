@@ -1,0 +1,183 @@
+"""
+Shape rendering functions for SVG generation.
+Handles rendering of lines, circles, rectangles, and arcs with proper scaling and styling.
+"""
+import svgwrite
+from typing import Dict, List, Tuple, Optional, Union
+import math
+from .base_renderer import BaseRenderer
+
+class ShapeRenderer(BaseRenderer):
+    """Renderer for various shape types in the schematic."""
+    
+    # Line style patterns
+    LINE_STYLE_SOLID = None  # No dash array for solid lines
+    LINE_STYLE_DASH = "4,2"  # 4 units dash, 2 units gap
+    LINE_STYLE_DOT = "0.001,2"  # Very small dash to create dots, 2 units gap
+    LINE_STYLE_DASH_DOT = "4,2,0.001,2"  # Dash, gap, dot, gap
+    LINE_STYLE_DASH_DOT_DOT = "4,2,0.001,2,0.001,2"  # Dash, gap, dot, gap, dot, gap
+    
+    def __init__(self, dwg: svgwrite.Drawing):
+        super().__init__(dwg)
+        
+    def _scale_dash_array(self, pattern: str, stroke_width: float) -> str:
+        """Scale a dash array pattern by the stroke width.
+        
+        Args:
+            pattern: The dash array pattern string (e.g., "5,5")
+            stroke_width: The stroke width to scale by
+            
+        Returns:
+            The scaled dash array pattern
+        """
+        if not pattern:
+            return ""
+            
+        # Split the pattern into individual lengths
+        lengths = [float(x) for x in pattern.split(',')]
+        
+        # Scale each length by the stroke width
+        scaled_lengths = [str(length * stroke_width) for length in lengths]
+        
+        # Join the scaled lengths back into a pattern string
+        return ','.join(scaled_lengths)
+        
+    def render(self, shape: Dict, stroke_width: float = 1.0) -> None:
+        """Render a single shape based on its type.
+        
+        Args:
+            shape: Dictionary containing shape properties
+            stroke_width: Width of the stroke
+        """
+        shape_type = shape.get('type')
+        if shape_type == 'line':
+            self._render_line(shape, stroke_width)
+        elif shape_type == 'circle':
+            self._render_circle(shape, stroke_width)
+        elif shape_type == 'rectangle':
+            self._render_rectangle(shape, stroke_width)
+        elif shape_type == 'arc':
+            self._render_arc(shape, stroke_width)
+        else:
+            self.logger.warning(f"Unknown shape type: {shape_type}")
+            
+    def _render_line(self, line: Dict, stroke_width: float) -> None:
+        """Render a line shape."""
+        style = {
+            'stroke': 'black',
+            'stroke-width': str(stroke_width),
+            'stroke-linecap': 'round'
+        }
+        
+        if 'style' in line:
+            style['stroke-dasharray'] = self._scale_dash_array(line['style'], stroke_width)
+            
+        self.dwg.add(self.dwg.line(
+            (str(line['x1']), str(line['y1'])),
+            (str(line['x2']), str(line['y2'])),
+            **style
+        ))
+        
+    def _render_circle(self, circle: Dict, stroke_width: float) -> None:
+        """Render a circle or ellipse shape."""
+        rx = abs(circle['x2'] - circle['x1']) / 2
+        ry = abs(circle['y2'] - circle['y1']) / 2
+        cx = (circle['x1'] + circle['x2']) / 2
+        cy = (circle['y1'] + circle['y2']) / 2
+        
+        style = {
+            'stroke': 'black',
+            'stroke-width': str(stroke_width),
+            'fill': 'none'
+        }
+        
+        if 'style' in circle:
+            style['stroke-dasharray'] = self._scale_dash_array(circle['style'], stroke_width)
+            style['stroke-linecap'] = 'round'
+            
+        if rx == ry:  # Perfect circle
+            self.dwg.add(self.dwg.circle(
+                center=(str(cx), str(cy)),
+                r=str(rx),
+                **style
+            ))
+        else:  # Ellipse
+            self.dwg.add(self.dwg.ellipse(
+                center=(str(cx), str(cy)),
+                r=(str(rx), str(ry)),
+                **style
+            ))
+            
+    def _render_rectangle(self, rect: Dict, stroke_width: float) -> None:
+        """Render a rectangle shape."""
+        x = min(rect['x1'], rect['x2'])
+        y = min(rect['y1'], rect['y2'])
+        width = abs(rect['x2'] - rect['x1'])
+        height = abs(rect['y2'] - rect['y1'])
+        
+        style = {
+            'stroke': 'black',
+            'stroke-width': str(stroke_width),
+            'fill': 'none'
+        }
+        
+        if 'style' in rect:
+            style['stroke-dasharray'] = self._scale_dash_array(rect['style'], stroke_width)
+            style['stroke-linecap'] = 'round'
+            
+            # For dotted/dashed rectangles, use path instead of rect
+            path_data = [
+                ('M', [(str(x), str(y))]),
+                ('L', [(str(x + width), str(y))]),
+                ('L', [(str(x + width), str(y + height))]),
+                ('L', [(str(x), str(y + height))]),
+                ('Z', [])
+            ]
+            self.dwg.add(self.dwg.path(d=path_data, **style))
+        else:
+            # For solid rectangles, use rect element
+            self.dwg.add(self.dwg.rect(
+                insert=(str(x), str(y)),
+                size=(str(width), str(height)),
+                **style
+            ))
+            
+    def _render_arc(self, arc: Dict, stroke_width: float) -> None:
+        """Render an arc shape."""
+        cx = (arc['x1'] + arc['x2']) / 2
+        cy = (arc['y1'] + arc['y2']) / 2
+        rx = abs(arc['x2'] - arc['x1']) / 2
+        ry = abs(arc['y2'] - arc['y1']) / 2
+        
+        start_angle = math.radians(arc['start_angle'])
+        end_angle = math.radians(arc['end_angle'])
+        
+        start_x = cx + rx * math.cos(start_angle)
+        start_y = cy + ry * math.sin(start_angle)
+        end_x = cx + rx * math.cos(end_angle)
+        end_y = cy + ry * math.sin(end_angle)
+        
+        large_arc = abs(end_angle - start_angle) > math.pi
+        sweep = end_angle > start_angle
+        
+        path_data = [
+            ('M', [(str(start_x), str(start_y))]),
+            ('A', [
+                str(rx), str(ry),
+                '0',
+                str(int(large_arc)), str(int(sweep)),
+                str(end_x), str(end_y)
+            ])
+        ]
+        
+        style = {
+            'stroke': 'black',
+            'stroke-width': str(stroke_width),
+            'fill': 'none'
+        }
+        
+        if 'style' in arc:
+            style['stroke-dasharray'] = self._scale_dash_array(arc['style'], stroke_width)
+            style['stroke-linecap'] = 'round'
+            
+        self.dwg.add(self.dwg.path(d=path_data, **style)) 

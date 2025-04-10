@@ -8,6 +8,7 @@ The project aims to convert LTspice schematics to SVG format. We are currently i
 - Default values for stroke width (3.0) and dot size multiplier (1.5) are now consistently used across the codebase
 - Test cases for WireRenderer are passing with 100% success rate
 - SVG output files are being saved in the test results directory for manual inspection
+- Working on implementing ShapeRenderer with comprehensive test cases
 
 ## Architecture Design
 ### New SVGRenderer Structure
@@ -16,7 +17,7 @@ The project aims to convert LTspice schematics to SVG format. We are currently i
   - WireRenderer (implemented)
   - SymbolRenderer (pending implementation)
   - TextRenderer (pending implementation)
-  - ShapeRenderer (pending implementation)
+  - ShapeRenderer (in progress)
 - Main SVGRenderer class for orchestration
 
 ### Logging System
@@ -191,6 +192,15 @@ LTspice to SVG Converter - A tool to convert LTspice schematics (.asc files) to 
   - Use float() for numeric attribute comparisons
   - Keep consistent attribute types across renderers
 
+- SVGWrite Drawing Behavior:
+  - Each svgwrite.Drawing instance automatically creates a <defs> element
+  - The <defs> element is always the first element in the drawing.elements list
+  - When writing tests, account for this automatic element:
+    - For empty drawings, expect len(elements) == 1
+    - For drawings with one shape, expect len(elements) == 2
+    - The actual shape element is always at index 1 or higher
+  - This behavior affects element counting and indexing in tests
+
 ## Flag Renderer Tests
 - Currently using scale=1.0 for testing
 - SVG output files saved in tests/flag_renderer/results/
@@ -223,4 +233,48 @@ LTspice to SVG Converter - A tool to convert LTspice schematics (.asc files) to 
 - Proper error handling for missing symbols is essential
 - Using dedicated renderer classes improves code modularity and maintainability
 - Coordinate scaling should be handled at the group level rather than globally
-- SVG attributes should be stored as numeric values for consistency 
+- SVG attributes should be stored as numeric values for consistency
+
+- SVG Attribute Type Handling:
+  - SVGWrite expects all attribute values to be strings
+  - Common type mismatches:
+    - Coordinates (x, y, cx, cy): Must convert numeric values to strings
+    - Dimensions (width, height, r): Must convert numeric values to strings
+    - Stroke width: Must convert numeric values to strings
+    - Path data values: Must convert all numeric values to strings
+  - Best practice: Convert all numeric values to strings using str() before passing to svgwrite
+  - Test assertions should expect string values (e.g., '10' not 10, '20.0' not 20.0)
+
+- SVG Style Attributes:
+  - Dash array patterns require special handling:
+    - Must be set in the style dictionary as 'stroke_dasharray'
+    - Pattern values must be scaled by stroke width
+    - Must be properly formatted as comma-separated string values
+    - Must be set before adding element to drawing
+  - Style attributes like stroke-width and stroke-dasharray use hyphens in SVG but underscores in svgwrite
+  - Always set stroke_linecap='round' for dashed/dotted lines for better appearance
+
+## Project State
+
+### Test Coverage
+- Comprehensive test suite for line style patterns implemented
+- Tests cover all five line styles:
+  - Solid line (no dash array)
+  - Dash pattern (4 units dash, 2 units gap)
+  - Dot pattern (very small dash to create dots, 2 units gap)
+  - Dash-dot pattern (dash, gap, dot, gap)
+  - Dash-dot-dot pattern (dash, gap, dot, gap, dot, gap)
+- Edge cases covered:
+  - Empty pattern handling
+  - Invalid pattern handling
+- Visual test case added:
+  - Generates SVG file with all line styles for visual comparison
+  - Located at tests/test_shape_renderer/results/line_styles.svg
+- All tests passing successfully
+
+### SVG Attribute Handling
+- SVG attributes use hyphen format (e.g., stroke-width, stroke-dasharray)
+- Style attributes are set in the style dictionary before adding elements
+- Coordinate values are stored as floats and converted to strings when needed
+- Test assertions handle floating-point comparisons appropriately
+- Test outputs saved in dedicated results directories for manual inspection 
