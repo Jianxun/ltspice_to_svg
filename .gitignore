@@ -36,7 +36,7 @@ env/
 .settings/
 
 # Project specific
-.cursorrules
+#.cursorrules
 output/
 .pytest_cache/
 .coverage
