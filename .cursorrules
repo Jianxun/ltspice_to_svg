@@ -1,0 +1,61 @@
+# Instructions
+
+## Project Setup
+
+- Most of our development will be in Python. Use the project-wide virtual environment `venv`. If it doesn't exist, create it.
+- Create a Git repository, create the `.gitignore` and `README.md` files.
+- Setup the context retaining directory and files if they don't exist(see next section)
+
+## Context Retaining
+There are several important files under the `context` folder. 
+Use the files inside it to track the context of our project. We will periodically start a new chat and these files are critical to accurately recover the context.
+
+### Memory 
+There should be a memory file: `context/memory.md`. 
+- The memory file will contain the state of the project, and any notes or relevant details you'd need to remember between chats.
+- Keep the memory up to date based on the project's current state. 
+- Do not annotate task completion in the memory file. It will be tracked in the to-do list (`todo.md`).
+
+
+### To-do list
+Keep track of all your tasks and action items using the `context/todo.md` file.
+
+When you receive a new task, you should:
+- Review the content of the existing tasks.
+- Clear old tasks that are irrelavent or completed. A task is not completed until all its sub-tasks are completed.
+- Add the new task, explain it and plan the steps you need to take to complete the task, add them as sub-tasks. 
+
+You can use todo markers to indicate the progress, e.g.
+[X] Task 1
+[ ] Task 2
+
+## Development Guidelines
+
+You should do task-based and test-driven development. For every task, you should write the tests, implement the code, and run the tests to make sure everything works. Organize all test cases under `/tests/{test name}`, save the test results under `/tests/{test name}/results`
+
+When the tests fail:
+- Troubleshoot and fix all the errors and warnings.
+
+When the tests pass:
+- Update the todo list to reflect the task being completed
+- Update the memory file to reflect the current state of the project
+- Commit the changes to the repository with a descriptive commit message
+- Update the `Lessons` section in the `.cursorrules` file to reflect anything that you've learned while working on the project.
+- Stop and we will open a new chat for the next task
+
+## Tools
+You can create python based tools to aid your operation.
+Save the tools your created under `tools`. Add the instructions on how to invoke the tools in this section
+
+### Tool1
+Example on how to invoke the tool
+...
+
+
+## Lessons
+
+### Git Workflow
+- Always check repository status (`git status`) before adding files to commit
+- This helps ensure we're only committing the intended changes and nothing else
+- It also helps catch any unexpected changes or files that shouldn't be committed
+
