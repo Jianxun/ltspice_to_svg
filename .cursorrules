@@ -59,3 +59,15 @@ Example on how to invoke the tool
 - This helps ensure we're only committing the intended changes and nothing else
 - It also helps catch any unexpected changes or files that shouldn't be committed
 
+### Testing with pytest
+- Use pytest fixtures for test setup and teardown
+- Organize test files with clear naming: `test_*.py`
+- Use descriptive test function names: `test_*`
+- Group related tests using classes
+- Use pytest's assert statements for cleaner test code
+- Save test results in dedicated directories under `/tests/{test name}/results`
+- Use pytest's built-in fixtures (e.g., `tmp_path`) for temporary files
+- Leverage pytest's parameterize decorator for testing multiple cases
+- Use pytest's markers for categorizing tests
+- Document test cases clearly with docstrings
+
