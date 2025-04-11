@@ -42,26 +42,27 @@ class ShapeRenderer(BaseRenderer):
         # Join the scaled lengths back into a pattern string
         return ','.join(scaled_lengths)
         
-    def render(self, shape: Dict, stroke_width: float = 1.0) -> None:
+    def render(self, shape: Dict, stroke_width: float = 1.0, target_group: Optional[svgwrite.container.Group] = None) -> None:
         """Render a single shape based on its type.
         
         Args:
             shape: Dictionary containing shape properties
             stroke_width: Width of the stroke
+            target_group: Optional group to add the shape to. If None, adds to drawing.
         """
         shape_type = shape.get('type')
         if shape_type == 'line':
-            self._render_line(shape, stroke_width)
+            self._render_line(shape, stroke_width, target_group)
         elif shape_type == 'circle':
-            self._render_circle(shape, stroke_width)
+            self._render_circle(shape, stroke_width, target_group)
         elif shape_type == 'rectangle':
-            self._render_rectangle(shape, stroke_width)
+            self._render_rectangle(shape, stroke_width, target_group)
         elif shape_type == 'arc':
-            self._render_arc(shape, stroke_width)
+            self._render_arc(shape, stroke_width, target_group)
         else:
             self.logger.warning(f"Unknown shape type: {shape_type}")
             
-    def _render_line(self, line: Dict, stroke_width: float) -> None:
+    def _render_line(self, line: Dict, stroke_width: float, target_group: Optional[svgwrite.container.Group] = None) -> None:
         """Render a line shape."""
         style = {
             'stroke': 'black',
@@ -72,18 +73,36 @@ class ShapeRenderer(BaseRenderer):
         if 'style' in line:
             style['stroke-dasharray'] = self._scale_dash_array(line['style'], stroke_width)
             
-        self.dwg.add(self.dwg.line(
+        line_element = self.dwg.line(
             (str(line['x1']), str(line['y1'])),
             (str(line['x2']), str(line['y2'])),
             **style
-        ))
+        )
         
-    def _render_circle(self, circle: Dict, stroke_width: float) -> None:
-        """Render a circle or ellipse shape."""
-        rx = abs(circle['x2'] - circle['x1']) / 2
-        ry = abs(circle['y2'] - circle['y1']) / 2
-        cx = (circle['x1'] + circle['x2']) / 2
-        cy = (circle['y1'] + circle['y2']) / 2
+        if target_group is not None:
+            target_group.add(line_element)
+        else:
+            self.dwg.add(line_element)
+        
+    def _render_circle(self, circle: Dict, stroke_width: float, target_group: Optional[svgwrite.container.Group] = None) -> None:
+        """Render a circle or ellipse shape.
+        
+        Supports two formats:
+        1. Bounding box format: {'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2}
+        2. Center-radius format: {'cx': cx, 'cy': cy, 'r': r}
+        """
+        # Check which format is being used
+        if 'cx' in circle and 'cy' in circle and 'r' in circle:
+            # Center-radius format
+            cx = circle['cx']
+            cy = circle['cy']
+            rx = ry = circle['r']
+        else:
+            # Bounding box format
+            rx = abs(circle['x2'] - circle['x1']) / 2
+            ry = abs(circle['y2'] - circle['y1']) / 2
+            cx = (circle['x1'] + circle['x2']) / 2
+            cy = (circle['y1'] + circle['y2']) / 2
         
         style = {
             'stroke': 'black',
@@ -96,19 +115,24 @@ class ShapeRenderer(BaseRenderer):
             style['stroke-linecap'] = 'round'
             
         if rx == ry:  # Perfect circle
-            self.dwg.add(self.dwg.circle(
+            element = self.dwg.circle(
                 center=(str(cx), str(cy)),
                 r=str(rx),
                 **style
-            ))
+            )
         else:  # Ellipse
-            self.dwg.add(self.dwg.ellipse(
+            element = self.dwg.ellipse(
                 center=(str(cx), str(cy)),
                 r=(str(rx), str(ry)),
                 **style
-            ))
+            )
             
-    def _render_rectangle(self, rect: Dict, stroke_width: float) -> None:
+        if target_group is not None:
+            target_group.add(element)
+        else:
+            self.dwg.add(element)
+            
+    def _render_rectangle(self, rect: Dict, stroke_width: float, target_group: Optional[svgwrite.container.Group] = None) -> None:
         """Render a rectangle shape."""
         x = min(rect['x1'], rect['x2'])
         y = min(rect['y1'], rect['y2'])
@@ -133,16 +157,21 @@ class ShapeRenderer(BaseRenderer):
                 ('L', [(str(x), str(y + height))]),
                 ('Z', [])
             ]
-            self.dwg.add(self.dwg.path(d=path_data, **style))
+            element = self.dwg.path(d=path_data, **style)
         else:
             # For solid rectangles, use rect element
-            self.dwg.add(self.dwg.rect(
+            element = self.dwg.rect(
                 insert=(str(x), str(y)),
                 size=(str(width), str(height)),
                 **style
-            ))
+            )
             
-    def _render_arc(self, arc: Dict, stroke_width: float) -> None:
+        if target_group is not None:
+            target_group.add(element)
+        else:
+            self.dwg.add(element)
+            
+    def _render_arc(self, arc: Dict, stroke_width: float, target_group: Optional[svgwrite.container.Group] = None) -> None:
         """Render an arc shape."""
         cx = (arc['x1'] + arc['x2']) / 2
         cy = (arc['y1'] + arc['y2']) / 2
@@ -180,4 +209,9 @@ class ShapeRenderer(BaseRenderer):
             style['stroke-dasharray'] = self._scale_dash_array(arc['style'], stroke_width)
             style['stroke-linecap'] = 'round'
             
-        self.dwg.add(self.dwg.path(d=path_data, **style)) 
+        element = self.dwg.path(d=path_data, **style)
+        
+        if target_group is not None:
+            target_group.add(element)
+        else:
+            self.dwg.add(element) 

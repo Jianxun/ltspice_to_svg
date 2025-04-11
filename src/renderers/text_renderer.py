@@ -3,7 +3,7 @@ Text renderer for LTspice schematics.
 Handles rendering of text elements in SVG format.
 """
 import svgwrite
-from typing import Dict
+from typing import Dict, Optional
 from .base_renderer import BaseRenderer
 
 class TextRenderer(BaseRenderer):
@@ -21,7 +21,7 @@ class TextRenderer(BaseRenderer):
         7: 7.0     # 7.0x base size
     }
     
-    def render(self, text: Dict, font_size: float = 22.0) -> None:
+    def render(self, text: Dict, font_size: float = 22.0, target_group: Optional[svgwrite.container.Group] = None) -> None:
         """Render a text element.
         
         Args:
@@ -32,6 +32,7 @@ class TextRenderer(BaseRenderer):
                 - justification: Text alignment ('Left', 'Right', 'Center', 'Top', 'Bottom')
                 - size_multiplier: Font size multiplier index (0-7)
             font_size: Base font size in pixels
+            target_group: Optional group to add the text to. If None, adds to drawing.
         """
         # Skip if no text content
         if not text.get('text'):
@@ -71,7 +72,11 @@ class TextRenderer(BaseRenderer):
             font_size,
             text_anchor
         )
-        self.dwg.add(text_element)
+        
+        if target_group is not None:
+            target_group.add(text_element)
+        else:
+            self.dwg.add(text_element)
         
     def _create_multiline_text(self, text_content: str, x: float, y: float, 
                             font_size: float, text_anchor: str = 'start', 

@@ -1,0 +1,62 @@
+{
+  "wires": [
+  ],
+  "symbols": [
+    {
+      "symbol_name": "pin",
+      "instance_name": "X2",
+      "x": -304,
+      "y": -128,
+      "rotation": "R180"
+    },
+    {
+      "symbol_name": "pin",
+      "instance_name": "X3",
+      "x": -320,
+      "y": -112,
+      "rotation": "R270"
+    },
+    {
+      "symbol_name": "pin",
+      "instance_name": "X4",
+      "x": -320,
+      "y": -144,
+      "rotation": "R90"
+    },
+    {
+      "symbol_name": "pin",
+      "instance_name": "X5",
+      "x": -336,
+      "y": -128,
+      "rotation": "R0"
+    },
+    {
+      "symbol_name": "pin",
+      "instance_name": "X1",
+      "x": -240,
+      "y": -128,
+      "rotation": "M180"
+    },
+    {
+      "symbol_name": "pin",
+      "instance_name": "X6",
+      "x": -224,
+      "y": -112,
+      "rotation": "M270"
+    },
+    {
+      "symbol_name": "pin",
+      "instance_name": "X7",
+      "x": -224,
+      "y": -144,
+      "rotation": "M90"
+    },
+    {
+      "symbol_name": "pin",
+      "instance_name": "X8",
+      "x": -208,
+      "y": -128,
+      "rotation": "M0"
+    }
+  ]
+}
