@@ -72,7 +72,7 @@ class SVGRenderer:
         self.dwg.viewbox(min_x, min_y, width, height)
         self._initialize_renderers()
         
-    def render_wires(self, stroke_width: float = 1.0, dot_size_multiplier: float = 0.75) -> None:
+    def render_wires(self, stroke_width: float = 2.0, dot_size_multiplier: float = 1.5) -> None:
         """Render all wires in the schematic.
         
         Args:
