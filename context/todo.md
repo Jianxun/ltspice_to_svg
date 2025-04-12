@@ -63,11 +63,11 @@
     - [ ] Implement test script
     - [ ] Add assertions for text count and content
     - [ ] Verify SVG output matches expected results
-  - [ ] Test3: Shapes
-    - [ ] Create test schematic with various shapes
-    - [ ] Implement test script
-    - [ ] Add assertions for shape count and types
-    - [ ] Verify SVG output matches expected results
+  - [X] Test3: Shapes
+    - [X] Create test schematic with various shapes
+    - [X] Implement test script
+    - [X] Add assertions for shape count and types
+    - [X] Verify SVG output matches expected results
   - [ ] Test4: Symbols
     - [ ] Create test schematic with various symbols
     - [ ] Implement test script
@@ -216,7 +216,18 @@
 [ ] Add performance tests
 [ ] Document test strategy
 
-## Current Task: Implement SVGRenderer Refactor
+## Current Task: Fix Arc Rendering and Angle Verification
+[ ] Fix arc angle verification in tests
+  - [ ] Update test to use LTspice control points for angle verification
+  - [ ] Add test cases for different arc configurations
+  - [ ] Verify both clockwise and counterclockwise arcs
+  - [ ] Add visual verification of rendered arcs
+
+## Next Tasks
+[ ] Add support for more LTspice shape styles
+[ ] Implement symbol rendering
+[ ] Add support for text elements
+[ ] Add support for flags and IO pins
 
 ## High Priority Tasks
 
@@ -272,3 +283,14 @@
 [ ] Add docstrings to all classes and methods
 [ ] Add unit tests for individual components
 [ ] Implement continuous integration
+
+## Text Rendering
+- [X] Basic text rendering implementation
+- [X] Handle text prefixes (! for spice directives, ; for comments)
+- [X] Support different text alignments (Left, Right, Center, Top, Bottom)
+- [X] Support vertical text orientations (VLeft, VRight, VCenter, VTop, VBottom)
+- [ ] Fine-tune text justifications:
+  - Adjust vertical positioning for different alignments
+  - Fine-tune horizontal offsets for better readability
+  - Optimize vertical text positioning and rotation
+  - Ensure consistent spacing across different text types

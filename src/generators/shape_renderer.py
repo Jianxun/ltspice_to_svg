@@ -152,19 +152,20 @@ def render_arc(dwg: svgwrite.Drawing, arc: Dict, scale: float, stroke_width: flo
     rx = abs(arc['x2'] - arc['x1']) / 2
     ry = abs(arc['y2'] - arc['y1']) / 2
     
+    # Use control points directly for start and end points
+    start_x = arc['x1']
+    start_y = arc['y1']
+    end_x = arc['x2']
+    end_y = arc['y2']
+    
     # Convert angles to radians for path calculation
     start_angle = math.radians(arc['start_angle'])
     end_angle = math.radians(arc['end_angle'])
     
-    # Calculate start and end points
-    start_x = cx + rx * math.cos(start_angle)
-    start_y = cy + ry * math.sin(start_angle)
-    end_x = cx + rx * math.cos(end_angle)
-    end_y = cy + ry * math.sin(end_angle)
-    
     # Determine if arc should be drawn clockwise or counterclockwise
-    large_arc = abs(end_angle - start_angle) > math.pi
-    sweep = end_angle > start_angle
+    angle_diff = (end_angle - start_angle + 2 * math.pi) % (2 * math.pi)
+    large_arc = angle_diff > math.pi
+    sweep = angle_diff > 0
     
     # Create path data
     path_data = [

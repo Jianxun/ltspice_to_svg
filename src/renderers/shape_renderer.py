@@ -193,29 +193,41 @@ class ShapeRenderer(BaseRenderer):
             
     def _render_arc(self, arc: Dict, stroke_width: float, target_group: Optional[svgwrite.container.Group] = None) -> None:
         """Render an arc shape."""
+        # Calculate center and radius
         cx = (arc['x1'] + arc['x2']) / 2
         cy = (arc['y1'] + arc['y2']) / 2
         rx = abs(arc['x2'] - arc['x1']) / 2
         ry = abs(arc['y2'] - arc['y1']) / 2
         
+        # Convert angles to radians for path calculation
         start_angle = math.radians(arc['start_angle'])
         end_angle = math.radians(arc['end_angle'])
         
+        # Calculate start and end points on the ellipse
         start_x = cx + rx * math.cos(start_angle)
         start_y = cy + ry * math.sin(start_angle)
         end_x = cx + rx * math.cos(end_angle)
         end_y = cy + ry * math.sin(end_angle)
         
-        large_arc = abs(end_angle - start_angle) > math.pi
-        sweep = end_angle > start_angle
+        # Calculate angle difference
+        angle_diff = (arc['end_angle'] - arc['start_angle'] + 360) % 360
         
+        # Determine if arc should be drawn clockwise or counterclockwise
+        # For counter-clockwise arcs, sweep should be 1
+        sweep = 1  # Always draw counter-clockwise
+        
+        # Determine if we need to use the large arc
+        # For angles > 180 degrees, large_arc should be 1
+        large_arc = 1 if angle_diff > 180 else 0
+        
+        # Create path data
         path_data = [
             ('M', [(str(start_x), str(start_y))]),
             ('A', [
-                str(rx), str(ry),
-                '0',
-                str(int(large_arc)), str(int(sweep)),
-                str(end_x), str(end_y)
+                str(rx), str(ry),  # radii
+                '0',  # x-axis-rotation
+                str(int(large_arc)), str(int(sweep)),  # large-arc and sweep flags
+                str(end_x), str(end_y)  # end point
             ])
         ]
         

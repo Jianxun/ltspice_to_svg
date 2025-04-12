@@ -29,8 +29,9 @@ class TextRenderer(BaseRenderer):
                 - x: X coordinate
                 - y: Y coordinate
                 - text: Text content
-                - justification: Text alignment ('Left', 'Right', 'Center', 'Top', 'Bottom')
+                - justification: Text alignment ('Left', 'Right', 'Center', 'Top', 'Bottom', 'VLeft', 'VRight', 'VCenter', 'VTop', 'VBottom')
                 - size_multiplier: Font size multiplier index (0-7)
+                - type: Text type ('spice' or 'comment')
             font_size: Base font size in pixels
             target_group: Optional group to add the text to. If None, adds to drawing.
         """
@@ -44,17 +45,37 @@ class TextRenderer(BaseRenderer):
         content = text.get('text', '')
         justification = text.get('justification', 'Left')
         size_multiplier = text.get('size_multiplier', 2)  # Default to size 2 (1.5x)
+        text_type = text.get('type', 'comment')  # Default to comment type
         
+        # Strip prefix based on text type
+        if text_type == 'spice' and content.startswith('!'):
+            content = content[1:]  # Remove ! prefix
+        elif text_type == 'comment' and content.startswith(';'):
+            content = content[1:]  # Remove ; prefix
+            
         # Calculate actual font size
         font_size = font_size * self.SIZE_MULTIPLIERS.get(size_multiplier, self.SIZE_MULTIPLIERS[2])
+        
+        # Handle vertical text (rotated 90 degrees counter-clockwise)
+        is_vertical = justification.startswith('V')
+        if is_vertical:
+            # Remove 'V' prefix for alignment handling
+            justification = justification[1:]
+            # Create a group for the rotated text
+            group = self.dwg.g()
+            # Add rotation transform
+            group.attribs['transform'] = f"rotate(-90, {x}, {y})"
         
         # Set text alignment based on justification
         if justification == 'Left':
             text_anchor = 'start'
+            x_offset = 0
         elif justification == 'Right':
             text_anchor = 'end'
-        else:  # Center, Top, Bottom all use middle horizontal alignment
+            x_offset = 0
+        else:  # Center, Top, Bottom
             text_anchor = 'middle'
+            x_offset = 0
         
         # Adjust vertical position based on justification
         if justification in ['Left', 'Center', 'Right']:
@@ -67,16 +88,24 @@ class TextRenderer(BaseRenderer):
         # Create multiline text element
         text_element = self._create_multiline_text(
             content,
-            x,
+            x + x_offset,
             y + y_offset,
             font_size,
             text_anchor
         )
         
-        if target_group is not None:
-            target_group.add(text_element)
+        # Add text to group or drawing
+        if is_vertical:
+            group.add(text_element)
+            if target_group is not None:
+                target_group.add(group)
+            else:
+                self.dwg.add(group)
         else:
-            self.dwg.add(text_element)
+            if target_group is not None:
+                target_group.add(text_element)
+            else:
+                self.dwg.add(text_element)
         
     def _create_multiline_text(self, text_content: str, x: float, y: float, 
                             font_size: float, text_anchor: str = 'start', 

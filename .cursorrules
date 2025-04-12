@@ -47,6 +47,17 @@ When the tests pass:
 You can create python based tools to aid your operation.
 Save the tools your created under `tools`. Add the instructions on how to invoke the tools in this section
 
+### fix_encoding.py
+A tool to fix the encoding of LTspice files (.asc and .asy) to UTF-16LE without BOM.
+Usage:
+```bash
+python tools/fix_encoding.py <path_to_ltspice_file>
+```
+The tool will:
+1. Try to read the file with UTF-16 encoding first
+2. If that fails, try reading as binary and attempt to decode with various encodings
+3. Write the content back in UTF-16LE without BOM
+
 ### Tool1
 Example on how to invoke the tool
 ...

@@ -53,7 +53,7 @@ class SVGRenderer:
         optional_keys = ['symbols', 'texts', 'shapes']
         for key in optional_keys:
             if key not in schematic_data:
-                schematic_data[key] = []
+                schematic_data[key] = {}
                 
         self.schematic_data = schematic_data
         self.symbol_data = symbol_data or {}  # Store symbol data
@@ -94,12 +94,56 @@ class SVGRenderer:
         pass
             
     def render_texts(self, font_size: float = 22.0) -> None:
-        """Placeholder for text rendering."""
-        pass
+        """Render all text elements in the schematic.
+        
+        Args:
+            font_size (float): Base font size in pixels.
+        """
+        if not self.schematic_data or not self.dwg:
+            raise ValueError("Schematic not loaded or drawing not created")
+            
+        text_renderer = self._renderers['text']
+        texts = self.schematic_data.get('texts', [])
+        print(f"Found {len(texts)} text elements to render:")
+        for text in texts:
+            print(f"Rendering text: {text}")
+            text_renderer.render(text, font_size)
             
     def render_shapes(self, stroke_width: float = 1.0) -> None:
-        """Placeholder for shape rendering."""
-        pass
+        """Render all shapes in the schematic.
+        
+        Args:
+            stroke_width (float): Width of the shape lines.
+        """
+        if not self.schematic_data or not self.dwg:
+            raise ValueError("Schematic not loaded or drawing not created")
+            
+        shape_renderer = self._renderers['shape']
+        shapes = self.schematic_data.get('shapes', {})
+        
+        # Render lines
+        for line in shapes.get('lines', []):
+            shape_data = line.copy()
+            shape_data['type'] = 'line'
+            shape_renderer.render(shape_data, stroke_width)
+            
+        # Render rectangles
+        for rect in shapes.get('rectangles', []):
+            shape_data = rect.copy()
+            shape_data['type'] = 'rectangle'
+            shape_renderer.render(shape_data, stroke_width)
+            
+        # Render circles
+        for circle in shapes.get('circles', []):
+            shape_data = circle.copy()
+            shape_data['type'] = 'circle'
+            shape_renderer.render(shape_data, stroke_width)
+            
+        # Render arcs
+        for arc in shapes.get('arcs', []):
+            shape_data = arc.copy()
+            shape_data['type'] = 'arc'
+            shape_renderer.render(shape_data, stroke_width)
             
     def save(self) -> None:
         """Save the SVG drawing to file."""
@@ -150,6 +194,25 @@ class SVGRenderer:
         # Calculate bounds from wires
         for wire in self.schematic_data.get('wires', []):
             self._update_bounds(wire['x1'], wire['y1'], wire['x2'], wire['y2'])
+            
+        # Calculate bounds from shapes
+        shapes = self.schematic_data.get('shapes', {})
+        
+        # Lines
+        for line in shapes.get('lines', []):
+            self._update_bounds(line['x1'], line['y1'], line['x2'], line['y2'])
+            
+        # Rectangles
+        for rect in shapes.get('rectangles', []):
+            self._update_bounds(rect['x1'], rect['y1'], rect['x2'], rect['y2'])
+            
+        # Circles
+        for circle in shapes.get('circles', []):
+            self._update_bounds(circle['x1'], circle['y1'], circle['x2'], circle['y2'])
+            
+        # Arcs
+        for arc in shapes.get('arcs', []):
+            self._update_bounds(arc['x1'], arc['y1'], arc['x2'], arc['y2'])
             
         # Calculate dimensions
         width = self._max_x - self._min_x
