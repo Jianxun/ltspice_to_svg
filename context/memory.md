@@ -33,6 +33,21 @@ This project aims to convert LTspice schematic files (.asc) to SVG format. The p
   - Symbol shapes are rendered correctly within their groups
   - Symbol transformations (translation, rotation) are applied correctly
   - Stroke width customization is supported for all elements
+  - Added detailed assertions for symbol elements:
+    - Voltage source: 5 lines, 1 circle
+    - NMOS: 14 lines
+  - LTSPICE_LIB_PATH environment variable is properly configured
+- Test5 (Symbol Texts) has been successfully implemented and verified
+  - Successfully implemented symbol text rendering
+  - Added support for text elements in symbols (pin labels, etc.)
+  - Fixed text rendering in mirrored symbols by applying counter-mirroring transform
+  - Fixed text coordinate transformation order to ensure proper positioning
+  - Fixed text group transformation to avoid double translation
+  - Improved text transformation by applying counter-mirroring to each text individually
+  - Simplified text rendering by removing unnecessary group nesting
+  - Verified text positioning, orientation, and visibility
+  - Tested with NMOS transistors in different orientations (R0, R270, M0)
+  - Generated SVG and JSON output files with proper text rendering
 
 ## Technical Details
 - The project uses Python 3.12.9
@@ -57,7 +72,9 @@ This project aims to convert LTspice schematic files (.asc) to SVG format. The p
 │   ├── generators/
 │   │   └── svg_renderer.py
 │   ├── parsers/
-│   │   └── asc_parser.py
+│   │   ├── asc_parser.py
+│   │   ├── asy_parser.py
+│   │   └── schematic_parser.py
 │   └── renderers/
 │       ├── wire_renderer.py
 │       ├── shape_renderer.py
@@ -108,6 +125,15 @@ This project aims to convert LTspice schematic files (.asc) to SVG format. The p
     - Correct handling of symbol definitions from both local files and LTspice library
     - Careful application of transformations (translation, rotation)
     - Proper delegation of shape and text rendering to specialized renderers
+12. Detailed assertions for symbol elements help ensure correct parsing and rendering
+13. Environment variables (LTSPICE_LIB_PATH) are crucial for accessing LTspice library symbols
+
+## Next Steps
+- Implement Test5 (Symbol Texts)
+  - Focus on text positioning and orientation
+  - Handle text visibility and readability
+  - Test with different stroke widths
+  - Verify text transformations
 
 ### Arc Rendering Details
 - LTspice specifies arcs using 8 coordinates: `ARC Normal x1 y1 x2 y2 x3 y3 x4 y4`

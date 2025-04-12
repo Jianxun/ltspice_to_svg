@@ -36,6 +36,7 @@
   - [X] Add visual test results
   - [X] Consolidate test cases
   - [X] Improve transformation testing with pin symbols
+  - [X] Add detailed element count assertions
 
 [X] Create Integration Test Plan
   - [X] Define test structure
@@ -77,33 +78,35 @@
     - [X] Test symbol transformations
     - [X] Verify symbol shapes and texts
     - [X] Test stroke width customization
-  - [ ] Test5: Symbol Texts
-    - [ ] Create test schematic with symbols containing text
-    - [ ] Implement test script
-    - [ ] Add assertions for symbol text count and content
-    - [ ] Verify SVG output matches expected results
-    - [ ] Test text positioning and orientation
-    - [ ] Verify text visibility and readability
+    - [X] Add detailed element count assertions
+  - [X] Test5: Symbol Text Rendering
+    - [X] Implement basic text rendering for symbols
+    - [X] Add support for text elements in symbols (pin labels, etc.)
+    - [X] Fix text rendering in mirrored symbols
+    - [X] Verify text positioning and orientation
+    - [X] Test with different symbol orientations
+    - [X] Generate SVG and JSON output files
+    - [X] Update documentation
 
 ## Current Task: Test5 (Symbol Texts)
-[ ] Create test schematic for symbol texts
-  - [ ] Add symbols with various text elements
-  - [ ] Include different text positions
-  - [ ] Add symbols with different orientations
-  - [ ] Test text visibility with different stroke widths
+[X] Create test schematic for symbol texts
+  - [X] Add symbols with various text elements
+  - [X] Include different text positions
+  - [X] Add symbols with different orientations
+  - [X] Test text visibility with different stroke widths
 
-[ ] Implement symbol text test script
-  - [ ] Add assertions for text count
-  - [ ] Verify text positions
-  - [ ] Check text orientations
-  - [ ] Verify text content
-  - [ ] Test text transformations
+[X] Implement symbol text test script
+  - [X] Add assertions for text count
+  - [X] Verify text positions
+  - [X] Check text orientations
+  - [X] Verify text content
+  - [X] Test text transformations
 
-[ ] Verify symbol text rendering
-  - [ ] Check text group creation
-  - [ ] Verify text visibility
-  - [ ] Test text readability
-  - [ ] Verify text transformations
+[X] Verify symbol text rendering
+  - [X] Check text group creation
+  - [X] Verify text visibility
+  - [X] Test text readability
+  - [X] Verify text transformations
 
 ## Future Tasks
 [ ] Implement Logging System
@@ -248,19 +251,6 @@
 - [ ] Create test directory structure
 - [ ] Write test cases for viewBox calculation
 - [ ] Write test cases for T-junction detection
-- [ ] Write test cases for symbol rendering
-- [ ] Write test cases for error handling
-- [ ] Add test data for various scenarios
-
-### 2. Verify Symbol Rendering
-- [ ] Test symbol transformations (rotation, position)
-- [ ] Verify symbol shape rendering
-- [ ] Test symbol text rendering
-- [ ] Check symbol group creation
-- [ ] Validate symbol data handling
-
-### 3. Test T-junction Detection
-- [ ] Test horizontal wire intersections
 
 ## Medium Priority Tasks
 
