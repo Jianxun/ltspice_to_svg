@@ -5,6 +5,7 @@
 - Core SVG rendering functionality is implemented
 - Modular design with separate renderers for different schematic elements
 - Currently working on feature/explicit-svg-rendering branch
+- Integration test plan has been created and needs review
 
 ## Core Components
 
@@ -43,13 +44,25 @@ src/
       └── shape_renderer.py
 ```
 
+## Integration Testing
+- Integration test plan created in `context/integration_test_plan.md`
+- Plan includes:
+  - Test structure and organization
+  - Detailed test categories
+  - Comparison methods
+  - Test implementation framework
+  - Data collection strategy
+  - Validation process
+  - Success criteria
+
 ## Known Issues
 1. Need to add unit tests for the new implementation
 2. Need to verify symbol rendering with transformations
 3. Need to test T-junction detection with various wire configurations
 
 ## Next Steps
-- Create test cases for SVGRenderer
-- Verify symbol rendering functionality
-- Test T-junction detection
-- Add performance optimizations if needed
+- Review and refine integration test plan
+- Set up test environment
+- Create initial test cases
+- Implement comparison tools
+- Begin testing process
