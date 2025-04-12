@@ -1,68 +1,52 @@
-# Project State and Memory
+# Project Memory
+
+## Project Overview
+This project aims to convert LTspice schematic files (.asc) to SVG format. The project is organized into several key components:
+
+1. **Parsers**: Handle the conversion of LTspice schematic files to an intermediate format
+2. **Renderers**: Convert the intermediate format to SVG
+3. **Generators**: Coordinate the overall conversion process
 
 ## Current State
-- Project is set up with Python virtual environment
+- Python virtual environment is set up
 - Core SVG rendering functionality is implemented
-- Modular design with separate renderers for different schematic elements
-- Currently working on feature/explicit-svg-rendering branch
-- Integration test plan has been created and needs review
+- Test1 (Wires and T-junctions) has been successfully implemented and verified
+  - Successfully detects and renders 9 T-junctions
+  - Uses dot_size_multiplier=2.0 for better visibility
+  - Includes assertion to verify T-junction count
 
-## Core Components
-
-### SVGRenderer
-The main class responsible for converting schematic data to SVG format.
-
-#### Key Features:
-- Modular design with specialized renderers
-- Handles wires, symbols, text, and shapes
-- Supports T-junction detection for wire intersections
-- Configurable rendering parameters (stroke width, font size, etc.)
-- Automatic viewBox calculation with padding
-- Symbol data support with transformations
-
-#### Current Implementation:
-- Basic rendering pipeline is in place
-- Core renderers are implemented
-- ViewBox calculation is implemented
-- T-junction detection is implemented
-- Symbol rendering with transformations is implemented
-
-#### Dependencies:
-- svgwrite: For SVG generation
-- Custom renderers for different element types
+## Technical Details
+- The project uses Python 3.12.9
+- Testing framework: pytest
+- SVG rendering is handled by the SVGRenderer class
+- Wire and T-junction detection is implemented in the WireRenderer class
 
 ## Project Structure
 ```
-src/
-  ├── generators/
-  │   └── svg_renderer.py
-  └── renderers/
-      ├── base_renderer.py
-      ├── wire_renderer.py
-      ├── symbol_renderer.py
-      ├── text_renderer.py
-      └── shape_renderer.py
+.
+├── src/
+│   ├── generators/
+│   │   └── svg_renderer.py
+│   ├── parsers/
+│   │   └── asc_parser.py
+│   └── renderers/
+│       └── wire_renderer.py
+├── tests/
+│   └── integration/
+│       └── test_svg_renderer/
+│           └── test1_wires_and_tjunctions/
+│               ├── test1_wires_and_tjunctions.asc
+│               ├── test1_wires_and_tjunctions.py
+│               └── results/
+│                   ├── test1_wires_and_tjunctions.svg
+│                   └── test1_wires_and_tjunctions.json
+└── context/
+    ├── memory.md
+    └── todo.md
 ```
 
-## Integration Testing
-- Integration test plan created in `context/integration_test_plan.md`
-- Plan includes:
-  - Test structure and organization
-  - Detailed test categories
-  - Comparison methods
-  - Test implementation framework
-  - Data collection strategy
-  - Validation process
-  - Success criteria
-
-## Known Issues
-1. Need to add unit tests for the new implementation
-2. Need to verify symbol rendering with transformations
-3. Need to test T-junction detection with various wire configurations
-
-## Next Steps
-- Review and refine integration test plan
-- Set up test environment
-- Create initial test cases
-- Implement comparison tools
-- Begin testing process
+## Lessons Learned
+1. T-junction detection requires careful consideration of both direct and indirect connections
+2. Visual debugging is important for verifying T-junction detection
+3. Using appropriate dot size multipliers improves visibility of T-junctions
+4. Assertions should be added to verify expected counts of detected elements

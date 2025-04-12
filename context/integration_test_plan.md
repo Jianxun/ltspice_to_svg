@@ -1,7 +1,7 @@
 # SVGRenderer Integration Test Plan
 
 ## Overview
-This document outlines the integration testing strategy for comparing the new `SVGRenderer` implementation with the existing `SVGGenerator`. The goal is to ensure that the new implementation produces equivalent or better results while maintaining backward compatibility.
+This document outlines the integration testing strategy for the `SVGRenderer` implementation. The goal is to ensure that the renderer produces accurate and consistent SVG outputs for various schematic configurations.
 
 ## Test Structure
 
@@ -9,22 +9,38 @@ This document outlines the integration testing strategy for comparing the new `S
 ```
 tests/
   └── integration/
-      ├── test_svg_renderer_integration.py    # Main test file
-      ├── test_data/
-      │   ├── schematics/                     # Original LTspice schematics
-      │   │   ├── basic/                      # Basic test cases
-      │   │   ├── complex/                    # Complex test cases
-      │   │   └── edge_cases/                 # Edge case test cases
-      │   └── expected_outputs/               # Expected SVG outputs
-      └── results/
-          ├── svg_generator/                  # Outputs from SVGGenerator
-          └── svg_renderer/                   # Outputs from SVGRenderer
+      └── test_svg_renderer/
+          ├── test1_wires_and_tjunctions/
+          │   ├── test_wires_and_tjunctions.py
+          │   ├── wires_and_tjunctions.asc
+          │   └── results/
+          │       └── wires_and_tjunctions.svg
+          ├── test2_text/
+          │   ├── test_text.py
+          │   ├── text.asc
+          │   └── results/
+          │       └── text.svg
+          ├── test3_shapes/
+          │   ├── test_shapes.py
+          │   ├── shapes.asc
+          │   └── results/
+          │       └── shapes.svg
+          ├── test4_symbols/
+          │   ├── test_symbols.py
+          │   ├── symbols.asc
+          │   └── results/
+          │       └── symbols.svg
+          └── test5_symbol_texts/
+              ├── test_symbol_texts.py
+              ├── symbol_texts.asc
+              └── results/
+                  └── symbol_texts.svg
 ```
 
 ### Test Categories
 
-#### 1. Basic Elements
-- [ ] Simple wires
+#### 1. Wires and T-junctions
+- [ ] Basic wire segments
   - [ ] Horizontal wires
   - [ ] Vertical wires
   - [ ] Diagonal wires
@@ -33,72 +49,73 @@ tests/
   - [ ] Basic T-junctions
   - [ ] Multiple T-junctions
   - [ ] T-junctions with different angles
+- [ ] Complex wire networks
+  - [ ] Grid patterns
+  - [ ] Star patterns
+  - [ ] Complex intersections
+
+#### 2. Text Elements
+- [ ] Comment text
+  - [ ] Single line comments
+  - [ ] Multi-line comments
+  - [ ] Comments with special characters
+- [ ] SPICE directives
+  - [ ] Basic directives
+  - [ ] Complex directives
+  - [ ] Multiple directives
+- [ ] Text properties
+  - [ ] Different alignments
+  - [ ] Different font sizes
+  - [ ] Text rotation
+  - [ ] Text positioning
+
+#### 3. Basic Shapes
+- [ ] Lines
+  - [ ] Basic lines
+  - [ ] Dashed lines
+  - [ ] Arrow lines
+- [ ] Circles
+  - [ ] Basic circles
+  - [ ] Filled circles
+  - [ ] Circles with different radii
+- [ ] Rectangles
+  - [ ] Basic rectangles
+  - [ ] Filled rectangles
+  - [ ] Rounded rectangles
+- [ ] Arcs
+  - [ ] Basic arcs
+  - [ ] Different arc angles
+  - [ ] Arc styles
+
+#### 4. Symbols with Wires
 - [ ] Basic symbols
   - [ ] Resistors
   - [ ] Capacitors
   - [ ] Inductors
   - [ ] Diodes
   - [ ] Transistors
-- [ ] Text elements
-  - [ ] Single line text
-  - [ ] Multi-line text
-  - [ ] Text with special characters
-  - [ ] Text with different alignments
-- [ ] Basic shapes
-  - [ ] Lines
-  - [ ] Circles
-  - [ ] Rectangles
-  - [ ] Arcs
+- [ ] Symbol connections
+  - [ ] Single connection
+  - [ ] Multiple connections
+  - [ ] Complex networks
+- [ ] Symbol transformations
+  - [ ] Rotation
+  - [ ] Scaling
+  - [ ] Positioning
 
-#### 2. Complex Scenarios
-- [ ] Nested symbols
-  - [ ] Hierarchical symbols
-  - [ ] Symbols within symbols
-- [ ] Rotated elements
-  - [ ] Rotated symbols
-  - [ ] Rotated text
-  - [ ] Rotated shapes
-- [ ] Complex wire networks
-  - [ ] Grid patterns
-  - [ ] Star patterns
-  - [ ] Complex intersections
-- [ ] Mixed element types
-  - [ ] Combination of all element types
-  - [ ] Overlapping elements
-  - [ ] Elements with different styles
-
-#### 3. Edge Cases
-- [ ] Empty schematics
-- [ ] Single element schematics
-- [ ] Maximum complexity schematics
-- [ ] Schematics with special characters
-- [ ] Schematics with unusual rotations
-- [ ] Schematics with extreme coordinates
-- [ ] Schematics with minimal spacing
-
-## Comparison Methods
-
-### 1. Visual Comparison
-- Generate SVGs from both implementations
-- Compare using image comparison tools
-- Document visual differences
-- Verify rendering quality
-
-### 2. Structural Comparison
-- Parse both SVGs using `xml.etree.ElementTree`
-- Compare:
-  - Element counts
-  - Element positions
-  - Element attributes
-  - ViewBox dimensions
-  - Group structures
-  - Transformation matrices
-
-### 3. Performance Comparison
-- Measure execution time
-- Track memory usage
-- Compare resource utilization
-- Document performance differences
+#### 5. Symbol Texts
+- [ ] Reference designators
+  - [ ] Basic references
+  - [ ] Multiple references
+  - [ ] Reference positioning
+- [ ] Value texts
+  - [ ] Basic values
+  - [ ] Complex values
+  - [ ] Value positioning
+- [ ] Text properties
+  - [ ] Font sizes
+  - [ ] Text rotation
+  - [ ] Text alignment
 
 ## Test Implementation
 
@@ -106,7 +123,6 @@ tests/
 ```python
 import pytest
 from pathlib import Path
-from src.generators.svg_generator import SVGGenerator
 from src.generators.svg_renderer import SVGRenderer
 
 class TestSVGRendererIntegration:
@@ -118,48 +134,58 @@ class TestSVGRendererIntegration:
         ]
     
     @pytest.fixture
-    def svg_generator(self):
-        return SVGGenerator()
-    
-    @pytest.fixture
     def svg_renderer(self):
         return SVGRenderer()
     
-    def test_basic_elements(self, test_schematics, svg_generator, svg_renderer):
-        """Test basic schematic elements"""
+    def test_wires_and_tjunctions(self, test_schematics, svg_renderer):
+        """Test wire and T-junction rendering"""
         for schematic in test_schematics:
             # Load schematic data
             schematic_data = load_schematic_data(schematic)
             
-            # Generate SVGs
-            generator_output = generate_svg(svg_generator, schematic_data)
-            renderer_output = generate_svg(svg_renderer, schematic_data)
+            # Generate SVG
+            svg_output = generate_svg(svg_renderer, schematic_data)
             
-            # Compare outputs
-            compare_svgs(generator_output, renderer_output)
+            # Verify output
+            verify_svg_output(svg_output, schematic)
 ```
 
-### Comparison Tools
-- `xml.etree.ElementTree` for SVG parsing
-- `pytest-benchmark` for performance testing
-- `pytest-image-diff` for visual comparison
-- Custom comparison utilities for structural analysis
+### Verification Methods
+
+#### 1. Visual Verification
+- Generate SVGs from test schematics
+- Manually inspect rendering quality
+- Document any visual issues
+
+#### 2. Structural Verification
+- Parse generated SVGs using `xml.etree.ElementTree`
+- Verify:
+  - Element counts
+  - Element positions
+  - Element attributes
+  - ViewBox dimensions
+  - Group structures
+  - Transformation matrices
+
+#### 3. Performance Verification
+- Measure execution time
+- Track memory usage
+- Document performance metrics
 
 ## Test Data Collection
 
 ### Data Sources
-1. Existing LTspice schematics
-2. Generated test cases
-3. Edge case scenarios
-4. Real-world examples
+1. Test schematics provided for each category
+2. Edge case scenarios
+3. Real-world examples
 
 ### Data Requirements
 - Each test case should include:
-  - Original LTspice schematic
+  - Original schematic
   - Parsed schematic data
-  - Expected output from SVGGenerator
-  - Actual output from SVGRenderer
-  - Comparison results
+  - Expected SVG output
+  - Actual SVG output
+  - Verification results
 
 ## Validation Process
 
@@ -170,36 +196,37 @@ class TestSVGRendererIntegration:
 
 2. **Implementation**
    - [ ] Write test cases
-   - [ ] Implement comparison tools
+   - [ ] Implement verification tools
    - [ ] Set up automated testing
 
 3. **Execution**
    - [ ] Run tests
-   - [ ] Document differences
-   - [ ] Analyze results
+   - [ ] Document results
+   - [ ] Analyze output
 
 4. **Analysis**
-   - [ ] Categorize differences
-   - [ ] Determine if differences are:
+   - [ ] Categorize issues
+   - [ ] Determine if issues are:
      - Implementation bugs
-     - Intended improvements
-     - Unintended side effects
+     - Design limitations
+     - Edge cases
 
 5. **Documentation**
    - [ ] Document test results
-   - [ ] Create comparison reports
+   - [ ] Create verification reports
    - [ ] Update implementation as needed
 
 ## Success Criteria
 
-1. **Functional Equivalence**
-   - SVGRenderer produces equivalent or better results
-   - No regression in functionality
+1. **Functional Correctness**
    - All test cases pass
+   - No rendering errors
+   - Accurate element placement
+   - Correct attribute values
 
 2. **Performance**
-   - Comparable or better performance
-   - No significant memory issues
+   - Acceptable execution time
+   - No memory issues
    - Scalable for large schematics
 
 3. **Code Quality**
@@ -212,5 +239,5 @@ class TestSVGRendererIntegration:
 1. [ ] Review and refine test plan
 2. [ ] Set up test environment
 3. [ ] Create initial test cases
-4. [ ] Implement comparison tools
+4. [ ] Implement verification tools
 5. [ ] Begin testing process 

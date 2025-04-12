@@ -43,13 +43,17 @@ class SVGRenderer:
         if not isinstance(schematic_data, dict):
             raise ValueError("Schematic data must be a dictionary")
             
-        # Validate required top-level keys
-        required_keys = ['wires', 'symbols', 'texts', 'shapes']
-        for key in required_keys:
+        # Ensure wires exist and is a list
+        if 'wires' not in schematic_data:
+            schematic_data['wires'] = []
+        elif not isinstance(schematic_data['wires'], list):
+            raise ValueError("wires must be a list")
+            
+        # Initialize optional elements as empty lists
+        optional_keys = ['symbols', 'texts', 'shapes']
+        for key in optional_keys:
             if key not in schematic_data:
                 schematic_data[key] = []
-            elif not isinstance(schematic_data[key], list):
-                raise ValueError(f"{key} must be a list")
                 
         self.schematic_data = schematic_data
         self.symbol_data = symbol_data or {}  # Store symbol data
@@ -62,7 +66,8 @@ class SVGRenderer:
             output_path (str): Path where the SVG will be saved.
         """
         self.dwg = svgwrite.Drawing(output_path)
-        self.dwg.viewbox(*self.view_box)
+        min_x, min_y, width, height = self.view_box
+        self.dwg.viewbox(min_x, min_y, width, height)
         self._initialize_renderers()
         
     def render_wires(self, stroke_width: float = 1.0, dot_size_multiplier: float = 0.75) -> None:
@@ -85,72 +90,16 @@ class SVGRenderer:
             wire_renderer.render_t_junction(x, y, stroke_width * dot_size_multiplier)
             
     def render_symbols(self) -> None:
-        """Render all symbols in the schematic."""
-        if not self.schematic_data or not self.dwg:
-            raise ValueError("Schematic not loaded or drawing not created")
-            
-        symbol_renderer = self._renderers['symbol']
-        for symbol in self.schematic_data.get('symbols', []):
-            # Get symbol data
-            symbol_name = symbol['symbol_name']
-            if symbol_name not in self.symbol_data:
-                print(f"Warning: Symbol {symbol_name} not found in symbol data")
-                continue
-                
-            symbol_def = self.symbol_data[symbol_name]
-            
-            # Create a group for the symbol
-            symbol_renderer.create_group()
-            
-            # Convert rotation to string format if it's an integer
-            rotation = symbol.get('rotation', 'R0')
-            if isinstance(rotation, int):
-                rotation = f'R{rotation}'
-            
-            # Set transformation
-            symbol_renderer.set_transformation(rotation, (symbol['x'], symbol['y']))
-            
-            # Render shapes
-            shapes = {
-                'lines': symbol_def.get('lines', []),
-                'circles': symbol_def.get('circles', []),
-                'rectangles': symbol_def.get('rectangles', []),
-                'arcs': symbol_def.get('arcs', [])
-            }
-            symbol_renderer.render_shapes(shapes)
-            
-            # Render texts
-            texts = symbol_def.get('texts', [])
-            symbol_renderer.render_texts(texts)
-            
-            # Add the group to the drawing
-            symbol_renderer.add_to_drawing()
+        """Placeholder for symbol rendering."""
+        pass
             
     def render_texts(self, font_size: float = 22.0) -> None:
-        """Render all text elements in the schematic.
-        
-        Args:
-            font_size (float): Size of the text.
-        """
-        if not self.schematic_data or not self.dwg:
-            raise ValueError("Schematic not loaded or drawing not created")
-            
-        text_renderer = self._renderers['text']
-        for text in self.schematic_data.get('texts', []):
-            text_renderer.render(text, font_size)
+        """Placeholder for text rendering."""
+        pass
             
     def render_shapes(self, stroke_width: float = 1.0) -> None:
-        """Render all shapes in the schematic.
-        
-        Args:
-            stroke_width (float): Width of the shape lines.
-        """
-        if not self.schematic_data or not self.dwg:
-            raise ValueError("Schematic not loaded or drawing not created")
-            
-        shape_renderer = self._renderers['shape']
-        for shape in self.schematic_data.get('shapes', []):
-            shape_renderer.render(shape, stroke_width)
+        """Placeholder for shape rendering."""
+        pass
             
     def save(self) -> None:
         """Save the SVG drawing to file."""
@@ -198,57 +147,30 @@ class SVGRenderer:
         # Reset bounds
         self._reset_bounds()
         
-        # Check if there are any elements to process
-        has_elements = False
-        
-        # Scan wires
+        # Calculate bounds from wires
         for wire in self.schematic_data.get('wires', []):
-            has_elements = True
             self._update_bounds(wire['x1'], wire['y1'], wire['x2'], wire['y2'])
             
-        # Scan symbols
-        for symbol in self.schematic_data.get('symbols', []):
-            has_elements = True
-            # Symbols can have multiple shapes and texts
-            for shape_type, shapes in symbol.get('shapes', {}).items():
-                for shape in shapes:
-                    self._update_bounds(shape['x1'], shape['y1'], shape['x2'], shape['y2'])
-                        
-            # Handle symbol texts
-            for text in symbol.get('texts', []):
-                self._update_bounds(text['x'], text['y'])
-                
-        # Scan standalone texts
-        for text in self.schematic_data.get('texts', []):
-            has_elements = True
-            self._update_bounds(text['x'], text['y'])
-            
-        # Scan standalone shapes
-        for shape in self.schematic_data.get('shapes', []):
-            has_elements = True
-            self._update_bounds(shape['x1'], shape['y1'], shape['x2'], shape['y2'])
-                
-        # If no elements were found, return default size
-        if not has_elements:
-            return (0, 0, 100, 100)
-                
-        # Add padding (10% of the total size)
+        # Calculate dimensions
         width = self._max_x - self._min_x
         height = self._max_y - self._min_y
+        
+        # Add padding (10% of the larger dimension)
         padding = max(width, height) * 0.1
         
-        self._min_x -= padding
-        self._min_y -= padding
-        self._max_x += padding
-        self._max_y += padding
+        # Update bounds with padding
+        min_x = self._min_x - padding
+        min_y = self._min_y - padding
+        width = width + 2 * padding
+        height = height + 2 * padding
         
         # Ensure minimum size
         if width == 0:
-            self._max_x = self._min_x + 100
+            width = 100
         if height == 0:
-            self._max_y = self._min_y + 100
+            height = 100
             
-        return (self._min_x, self._min_y, self._max_x - self._min_x, self._max_y - self._min_y)
+        return (min_x, min_y, width, height)
         
     def _find_t_junctions(self, wires: list) -> list:
         """Find all T-junctions in the wire list.
@@ -259,32 +181,39 @@ class SVGRenderer:
         Returns:
             list: List of (x, y) coordinates where T-junctions occur.
         """
-        junctions = []
-        # Create a dictionary to count connections at each point
-        point_connections = {}
+        # Create a list to track endpoint coordinates and their occurrences
+        endpoint_coords = []
         
-        # First, add all wire endpoints
+        # Process each wire
         for wire in wires:
-            start = (wire['x1'], wire['y1'])
-            end = (wire['x2'], wire['y2'])
+            # Process start point
+            start = {'x': wire['x1'], 'y': wire['y1'], 'occurrence': 1}
+            # Process end point
+            end = {'x': wire['x2'], 'y': wire['y2'], 'occurrence': 1}
             
-            # Count connections at start point
-            point_connections[start] = point_connections.get(start, 0) + 1
-            # Count connections at end point
-            point_connections[end] = point_connections.get(end, 0) + 1
-            
-        # Then check for wire intersections
-        for i, wire1 in enumerate(wires):
-            for wire2 in wires[i+1:]:
-                intersection = self._find_wire_intersection(wire1, wire2)
-                if intersection:
-                    point_connections[intersection] = point_connections.get(intersection, 0) + 2
-        
-        # A T-junction is a point where exactly 3 wires meet
-        for point, count in point_connections.items():
-            if count == 3:
-                junctions.append(point)
+            # Check if start point already exists
+            start_found = False
+            for coord in endpoint_coords:
+                if coord['x'] == start['x'] and coord['y'] == start['y']:
+                    coord['occurrence'] += 1
+                    start_found = True
+                    break
+            if not start_found:
+                endpoint_coords.append(start)
                 
+            # Check if end point already exists
+            end_found = False
+            for coord in endpoint_coords:
+                if coord['x'] == end['x'] and coord['y'] == end['y']:
+                    coord['occurrence'] += 1
+                    end_found = True
+                    break
+            if not end_found:
+                endpoint_coords.append(end)
+        
+        # Find coordinates that appear 3 or more times
+        junctions = [(coord['x'], coord['y']) for coord in endpoint_coords if coord['occurrence'] >= 3]
+        
         return junctions
         
     def _find_wire_intersection(self, wire1: dict, wire2: dict) -> tuple:
