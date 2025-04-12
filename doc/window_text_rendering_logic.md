@@ -6,43 +6,36 @@ Window text is a special type of text used to render symbol properties (e.g., sy
 ## Data Structure
 
 ### Window Definition in Symbols
-Windows are defined in the `symbols.{symbol_name}.windows` array with the following properties:
-- `property_id`: Identifies the type of property
-  - `0`: Symbol name
-  - `3`: Symbol value
-- `x`, `y`: Default coordinates for text placement
-- `justification`: Text alignment (e.g., "Left", "VBottom", "VTop")
-- `size_multiplier`: Controls text size
-
-### Window Overrides in Schematic
-Overrides are specified in `schematic.symbols[].window_overrides` with the following structure:
-- Key: Property ID (e.g., "0", "3")
-- Value: Override properties
-  - `x`, `y`: Override coordinates
-  - `justification`: Override text alignment
-  - `size_multiplier`: Override size multiplier (standardized to match window definition)
-
-## Example
+Windows are defined in the `symbols.{symbol_name}.windows` dictionary with property IDs as keys:
 ```json
-// Symbol definition
-"windows": [
-  {
-    "property_id": 0,  // Name window
+"windows": {
+  "0": {  // Name window
     "x": 24,
     "y": 16,
     "justification": "Left",
     "size_multiplier": 2
   },
-  {
-    "property_id": 3,  // Value window
+  "3": {  // Value window
     "x": 24,
     "y": 96,
     "justification": "Left",
     "size_multiplier": 2
   }
-]
+}
+```
 
-// Instance overrides
+Each window has the following properties:
+- Key: Property ID (e.g., "0", "3")
+  - `0`: Symbol name
+  - `3`: Symbol value
+- Value: Window properties
+  - `x`, `y`: Default coordinates for text placement
+  - `justification`: Text alignment (e.g., "Left", "VBottom", "VTop")
+  - `size_multiplier`: Controls text size
+
+### Window Overrides in Schematic
+Overrides are specified in `schematic.symbols[].window_overrides` with the same structure:
+```json
 "window_overrides": {
   "0": {
     "x": -32,
@@ -63,7 +56,7 @@ Overrides are specified in `schematic.symbols[].window_overrides` with the follo
 
 1. For each symbol instance:
    - Get the base symbol definition from `symbols.{symbol_name}`
-   - For each window in the symbol's `windows` array:
+   - For each property ID in the symbol's `windows` dictionary:
      a. Check if the instance has a corresponding property value
      b. If no property value exists, skip this window
      c. If property exists:
