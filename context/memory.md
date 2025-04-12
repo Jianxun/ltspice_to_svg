@@ -53,6 +53,19 @@ This project aims to convert LTspice schematic files (.asc) to SVG format. The p
     - Text properties (position, justification, size) are maintained
   - Fixed test assertions to expect 5 symbols (3 NMOS and 2 voltage sources)
   - Successfully regenerated test5_symbol_texts.json with correct symbol count
+  - Updated window text metadata format to use property IDs as dictionary keys:
+    - Changed windows from array to dictionary format
+    - Property IDs are now used as keys instead of being stored in the data
+    - Structure is consistent between window definitions and overrides
+    - Updated documentation to reflect the new format
+  - Implemented window text rendering:
+    - Added render_window_texts method to SymbolRenderer
+    - Handles window definitions from symbol definitions
+    - Supports window overrides from symbol instances
+    - Properly handles property values (instance names and values)
+    - Applies text transformations (mirroring, rotation)
+    - Handles text justification and size multipliers
+    - Successfully tested with various symbol types and orientations
 
 ## Technical Details
 - The project uses Python 3.12.9
@@ -71,6 +84,7 @@ This project aims to convert LTspice schematic files (.asc) to SVG format. The p
   - Symbol group creation and transformation
   - Symbol shape and text rendering
   - Text justification and mirroring support
+  - Window text rendering with property resolution and overrides
 
 ## Project Structure
 ```
@@ -138,13 +152,20 @@ This project aims to convert LTspice schematic files (.asc) to SVG format. The p
     - Proper delegation of shape and text rendering to specialized renderers
 12. Detailed assertions for symbol elements help ensure correct parsing and rendering
 13. Environment variables (LTSPICE_LIB_PATH) are crucial for accessing LTspice library symbols
+14. Window text rendering requires:
+    - Proper handling of window definitions and overrides
+    - Careful property value resolution
+    - Correct application of text transformations
+    - Proper handling of text justification in mirrored symbols
+    - Consistent font size scaling
 
 ## Next Steps
-- Implement Test5 (Symbol Texts)
-  - Focus on text positioning and orientation
-  - Handle text visibility and readability
-  - Test with different stroke widths
-  - Verify text transformations
+- Implement Test2 (Text) to handle standalone text elements
+  - Add text elements with different justifications
+  - Add text elements with different font sizes
+  - Add text elements with special characters
+  - Add text elements with multiple lines
+  - Add text elements with different orientations
 
 ### Arc Rendering Details
 - LTspice specifies arcs using 8 coordinates: `ARC Normal x1 y1 x2 y2 x3 y3 x4 y4`
@@ -175,15 +196,6 @@ This project aims to convert LTspice schematic files (.asc) to SVG format. The p
    - Verifies counter-clockwise direction
    - Verifies large arc flag based on angle difference
 
-### Next Task: Test4 (Symbols)
-- Need to implement symbol rendering tests
-- Will need to handle:
-  - Symbol transformations (rotation, position)
-  - Symbol shape rendering
-  - Symbol text rendering
-  - Symbol group creation
-  - Symbol data handling
-
 ### Dependencies
 - SVG path command format: `M start_x start_y A rx ry x-axis-rotation large-arc sweep end_x end_y`
 - Using svgwrite library for SVG generation
@@ -195,3 +207,9 @@ This project aims to convert LTspice schematic files (.asc) to SVG format. The p
 - For mirrored symbols, text is counter-mirrored to maintain readability while preserving position
 - Text justification is handled by setting the appropriate SVG text-anchor property
 - Font size is calculated based on the size multiplier and base font size
+- Window text rendering handles:
+  - Window definitions from symbol definitions
+  - Window overrides from symbol instances
+  - Property values (instance names and values)
+  - Text transformations (mirroring, rotation)
+  - Text justification and size multipliers

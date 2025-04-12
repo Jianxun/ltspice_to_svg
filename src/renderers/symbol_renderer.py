@@ -134,6 +134,56 @@ class SymbolRenderer(BaseRenderer):
         except Exception as e:
             self.logger.error(f"Failed to render texts: {str(e)}")
             raise
+
+    def render_window_texts(self, symbol: Dict, symbol_def: Dict, font_size: float = 22.0) -> None:
+        """Render window texts for the current symbol.
+        
+        Args:
+            symbol: Dictionary containing symbol instance data
+            symbol_def: Dictionary containing symbol definition
+            font_size: Base font size in pixels
+        """
+        if not self._current_group:
+            raise ValueError("No group created. Call create_group() first.")
+
+        try:
+            # Get window definitions from symbol definition
+            windows = symbol_def.get('windows', {})
+            if not windows:
+                self.logger.debug("No window definitions found in symbol")
+                return
+
+            # Get window overrides from symbol instance
+            window_overrides = symbol.get('window_overrides', {})
+
+            # Process each window
+            for property_id, window_def in windows.items():
+                # Get the property value from the symbol instance
+                property_value = symbol.get(f'property_{property_id}')
+                if not property_value:
+                    self.logger.debug(f"No value found for property {property_id}")
+                    continue
+
+                # Get window settings, using overrides if available
+                window_settings = window_overrides.get(property_id, window_def)
+
+                # Create text data
+                text_data = {
+                    'x': window_settings['x'],
+                    'y': window_settings['y'],
+                    'text': property_value,
+                    'justification': window_settings['justification'],
+                    'size_multiplier': window_settings['size_multiplier'],
+                    'is_mirrored': self._is_mirrored
+                }
+
+                # Render the text
+                self.logger.info(f"Rendering window text for property {property_id}: {text_data}")
+                self.text_renderer.render(text_data, font_size, target_group=self._current_group)
+
+        except Exception as e:
+            self.logger.error(f"Failed to render window texts: {str(e)}")
+            raise
             
     def add_to_drawing(self) -> None:
         """Add the current group to the drawing.
@@ -174,6 +224,10 @@ class SymbolRenderer(BaseRenderer):
             # Render texts if present
             if 'texts' in symbol:
                 self.render_texts(symbol['texts'])
+            
+            # Render window texts if present
+            if 'symbol_def' in symbol:
+                self.render_window_texts(symbol, symbol['symbol_def'])
             
             # Add the group to the drawing
             self.add_to_drawing()

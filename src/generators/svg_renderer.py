@@ -132,7 +132,11 @@ class SVGRenderer:
                     'rectangles': symbol_def.get('rectangles', []),
                     'arcs': symbol_def.get('arcs', [])
                 },
-                'texts': symbol_def.get('texts', [])
+                'texts': symbol_def.get('texts', []),
+                'symbol_def': symbol_def,  # Add symbol definition for window text rendering
+                'window_overrides': symbol.get('window_overrides', {}),  # Add window overrides
+                'property_0': symbol.get('instance_name', ''),  # Add instance name as property_0
+                'property_3': symbol.get('value', '')  # Add value as property_3
             }
             
             # Render the symbol

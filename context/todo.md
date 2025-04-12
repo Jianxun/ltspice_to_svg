@@ -37,6 +37,12 @@
   - [X] Consolidate test cases
   - [X] Improve transformation testing with pin symbols
   - [X] Add detailed element count assertions
+  - [X] Implement window text rendering
+    - [X] Add render_window_texts method
+    - [X] Handle window definitions and overrides
+    - [X] Support property value resolution
+    - [X] Apply text transformations
+    - [X] Test with various symbol types and orientations
 
 [X] Create Integration Test Plan
   - [X] Define test structure
@@ -93,6 +99,13 @@
       [X] Add tests for text properties in mirrored symbols
     - [X] Update documentation with final text rendering solution
     - [X] Regenerate test5_symbol_texts.json with correct symbol count
+    - [X] Update window text metadata format to use property IDs as dictionary keys
+    - [X] Implement window text rendering
+      - [X] Add render_window_texts method
+      - [X] Handle window definitions and overrides
+      - [X] Support property value resolution
+      - [X] Apply text transformations
+      - [X] Test with various symbol types and orientations
 
 ## Current Task: Test2 (Text)
 [ ] Create test schematic for standalone text elements
@@ -237,7 +250,6 @@
 [X] Add more test cases
 [X] Improve test coverage
 [ ] Add performance tests
-[ ] Document test strategy
 
 ## High Priority Tasks
 
