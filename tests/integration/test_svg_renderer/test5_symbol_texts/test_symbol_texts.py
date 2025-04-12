@@ -1,7 +1,12 @@
 import os
 import pytest
+import logging
 from src.generators.svg_renderer import SVGRenderer
 from src.parsers.schematic_parser import SchematicParser
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 @pytest.fixture
 def test_schematic():
@@ -85,8 +90,30 @@ def test_symbol_texts(test_schematic, output_dir):
     assert 'S' in text_contents, "NMOS should have source pin label"
     assert 'D' in text_contents, "NMOS should have drain pin label"
     
-    # Verify text positions
+    # Verify text positions and properties
     for text in nmos_symbol['texts']:
         assert 'x' in text, "Text should have x coordinate"
         assert 'y' in text, "Text should have y coordinate"
-        assert 'justification' in text, "Text should have justification" 
+        assert 'justification' in text, "Text should have justification"
+        assert 'size_multiplier' in text, "Text should have size multiplier"
+        assert 'text' in text, "Text should have content"
+    
+    # Read the SVG output to verify text rendering
+    with open(svg_output, 'r') as f:
+        svg_content = f.read()
+    
+    # Verify text elements are present in the SVG
+    assert '<text' in svg_content, "SVG should contain text elements"
+    
+    # Verify text content is present
+    for text in nmos_symbol['texts']:
+        assert text['text'] in svg_content, f"SVG should contain text '{text['text']}'"
+    
+    # Verify text transformations for mirrored symbol
+    mirrored_symbol = next(symbol for symbol in schematic['symbols'] if symbol.get('rotation', 'R0') == 'M0')
+    assert mirrored_symbol is not None, "Should find mirrored NMOS symbol"
+    
+    # The text elements should be rendered with the correct transformations
+    # We can't easily parse the SVG to verify exact positions, but we can check
+    # that the text elements are present and the transformations are applied
+    assert 'scale(-1,1)' in svg_content, "SVG should contain mirroring transformation" 

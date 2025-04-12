@@ -82,31 +82,24 @@
   - [X] Test5: Symbol Text Rendering
     - [X] Implement basic text rendering for symbols
     - [X] Add support for text elements in symbols (pin labels, etc.)
-    - [X] Fix text rendering in mirrored symbols
-    - [X] Verify text positioning and orientation
     - [X] Test with different symbol orientations
-    - [X] Generate SVG and JSON output files
-    - [X] Update documentation
+    - [X] Generate basic SVG and JSON output
+    - [X] Fix mirrored text rendering issues:
+      [X] Review and fix text positioning in mirrored symbols
+      [X] Correct text transformation order
+      [X] Fix font size inconsistencies
+      [X] Handle text justification in mirrored context
+      [X] Verify text readability and alignment
+      [X] Add tests for text properties in mirrored symbols
+    - [X] Update documentation with final text rendering solution
 
-## Current Task: Test5 (Symbol Texts)
-[X] Create test schematic for symbol texts
-  - [X] Add symbols with various text elements
-  - [X] Include different text positions
-  - [X] Add symbols with different orientations
-  - [X] Test text visibility with different stroke widths
-
-[X] Implement symbol text test script
-  - [X] Add assertions for text count
-  - [X] Verify text positions
-  - [X] Check text orientations
-  - [X] Verify text content
-  - [X] Test text transformations
-
-[X] Verify symbol text rendering
-  - [X] Check text group creation
-  - [X] Verify text visibility
-  - [X] Test text readability
-  - [X] Verify text transformations
+## Current Task: Test2 (Text)
+[ ] Create test schematic for standalone text elements
+  - [ ] Add text elements with different justifications
+  - [ ] Add text elements with different font sizes
+  - [ ] Add text elements with special characters
+  - [ ] Add text elements with multiple lines
+  - [ ] Add text elements with different orientations
 
 ## Future Tasks
 [ ] Implement Logging System

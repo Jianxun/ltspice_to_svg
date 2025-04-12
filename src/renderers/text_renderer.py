@@ -4,10 +4,20 @@ Handles rendering of text elements in SVG format.
 """
 import svgwrite
 from typing import Dict, Optional
+import logging
 from .base_renderer import BaseRenderer
 
 class TextRenderer(BaseRenderer):
     """Renderer for text elements."""
+    
+    def __init__(self, dwg: svgwrite.Drawing):
+        """Initialize the text renderer.
+        
+        Args:
+            dwg: The SVG drawing to render into
+        """
+        super().__init__(dwg)
+        self.logger = logging.getLogger(self.__class__.__name__)
     
     # Font size multiplier mapping
     SIZE_MULTIPLIERS = {
@@ -32,11 +42,13 @@ class TextRenderer(BaseRenderer):
                 - justification: Text alignment ('Left', 'Right', 'Center', 'Top', 'Bottom', 'VLeft', 'VRight', 'VCenter', 'VTop', 'VBottom')
                 - size_multiplier: Font size multiplier index (0-7)
                 - type: Text type ('spice' or 'comment')
+                - is_mirrored: Whether the text is in a mirrored symbol
             font_size: Base font size in pixels
             target_group: Optional group to add the text to. If None, adds to drawing.
         """
         # Skip if no text content
         if not text.get('text'):
+            self.logger.warning("Skipping text element with no content")
             return
             
         # Get text properties with defaults
@@ -46,15 +58,23 @@ class TextRenderer(BaseRenderer):
         justification = text.get('justification', 'Left')
         size_multiplier = text.get('size_multiplier', 2)  # Default to size 2 (1.5x)
         text_type = text.get('type', 'comment')  # Default to comment type
+        is_mirrored = text.get('is_mirrored', False)  # Default to not mirrored
+        
+        self.logger.info(f"Rendering text: '{content}' at ({x},{y})")
+        self.logger.info(f"Properties: justification={justification}, size_multiplier={size_multiplier}, "
+                         f"text_type={text_type}, is_mirrored={is_mirrored}")
         
         # Strip prefix based on text type
         if text_type == 'spice' and content.startswith('!'):
             content = content[1:]  # Remove ! prefix
+            self.logger.debug("Removed '!' prefix from spice text")
         elif text_type == 'comment' and content.startswith(';'):
             content = content[1:]  # Remove ; prefix
+            self.logger.debug("Removed ';' prefix from comment text")
             
         # Calculate actual font size
         font_size = font_size * self.SIZE_MULTIPLIERS.get(size_multiplier, self.SIZE_MULTIPLIERS[2])
+        self.logger.debug(f"Calculated font size: {font_size}px")
         
         # Handle vertical text (rotated 90 degrees counter-clockwise)
         is_vertical = justification.startswith('V')
@@ -65,17 +85,20 @@ class TextRenderer(BaseRenderer):
             group = self.dwg.g()
             # Add rotation transform
             group.attribs['transform'] = f"rotate(-90, {x}, {y})"
+            self.logger.debug(f"Vertical text rotation: {group.attribs['transform']}")
         
         # Set text alignment based on justification
         if justification == 'Left':
-            text_anchor = 'start'
+            text_anchor = 'start' if not is_mirrored else 'end'
             x_offset = 0
         elif justification == 'Right':
-            text_anchor = 'end'
+            text_anchor = 'end' if not is_mirrored else 'start'
             x_offset = 0
         else:  # Center, Top, Bottom
             text_anchor = 'middle'
             x_offset = 0
+        
+        self.logger.info(f"Text anchor: {text_anchor} (original justification: {justification}, mirrored: {is_mirrored})")
         
         # Adjust vertical position based on justification
         if justification in ['Left', 'Center', 'Right']:
@@ -84,6 +107,8 @@ class TextRenderer(BaseRenderer):
             y_offset = font_size * 0.6  # Move down
         else:  # Bottom
             y_offset = font_size * 0.0  # Move up
+        
+        self.logger.debug(f"Position offsets: x={x_offset}, y={y_offset}")
         
         # Create multiline text element
         text_element = self._create_multiline_text(
@@ -99,13 +124,17 @@ class TextRenderer(BaseRenderer):
             group.add(text_element)
             if target_group is not None:
                 target_group.add(group)
+                self.logger.debug("Added vertical text group to target group")
             else:
                 self.dwg.add(group)
+                self.logger.debug("Added vertical text group to drawing")
         else:
             if target_group is not None:
                 target_group.add(text_element)
+                self.logger.debug("Added text element to target group")
             else:
                 self.dwg.add(text_element)
+                self.logger.debug("Added text element to drawing")
         
     def _create_multiline_text(self, text_content: str, x: float, y: float, 
                             font_size: float, text_anchor: str = 'start', 
@@ -132,6 +161,8 @@ class TextRenderer(BaseRenderer):
         # Calculate line height
         line_height = font_size * line_spacing
         
+        self.logger.debug(f"Creating multiline text at ({x},{y}) with {len(lines)} lines")
+        
         # Add each line as a separate text element
         for i, line in enumerate(lines):
             # Calculate y position for this line
@@ -144,6 +175,7 @@ class TextRenderer(BaseRenderer):
                                       font_size=f'{font_size}px',
                                       text_anchor=text_anchor,
                                       fill='black')
+            self.logger.debug(f"Line {i}: '{line}' at ({x},{line_y}) with anchor {text_anchor}")
             group.add(text_element)
             
         return group 

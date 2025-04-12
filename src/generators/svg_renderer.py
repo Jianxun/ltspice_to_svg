@@ -1,4 +1,5 @@
 import svgwrite
+import logging
 from typing import Dict, Optional
 from src.renderers.base_renderer import BaseRenderer
 from src.renderers.wire_renderer import WireRenderer
@@ -17,6 +18,7 @@ class SVGRenderer:
         self._max_x = float('-inf')
         self._max_y = float('-inf')
         self.symbol_data = None  # Add symbol data storage
+        self.logger = logging.getLogger(self.__class__.__name__)
         
     def _initialize_renderers(self):
         """Initialize all renderers."""
@@ -93,26 +95,37 @@ class SVGRenderer:
         """Render all symbols in the schematic.
         
         Args:
-            stroke_width (float): Width of the symbol lines.
+            stroke_width (float): Width of lines in pixels.
         """
         if not self.schematic_data or not self.dwg:
             raise ValueError("Schematic not loaded or drawing not created")
             
         symbol_renderer = self._renderers['symbol']
-        for symbol in self.schematic_data.get('symbols', []):
-            # Get symbol definition from symbol_data
-            symbol_name = symbol.get('symbol_name', '')
-            symbol_def = self.symbol_data.get(symbol_name, {})
+        symbols = self.schematic_data.get('symbols', [])
+        self.logger.info(f"Found {len(symbols)} symbols to render")
+        
+        for i, symbol in enumerate(symbols):
+            self.logger.info(f"Rendering symbol {i+1}/{len(symbols)}:")
+            symbol_name = symbol.get('symbol_name', 'Unknown')
+            rotation = symbol.get('rotation', 'R0')
+            is_mirrored = rotation.startswith('M')
+            self.logger.debug(f"  Name: {symbol_name}")
+            self.logger.debug(f"  Instance: {symbol.get('instance_name', 'Unknown')}")
+            self.logger.debug(f"  Position: ({symbol.get('x', 0)}, {symbol.get('y', 0)})")
+            self.logger.debug(f"  Rotation: {rotation} (mirrored: {is_mirrored})")
             
-            # Create translation tuple from x, y coordinates
-            translation = (symbol['x'], symbol['y'])
+            # Get symbol definition
+            if not symbol_name or symbol_name not in self.symbol_data:
+                self.logger.warning(f"Symbol definition not found for {symbol_name}")
+                continue
+                
+            symbol_def = self.symbol_data[symbol_name]
+            self.logger.debug(f"  Definition found with {len(symbol_def.get('texts', []))} text elements")
             
-            # Create symbol data dictionary
-            symbol_data = {
-                'rotation': symbol.get('rotation', 'R0'),
-                'translation': translation,
-                'instance_name': symbol.get('instance_name', ''),
-                'symbol_name': symbol_name,
+            # Create symbol data for rendering
+            render_data = {
+                'rotation': rotation,
+                'translation': (symbol.get('x', 0), symbol.get('y', 0)),
                 'shapes': {
                     'lines': symbol_def.get('lines', []),
                     'circles': symbol_def.get('circles', []),
@@ -123,7 +136,7 @@ class SVGRenderer:
             }
             
             # Render the symbol
-            symbol_renderer.render(symbol_data, stroke_width)
+            symbol_renderer.render(render_data, stroke_width)
             
     def render_texts(self, font_size: float = 22.0) -> None:
         """Render all text elements in the schematic.
@@ -136,9 +149,14 @@ class SVGRenderer:
             
         text_renderer = self._renderers['text']
         texts = self.schematic_data.get('texts', [])
-        print(f"Found {len(texts)} text elements to render:")
-        for text in texts:
-            print(f"Rendering text: {text}")
+        self.logger.info(f"Found {len(texts)} text elements to render")
+        for i, text in enumerate(texts):
+            self.logger.info(f"Rendering text {i+1}/{len(texts)}:")
+            self.logger.debug(f"  Content: {text.get('text', '')}")
+            self.logger.debug(f"  Position: ({text.get('x', 0)}, {text.get('y', 0)})")
+            self.logger.debug(f"  Justification: {text.get('justification', 'Left')}")
+            self.logger.debug(f"  Size multiplier: {text.get('size_multiplier', 2)}")
+            self.logger.debug(f"  Type: {text.get('type', 'comment')}")
             text_renderer.render(text, font_size)
             
     def render_shapes(self, stroke_width: float = 1.0) -> None:

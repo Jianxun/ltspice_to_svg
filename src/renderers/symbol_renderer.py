@@ -27,6 +27,7 @@ class SymbolRenderer(BaseRenderer):
         self.shape_renderer = ShapeRenderer(dwg)
         self.text_renderer = TextRenderer(dwg)
         self._current_group = None
+        self._is_mirrored = False
         
     def create_group(self) -> svgwrite.container.Group:
         """Create a new group for a symbol.
@@ -35,6 +36,7 @@ class SymbolRenderer(BaseRenderer):
             An SVG group element
         """
         self._current_group = self.dwg.g()
+        self._is_mirrored = False
         return self._current_group
         
     def set_transformation(self, rotation: str, translation: Tuple[float, float]) -> None:
@@ -62,16 +64,24 @@ class SymbolRenderer(BaseRenderer):
                 self.logger.warning(f"Invalid rotation value: {rotation}")
                 angle = 0
                 
-            # Apply mirroring if needed
-            if rotation_type == 'M':
-                transform.append("scale(-1,1)")  # Mirror across Y axis
+            # Set mirrored state
+            self._is_mirrored = (rotation_type == 'M')
+            self.logger.info(f"Setting symbol transformation - Position: ({x},{y}), "
+                           f"Rotation: {rotation}, Mirrored: {self._is_mirrored}")
                 
-            # Apply rotation
+            # Apply rotation first
             if angle != 0:
                 transform.append(f"rotate({angle})")
+                self.logger.debug(f"Added rotation transform: rotate({angle})")
+                
+            # Apply mirroring after rotation
+            if self._is_mirrored:
+                transform.append("scale(-1,1)")  # Mirror across Y axis
+                self.logger.debug("Added mirroring transform: scale(-1,1)")
                 
             # Set the transform
             self._current_group.attribs['transform'] = ' '.join(transform)
+            self.logger.info(f"Final transform: {self._current_group.attribs['transform']}")
             
         except Exception as e:
             self.logger.error(f"Failed to set transformation: {str(e)}")
@@ -113,8 +123,13 @@ class SymbolRenderer(BaseRenderer):
             raise ValueError("No group created. Call create_group() first.")
             
         try:
+            self.logger.info(f"Rendering {len(texts)} text elements for {'mirrored' if self._is_mirrored else 'normal'} symbol")
             for text in texts:
-                self.text_renderer.render(text, font_size, target_group=self._current_group)
+                # Add mirrored state to text data
+                text_data = text.copy()
+                text_data['is_mirrored'] = self._is_mirrored
+                self.logger.info(f"Text data before rendering: {text_data}")
+                self.text_renderer.render(text_data, font_size, target_group=self._current_group)
                 
         except Exception as e:
             self.logger.error(f"Failed to render texts: {str(e)}")
@@ -131,6 +146,7 @@ class SymbolRenderer(BaseRenderer):
         try:
             self.dwg.add(self._current_group)
             self._current_group = None  # Reset current group
+            self._is_mirrored = False  # Reset mirrored state
             
         except Exception as e:
             self.logger.error(f"Failed to add group to drawing: {str(e)}")

@@ -279,67 +279,6 @@
           "text": "D"
         }
       ]
-    },
-    "Voltage": {
-      "lines": [
-        {
-          "x1": -8,
-          "y1": 36,
-          "x2": 8,
-          "y2": 36
-        },
-        {
-          "x1": -8,
-          "y1": 76,
-          "x2": 8,
-          "y2": 76
-        },
-        {
-          "x1": 0,
-          "y1": 28,
-          "x2": 0,
-          "y2": 44
-        },
-        {
-          "x1": 0,
-          "y1": 96,
-          "x2": 0,
-          "y2": 88
-        },
-        {
-          "x1": 0,
-          "y1": 16,
-          "x2": 0,
-          "y2": 24
-        }
-      ],
-      "circles": [
-        {
-          "x1": -32,
-          "y1": 24,
-          "x2": 32,
-          "y2": 88
-        }
-      ],
-      "rectangles": [],
-      "arcs": [],
-      "windows": [
-        {
-          "property_id": 0,
-          "x": 24,
-          "y": 16,
-          "justification": "Left",
-          "size_multiplier": 2
-        },
-        {
-          "property_id": 3,
-          "x": 24,
-          "y": 96,
-          "justification": "Left",
-          "size_multiplier": 2
-        }
-      ],
-      "texts": []
     }
   }
 }
