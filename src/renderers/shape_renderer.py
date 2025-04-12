@@ -222,12 +222,12 @@ class ShapeRenderer(BaseRenderer):
         style = {
             'stroke': 'black',
             'stroke-width': str(stroke_width),
-            'fill': 'none'
+            'fill': 'none',
+            'stroke-linecap': 'round'
         }
         
         if 'style' in arc:
             style['stroke-dasharray'] = self._scale_dash_array(arc['style'], stroke_width)
-            style['stroke-linecap'] = 'round'
             
         element = self.dwg.path(d=path_data, **style)
         
