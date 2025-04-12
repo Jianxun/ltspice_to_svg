@@ -42,14 +42,18 @@ class ShapeRenderer(BaseRenderer):
         # Join the scaled lengths back into a pattern string
         return ','.join(scaled_lengths)
         
-    def render(self, shape: Dict, stroke_width: float = 1.0, target_group: Optional[svgwrite.container.Group] = None) -> None:
+    def render(self, shape: Dict, stroke_width: float = None, target_group: Optional[svgwrite.container.Group] = None) -> None:
         """Render a single shape based on its type.
         
         Args:
             shape: Dictionary containing shape properties
-            stroke_width: Width of the stroke
+            stroke_width: Width of the stroke. If None, uses the default stroke width.
             target_group: Optional group to add the shape to. If None, adds to drawing.
         """
+        # Use default stroke width if not specified
+        if stroke_width is None:
+            stroke_width = self.DEFAULT_STROKE_WIDTH
+            
         shape_type = shape.get('type')
         if shape_type == 'line':
             self._render_line(shape, stroke_width, target_group)

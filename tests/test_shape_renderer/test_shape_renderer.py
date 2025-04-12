@@ -306,3 +306,64 @@ def test_visual_line_styles(renderer, dwg):
     
     # Verify all lines were added (accounting for defs element and text elements)
     assert len(dwg.elements) == 1 + len(styles) * 2  # defs + (line + text) for each style 
+
+def test_group_rendering(renderer, dwg):
+    """Test rendering triangles both directly and to a group."""
+    # Set drawing size
+    dwg['width'] = '400px'
+    dwg['height'] = '200px'
+    
+    # Create a group for the second triangle
+    group = dwg.g(id='triangle_group')
+    
+    # Define triangle vertices (equilateral triangle)
+    # First triangle (direct rendering)
+    vertices1 = [
+        (50, 150),  # bottom left
+        (150, 150),  # bottom right
+        (100, 50)   # top
+    ]
+    
+    # Second triangle (group rendering)
+    vertices2 = [
+        (250, 150),  # bottom left
+        (350, 150),  # bottom right
+        (300, 50)    # top
+    ]
+    
+    # Render first triangle directly to drawing
+    for i in range(3):
+        line = {
+            'type': 'line',
+            'x1': vertices1[i][0],
+            'y1': vertices1[i][1],
+            'x2': vertices1[(i + 1) % 3][0],
+            'y2': vertices1[(i + 1) % 3][1]
+        }
+        renderer.render(line)
+    
+    # Render second triangle to group
+    for i in range(3):
+        line = {
+            'type': 'line',
+            'x1': vertices2[i][0],
+            'y1': vertices2[i][1],
+            'x2': vertices2[(i + 1) % 3][0],
+            'y2': vertices2[(i + 1) % 3][1]
+        }
+        renderer.render(line, target_group=group)
+    
+    # Add group to drawing
+    dwg.add(group)
+    
+    # Save for manual inspection
+    dwg.saveas('tests/test_shape_renderer/results/group_rendering.svg')
+    
+    # Verify elements are in correct containers
+    # Main drawing should have defs + 3 lines + group
+    assert len(dwg.elements) == 5  # defs + 3 lines + group
+    
+    # Group should have 3 lines
+    assert len(group.elements) == 3
+    for element in group.elements:
+        assert element.elementname == 'line' 

@@ -44,6 +44,10 @@ htmlcov/
 commit_msg.txt
 tools/
 
+# Test results
+tests/*/results/
+tests/*/*/results/
+
 # OS specific
 .DS_Store
 Thumbs.db 

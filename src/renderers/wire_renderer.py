@@ -1,35 +1,48 @@
-from src.renderers.base_renderer import BaseRenderer
+"""
+Wire rendering functions for SVG generation.
+Handles rendering of wires with proper scaling and styling.
+"""
 import svgwrite
+from typing import Dict, List, Tuple, Optional, Union
+from .base_renderer import BaseRenderer
 
 class WireRenderer(BaseRenderer):
-    """Renderer for wire elements in the schematic."""
+    """Renderer for wire connections in the schematic."""
     
-    def render(self, wire: dict, stroke_width: float = 1.0) -> None:
-        """
-        Render a wire element.
+    def __init__(self, dwg: svgwrite.Drawing):
+        super().__init__(dwg)
+        
+    def render(self, wire: Dict, stroke_width: float = None, target_group: Optional[svgwrite.container.Group] = None) -> None:
+        """Render a single wire based on its properties.
         
         Args:
-            wire: Dictionary containing wire coordinates
-                {
-                    'x1': float,  # Start x coordinate
-                    'y1': float,  # Start y coordinate
-                    'x2': float,  # End x coordinate
-                    'y2': float   # End y coordinate
-                }
-            stroke_width: Width of the wire line
+            wire: Dictionary containing wire properties
+            stroke_width: Width of the stroke. If None, uses the default stroke width.
+            target_group: Optional group to add the wire to. If None, adds to drawing.
         """
-        self.logger.info(f"Rendering wire from ({wire['x1']}, {wire['y1']}) to ({wire['x2']}, {wire['y2']})")
+        # Use default stroke width if not specified
+        if stroke_width is None:
+            stroke_width = self.DEFAULT_STROKE_WIDTH
+            
+        style = {
+            'stroke': 'black',
+            'stroke-width': str(stroke_width),
+            'stroke-linecap': 'round'
+        }
         
-        # Create the line element
-        line = self.dwg.line(
-            start=(wire['x1'], wire['y1']),
-            end=(wire['x2'], wire['y2']),
-            stroke='black',
-            stroke_width=stroke_width
+        if 'style' in wire and wire['style'] is not None:
+            style['stroke-dasharray'] = self._scale_dash_array(wire['style'], stroke_width)
+            
+        line_element = self.dwg.line(
+            (str(wire['x1']), str(wire['y1'])),
+            (str(wire['x2']), str(wire['y2'])),
+            **style
         )
         
-        # Add the line to the drawing
-        self.dwg.add(line)
+        if target_group is not None:
+            target_group.add(line_element)
+        else:
+            self.dwg.add(line_element)
         
     def render_t_junction(self, x: float, y: float, dot_size: float) -> None:
         """
