@@ -70,7 +70,7 @@ class ShapeRenderer(BaseRenderer):
             'stroke-linecap': 'round'
         }
         
-        if 'style' in line:
+        if 'style' in line and line['style'] is not None:
             style['stroke-dasharray'] = self._scale_dash_array(line['style'], stroke_width)
             
         line_element = self.dwg.line(
@@ -133,11 +133,27 @@ class ShapeRenderer(BaseRenderer):
             self.dwg.add(element)
             
     def _render_rectangle(self, rect: Dict, stroke_width: float, target_group: Optional[svgwrite.container.Group] = None) -> None:
-        """Render a rectangle shape."""
-        x = min(rect['x1'], rect['x2'])
-        y = min(rect['y1'], rect['y2'])
-        width = abs(rect['x2'] - rect['x1'])
-        height = abs(rect['y2'] - rect['y1'])
+        """Render a rectangle shape.
+        
+        Supports two formats:
+        1. Bounding box format: {'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2}
+        2. Position-size format: {'x': x, 'y': y, 'width': width, 'height': height}
+        """
+        # Check which format is being used
+        if 'x1' in rect and 'y1' in rect and 'x2' in rect and 'y2' in rect:
+            # Bounding box format
+            x = min(rect['x1'], rect['x2'])
+            y = min(rect['y1'], rect['y2'])
+            width = abs(rect['x2'] - rect['x1'])
+            height = abs(rect['y2'] - rect['y1'])
+        elif 'x' in rect and 'y' in rect and 'width' in rect and 'height' in rect:
+            # Position-size format
+            x = rect['x']
+            y = rect['y']
+            width = rect['width']
+            height = rect['height']
+        else:
+            raise ValueError("Invalid rectangle format. Must use either x1,y1,x2,y2 or x,y,width,height")
         
         style = {
             'stroke': 'black',

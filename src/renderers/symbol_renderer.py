@@ -134,4 +134,34 @@ class SymbolRenderer(BaseRenderer):
             
         except Exception as e:
             self.logger.error(f"Failed to add group to drawing: {str(e)}")
+            raise
+
+    def render(self, symbol: Dict, stroke_width: float = 1.0) -> None:
+        """Render a complete symbol.
+        
+        Args:
+            symbol: Dictionary containing symbol data
+            stroke_width: Width of lines
+        """
+        try:
+            # Create a new group for the symbol
+            self.create_group()
+            
+            # Set transformation if provided
+            if 'rotation' in symbol and 'translation' in symbol:
+                self.set_transformation(symbol['rotation'], symbol['translation'])
+            
+            # Render shapes if present
+            if 'shapes' in symbol:
+                self.render_shapes(symbol['shapes'], stroke_width)
+            
+            # Render texts if present
+            if 'texts' in symbol:
+                self.render_texts(symbol['texts'])
+            
+            # Add the group to the drawing
+            self.add_to_drawing()
+            
+        except Exception as e:
+            self.logger.error(f"Failed to render symbol: {str(e)}")
             raise 

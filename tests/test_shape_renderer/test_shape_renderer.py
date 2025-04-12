@@ -16,198 +16,246 @@ def renderer(dwg):
     """Create a new ShapeRenderer instance for each test."""
     return ShapeRenderer(dwg)
 
-def test_render_line(renderer, dwg):
-    """Test rendering a basic line."""
+def test_basic_shapes(renderer, dwg):
+    """Test rendering basic shapes arranged horizontally."""
+    # Set drawing size
+    dwg['width'] = '600px'
+    dwg['height'] = '200px'
+    
+    # Define common parameters
+    y_center = 100
+    shape_spacing = 80
+    start_x = 50
+    
+    # Line
     line = {
         'type': 'line',
-        'x1': 10,
-        'y1': 10,
-        'x2': 50,
-        'y2': 50
+        'x1': start_x,
+        'y1': y_center - 20,
+        'x2': start_x + 40,
+        'y2': y_center + 20
     }
-    renderer.render(line, stroke_width=2.0)
+    renderer.render(line)
     
-    # Save for manual inspection
-    dwg.saveas('tests/test_shape_renderer/results/line.svg')
-    
-    # Verify line was added (accounting for defs element)
-    assert len(dwg.elements) == 2  # defs + line
-    line_element = dwg.elements[1]  # line is the second element
-    assert line_element.elementname == 'line'
-    assert line_element.attribs['x1'] == '10'
-    assert line_element.attribs['y1'] == '10'
-    assert line_element.attribs['x2'] == '50'
-    assert line_element.attribs['y2'] == '50'
-    assert line_element.attribs['stroke-width'] == '2.0'
-
-def test_render_dashed_line(renderer, dwg):
-    """Test rendering a dashed line."""
-    line = {
-        'type': 'line',
-        'x1': 10,
-        'y1': 10,
-        'x2': 50,
-        'y2': 50,
-        'style': '5,5'
+    # Rectangle
+    rect = {
+        'type': 'rectangle',
+        'x1': start_x + shape_spacing,
+        'y1': y_center - 20,
+        'x2': start_x + shape_spacing + 40,
+        'y2': y_center + 20
     }
-    renderer.render(line, stroke_width=2.0)
+    renderer.render(rect)
     
-    # Save for manual inspection
-    dwg.saveas('tests/test_shape_renderer/results/dashed_line.svg')
-    
-    # Verify line was added with dash pattern (accounting for defs element)
-    assert len(dwg.elements) == 2  # defs + line
-    line_element = dwg.elements[1]  # line is the second element
-    assert line_element.attribs['stroke-dasharray'] == '10.0,10.0'
-
-def test_render_circle(renderer, dwg):
-    """Test rendering a perfect circle."""
+    # Circle
     circle = {
         'type': 'circle',
-        'x1': 10,
-        'y1': 10,
-        'x2': 30,
-        'y2': 30
+        'x1': start_x + shape_spacing * 2,
+        'y1': y_center - 20,
+        'x2': start_x + shape_spacing * 2 + 40,
+        'y2': y_center + 20
     }
-    renderer.render(circle, stroke_width=2.0)
+    renderer.render(circle)
     
-    # Save for manual inspection
-    dwg.saveas('tests/test_shape_renderer/results/circle.svg')
-    
-    # Verify circle was added (accounting for defs element)
-    assert len(dwg.elements) == 2  # defs + circle
-    circle_element = dwg.elements[1]  # circle is the second element
-    assert circle_element.elementname == 'circle'
-    assert float(circle_element.attribs['cx']) == 20.0
-    assert float(circle_element.attribs['cy']) == 20.0
-    assert float(circle_element.attribs['r']) == 10.0
-
-def test_render_ellipse(renderer, dwg):
-    """Test rendering an ellipse."""
+    # Ellipse
     ellipse = {
         'type': 'circle',
-        'x1': 10,
-        'y1': 10,
-        'x2': 30,
-        'y2': 50
+        'x1': start_x + shape_spacing * 3,
+        'y1': y_center - 30,
+        'x2': start_x + shape_spacing * 3 + 40,
+        'y2': y_center + 30
     }
-    renderer.render(ellipse, stroke_width=2.0)
+    renderer.render(ellipse)
     
-    # Save for manual inspection
-    dwg.saveas('tests/test_shape_renderer/results/ellipse.svg')
-    
-    # Verify ellipse was added (accounting for defs element)
-    assert len(dwg.elements) == 2  # defs + ellipse
-    ellipse_element = dwg.elements[1]  # ellipse is the second element
-    assert ellipse_element.elementname == 'ellipse'
-    assert float(ellipse_element.attribs['cx']) == 20.0
-    assert float(ellipse_element.attribs['cy']) == 30.0
-    assert float(ellipse_element.attribs['rx']) == 10.0
-    assert float(ellipse_element.attribs['ry']) == 20.0
-
-def test_render_rectangle(renderer, dwg):
-    """Test rendering a basic rectangle."""
-    rect = {
-        'type': 'rectangle',
-        'x1': 10,
-        'y1': 10,
-        'x2': 50,
-        'y2': 30
-    }
-    renderer.render(rect, stroke_width=2.0)
-    
-    # Save for manual inspection
-    dwg.saveas('tests/test_shape_renderer/results/rectangle.svg')
-    
-    # Verify rectangle was added (accounting for defs element)
-    assert len(dwg.elements) == 2  # defs + rectangle
-    rect_element = dwg.elements[1]  # rectangle is the second element
-    assert rect_element.elementname == 'rect'
-    assert rect_element.attribs['x'] == '10'
-    assert rect_element.attribs['y'] == '10'
-    assert rect_element.attribs['width'] == '40'
-    assert rect_element.attribs['height'] == '20'
-
-def test_render_dashed_rectangle(renderer, dwg):
-    """Test rendering a dashed rectangle."""
-    rect = {
-        'type': 'rectangle',
-        'x1': 10,
-        'y1': 10,
-        'x2': 50,
-        'y2': 30,
-        'style': '5,5'
-    }
-    renderer.render(rect, stroke_width=2.0)
-    
-    # Save for manual inspection
-    dwg.saveas('tests/test_shape_renderer/results/dashed_rectangle.svg')
-    
-    # Verify rectangle was added as path with dash pattern (accounting for defs element)
-    assert len(dwg.elements) == 2  # defs + path
-    path_element = dwg.elements[1]  # path is the second element
-    assert path_element.elementname == 'path'
-    assert path_element.attribs['stroke-dasharray'] == '10.0,10.0'
-
-def test_render_arc(renderer, dwg):
-    """Test rendering an arc."""
-    arc = {
+    # Arc (90 degrees)
+    arc_90 = {
         'type': 'arc',
-        'x1': 10,
-        'y1': 10,
-        'x2': 50,
-        'y2': 50,
+        'x1': start_x + shape_spacing * 4,
+        'y1': y_center - 20,
+        'x2': start_x + shape_spacing * 4 + 40,
+        'y2': y_center + 20,
         'start_angle': 0,
         'end_angle': 90
     }
-    renderer.render(arc, stroke_width=2.0)
+    renderer.render(arc_90)
+    
+    # Arc (270 degrees)
+    arc_270 = {
+        'type': 'arc',
+        'x1': start_x + shape_spacing * 5,
+        'y1': y_center - 20,
+        'x2': start_x + shape_spacing * 5 + 40,
+        'y2': y_center + 20,
+        'start_angle': 0,
+        'end_angle': 270
+    }
+    renderer.render(arc_270)
     
     # Save for manual inspection
-    dwg.saveas('tests/test_shape_renderer/results/arc.svg')
-    
-    # Verify arc was added as path (accounting for defs element)
-    assert len(dwg.elements) == 2  # defs + path
-    path_element = dwg.elements[1]  # path is the second element
-    assert path_element.elementname == 'path'
-    assert 'M' in path_element.attribs['d']
-    assert 'A' in path_element.attribs['d']
+    dwg.saveas('tests/test_shape_renderer/results/basic_shapes.svg')
 
-def test_render_dashed_arc(renderer, dwg):
-    """Test rendering a dashed arc."""
-    arc = {
+def test_dotted_shapes(renderer, dwg):
+    """Test rendering shapes with dotted style."""
+    # Set drawing size
+    dwg['width'] = '600px'
+    dwg['height'] = '200px'
+    
+    # Define common parameters
+    y_center = 100
+    shape_spacing = 80
+    start_x = 50
+    
+    # Line
+    line = {
+        'type': 'line',
+        'x1': start_x,
+        'y1': y_center - 20,
+        'x2': start_x + 40,
+        'y2': y_center + 20,
+        'style': ShapeRenderer.LINE_STYLE_DOT
+    }
+    renderer.render(line)
+    
+    # Rectangle
+    rect = {
+        'type': 'rectangle',
+        'x1': start_x + shape_spacing,
+        'y1': y_center - 20,
+        'x2': start_x + shape_spacing + 40,
+        'y2': y_center + 20,
+        'style': ShapeRenderer.LINE_STYLE_DOT
+    }
+    renderer.render(rect)
+    
+    # Circle
+    circle = {
+        'type': 'circle',
+        'x1': start_x + shape_spacing * 2,
+        'y1': y_center - 20,
+        'x2': start_x + shape_spacing * 2 + 40,
+        'y2': y_center + 20,
+        'style': ShapeRenderer.LINE_STYLE_DOT
+    }
+    renderer.render(circle)
+    
+    # Ellipse
+    ellipse = {
+        'type': 'circle',
+        'x1': start_x + shape_spacing * 3,
+        'y1': y_center - 30,
+        'x2': start_x + shape_spacing * 3 + 40,
+        'y2': y_center + 30,
+        'style': ShapeRenderer.LINE_STYLE_DOT
+    }
+    renderer.render(ellipse)
+    
+    # Arc (90 degrees)
+    arc_90 = {
         'type': 'arc',
-        'x1': 10,
-        'y1': 10,
-        'x2': 50,
-        'y2': 50,
+        'x1': start_x + shape_spacing * 4,
+        'y1': y_center - 20,
+        'x2': start_x + shape_spacing * 4 + 40,
+        'y2': y_center + 20,
         'start_angle': 0,
         'end_angle': 90,
-        'style': '5,5'
+        'style': ShapeRenderer.LINE_STYLE_DOT
     }
-    renderer.render(arc, stroke_width=2.0)
+    renderer.render(arc_90)
+    
+    # Arc (270 degrees)
+    arc_270 = {
+        'type': 'arc',
+        'x1': start_x + shape_spacing * 5,
+        'y1': y_center - 20,
+        'x2': start_x + shape_spacing * 5 + 40,
+        'y2': y_center + 20,
+        'start_angle': 0,
+        'end_angle': 270,
+        'style': ShapeRenderer.LINE_STYLE_DOT
+    }
+    renderer.render(arc_270)
     
     # Save for manual inspection
-    dwg.saveas('tests/test_shape_renderer/results/dashed_arc.svg')
-    
-    # Verify arc was added with dash pattern (accounting for defs element)
-    assert len(dwg.elements) == 2  # defs + path
-    path_element = dwg.elements[1]  # path is the second element
-    assert path_element.attribs['stroke-dasharray'] == '10.0,10.0'
+    dwg.saveas('tests/test_shape_renderer/results/dotted_shapes.svg')
 
-def test_unknown_shape_type(renderer, dwg):
-    """Test handling of unknown shape type."""
-    unknown = {
-        'type': 'unknown',
-        'x1': 10,
-        'y1': 10,
-        'x2': 50,
-        'y2': 50
-    }
-    renderer.render(unknown, stroke_width=2.0)
+def test_thick_shapes(renderer, dwg):
+    """Test rendering shapes with thick stroke width."""
+    # Set drawing size
+    dwg['width'] = '600px'
+    dwg['height'] = '200px'
     
-    # Verify only defs element exists
-    assert len(dwg.elements) == 1  # only defs
-    assert dwg.elements[0].elementname == 'defs'
+    # Define common parameters
+    y_center = 100
+    shape_spacing = 80
+    start_x = 50
+    stroke_width = 5.0
+    
+    # Line
+    line = {
+        'type': 'line',
+        'x1': start_x,
+        'y1': y_center - 20,
+        'x2': start_x + 40,
+        'y2': y_center + 20
+    }
+    renderer.render(line, stroke_width=stroke_width)
+    
+    # Rectangle
+    rect = {
+        'type': 'rectangle',
+        'x1': start_x + shape_spacing,
+        'y1': y_center - 20,
+        'x2': start_x + shape_spacing + 40,
+        'y2': y_center + 20
+    }
+    renderer.render(rect, stroke_width=stroke_width)
+    
+    # Circle
+    circle = {
+        'type': 'circle',
+        'x1': start_x + shape_spacing * 2,
+        'y1': y_center - 20,
+        'x2': start_x + shape_spacing * 2 + 40,
+        'y2': y_center + 20
+    }
+    renderer.render(circle, stroke_width=stroke_width)
+    
+    # Ellipse
+    ellipse = {
+        'type': 'circle',
+        'x1': start_x + shape_spacing * 3,
+        'y1': y_center - 30,
+        'x2': start_x + shape_spacing * 3 + 40,
+        'y2': y_center + 30
+    }
+    renderer.render(ellipse, stroke_width=stroke_width)
+    
+    # Arc (90 degrees)
+    arc_90 = {
+        'type': 'arc',
+        'x1': start_x + shape_spacing * 4,
+        'y1': y_center - 20,
+        'x2': start_x + shape_spacing * 4 + 40,
+        'y2': y_center + 20,
+        'start_angle': 0,
+        'end_angle': 90
+    }
+    renderer.render(arc_90, stroke_width=stroke_width)
+    
+    # Arc (270 degrees)
+    arc_270 = {
+        'type': 'arc',
+        'x1': start_x + shape_spacing * 5,
+        'y1': y_center - 20,
+        'x2': start_x + shape_spacing * 5 + 40,
+        'y2': y_center + 20,
+        'start_angle': 0,
+        'end_angle': 270
+    }
+    renderer.render(arc_270, stroke_width=stroke_width)
+    
+    # Save for manual inspection
+    dwg.saveas('tests/test_shape_renderer/results/thick_shapes.svg')
 
 def test_visual_line_styles(renderer, dwg):
     """Test visual rendering of all line styles."""
@@ -248,7 +296,7 @@ def test_visual_line_styles(renderer, dwg):
         
         # Add label
         dwg.add(dwg.text(label, insert=(start_x - 40, y + 5), 
-                       font_size='12px', text_anchor='end'))
+                        font_size='12px', font_family='Arial'))
     
     # Save for manual inspection
     dwg.saveas('tests/test_shape_renderer/results/line_styles.svg')

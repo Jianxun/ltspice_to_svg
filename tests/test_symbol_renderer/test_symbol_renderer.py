@@ -131,7 +131,7 @@ def test_full_rendering_sequence(renderer, dwg, sample_shapes, sample_texts):
 def test_actual_symbol_rendering(renderer, dwg):
     """Test rendering with actual symbol data."""
     # Load test data
-    with open('tests/test_symbol_renderer/test_symbol_finding_parsed.json', 'r') as f:
+    with open('tests/test_symbol_renderer/parsed_symbols.json', 'r') as f:
         test_data = json.load(f)
     
     # Create a group for each symbol
