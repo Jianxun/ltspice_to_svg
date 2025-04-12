@@ -8,8 +8,14 @@ from src.parsers.schematic_parser import SchematicParser
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+@pytest.fixture(autouse=True)
+def setup_ltspice_lib():
+    """Set up the LTspice library path environment variable."""
+    os.environ['LTSPICE_LIB_PATH'] = f"/Users/{os.getenv('USER')}/Library/Application Support/LTspice/lib/sym"
+
 @pytest.fixture
 def test_schematic():
+    """Get the path to the test schematic file."""
     return os.path.join(os.path.dirname(__file__), "test5_symbol_texts.asc")
 
 @pytest.fixture

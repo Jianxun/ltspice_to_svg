@@ -82,3 +82,11 @@ Example on how to invoke the tool
 - Use pytest's markers for categorizing tests
 - Document test cases clearly with docstrings
 
+### Text Mirroring in SVG
+- When mirroring text in SVG, we need to apply a counter-mirroring transformation to maintain readability
+- The transformation should be applied to a group containing the text element
+- The counter-mirroring transform consists of:
+  1. A scale(-1,1) to flip the text back to normal orientation
+  2. A translate(-2*(x + x_offset),0) to adjust the position after mirroring
+- This approach preserves the text's position while ensuring it remains readable in mirrored symbols
+

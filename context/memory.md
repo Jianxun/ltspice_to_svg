@@ -186,3 +186,10 @@ This project aims to convert LTspice schematic files (.asc) to SVG format. The p
 - SVG path command format: `M start_x start_y A rx ry x-axis-rotation large-arc sweep end_x end_y`
 - Using svgwrite library for SVG generation
 - pytest for testing
+
+## Text Rendering
+- Text elements in symbols are rendered using the `TextRenderer` class
+- Text properties include position (x,y), justification, size multiplier, and text content
+- For mirrored symbols, text is counter-mirrored to maintain readability while preserving position
+- Text justification is handled by setting the appropriate SVG text-anchor property
+- Font size is calculated based on the size multiplier and base font size

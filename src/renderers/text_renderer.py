@@ -119,6 +119,15 @@ class TextRenderer(BaseRenderer):
             text_anchor
         )
         
+        # If the symbol is mirrored, we need to counter-mirror the text
+        if is_mirrored:
+            # Create a group for the text with counter-mirroring
+            text_group = self.dwg.g()
+            text_group.attribs['transform'] = f"scale(-1,1) translate({-2*(x + x_offset)},0)"
+            text_group.add(text_element)
+            text_element = text_group
+            self.logger.debug(f"Added counter-mirroring transform: {text_group.attribs['transform']}")
+        
         # Add text to group or drawing
         if is_vertical:
             group.add(text_element)

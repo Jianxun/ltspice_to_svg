@@ -286,3 +286,9 @@
   - Fine-tune horizontal offsets for better readability
   - Optimize vertical text positioning and rotation
   - Ensure consistent spacing across different text types
+
+[X] Fix text mirroring in symbols
+- [X] Add debug logging for text rendering
+- [X] Implement counter-mirroring transformation for text in mirrored symbols
+- [X] Test with both normal and mirrored symbols
+- [X] Verify text position and orientation in mirrored symbols
