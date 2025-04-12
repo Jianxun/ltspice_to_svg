@@ -2,9 +2,15 @@
   "schematic": {
     "wires": [
       {
+        "x1": 144,
+        "y1": 320,
+        "x2": 16,
+        "y2": 320
+      },
+      {
         "x1": 336,
         "y1": 320,
-        "x2": 176,
+        "x2": 224,
         "y2": 320
       },
       {
@@ -38,9 +44,9 @@
         "y2": 320
       },
       {
-        "x1": 176,
+        "x1": 16,
         "y1": 352,
-        "x2": 176,
+        "x2": 16,
         "y2": 320
       },
       {
@@ -62,9 +68,9 @@
         "y2": 400
       },
       {
-        "x1": 176,
+        "x1": 16,
         "y1": 480,
-        "x2": 176,
+        "x2": 16,
         "y2": 432
       },
       {
@@ -76,7 +82,7 @@
       {
         "x1": 336,
         "y1": 480,
-        "x2": 176,
+        "x2": 16,
         "y2": 480
       },
       {
@@ -127,7 +133,7 @@
       {
         "symbol_name": "Voltage",
         "instance_name": "V1",
-        "x": 176,
+        "x": 16,
         "y": 336,
         "rotation": "R0"
       },
@@ -144,6 +150,27 @@
         "x": 400,
         "y": 400,
         "rotation": "M0"
+      },
+      {
+        "symbol_name": "Voltage",
+        "instance_name": "V2",
+        "x": 240,
+        "y": 320,
+        "rotation": "R90",
+        "window_overrides": {
+          "0": {
+            "x": -32,
+            "y": 56,
+            "justification": "VBottom",
+            "size_multiplier": 2
+          },
+          "3": {
+            "x": 32,
+            "y": 56,
+            "justification": "VTop",
+            "size_multiplier": 2
+          }
+        }
       }
     ],
     "texts": [],
@@ -247,15 +274,14 @@
       "circles": [],
       "rectangles": [],
       "arcs": [],
-      "windows": [
-        {
-          "property_id": 0,
+      "windows": {
+        "0": {
           "x": 8,
           "y": -48,
           "justification": "Left",
           "size_multiplier": 2
         }
-      ],
+      },
       "texts": [
         {
           "x": 8,
@@ -323,22 +349,20 @@
       ],
       "rectangles": [],
       "arcs": [],
-      "windows": [
-        {
-          "property_id": 0,
+      "windows": {
+        "0": {
           "x": 24,
           "y": 16,
           "justification": "Left",
           "size_multiplier": 2
         },
-        {
-          "property_id": 3,
+        "3": {
           "x": 24,
           "y": 96,
           "justification": "Left",
           "size_multiplier": 2
         }
-      ],
+      },
       "texts": []
     }
   }

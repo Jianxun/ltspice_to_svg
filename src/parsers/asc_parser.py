@@ -356,7 +356,7 @@ class ASCParser:
                 if len(parts) > 5:
                     try:
                         size_multiplier = int(parts[5])
-                        window_data['size'] = size_multiplier
+                        window_data['size_multiplier'] = size_multiplier
                     except ValueError:
                         pass
                 

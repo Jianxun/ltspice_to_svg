@@ -92,6 +92,7 @@
       [X] Verify text readability and alignment
       [X] Add tests for text properties in mirrored symbols
     - [X] Update documentation with final text rendering solution
+    - [X] Regenerate test5_symbol_texts.json with correct symbol count
 
 ## Current Task: Test2 (Text)
 [ ] Create test schematic for standalone text elements

@@ -73,12 +73,14 @@ def test_symbol_texts(test_schematic, output_dir):
     schematic = data['schematic']
     assert schematic is not None
     assert 'symbols' in schematic
-    assert len(schematic['symbols']) == 4  # We expect 4 symbols (3 NMOS and 1 voltage source)
+    assert len(schematic['symbols']) == 5  # We expect 5 symbols (3 NMOS and 2 voltage sources)
     
     # Verify symbol types and orientations
     symbol_names = [symbol['symbol_name'] for symbol in schematic['symbols']]
     assert 'NMOS' in symbol_names
     assert 'Voltage' in symbol_names
+    assert symbol_names.count('NMOS') == 3  # Should have 3 NMOS symbols
+    assert symbol_names.count('Voltage') == 2  # Should have 2 Voltage symbols
     
     # Verify symbol orientations
     orientations = [symbol.get('rotation', 'R0') for symbol in schematic['symbols']]

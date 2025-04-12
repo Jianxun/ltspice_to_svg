@@ -51,6 +51,8 @@ This project aims to convert LTspice schematic files (.asc) to SVG format. The p
     - Text content is preserved
     - Mirroring transformations are applied correctly
     - Text properties (position, justification, size) are maintained
+  - Fixed test assertions to expect 5 symbols (3 NMOS and 2 voltage sources)
+  - Successfully regenerated test5_symbol_texts.json with correct symbol count
 
 ## Technical Details
 - The project uses Python 3.12.9
