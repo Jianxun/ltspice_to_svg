@@ -15,13 +15,17 @@ This project aims to convert LTspice schematic files (.asc) to SVG format. The p
   - Uses dot_size_multiplier=2.0 for better visibility
   - Includes assertion to verify T-junction count
 - Test3 (Shapes) has been successfully implemented and verified
-  - Successfully detects and renders 11 shapes (5 lines, 2 rectangles, 2 circles, 2 arcs)
+  - Successfully detects and renders 13 shapes (5 lines, 2 rectangles, 2 circles, 4 arcs)
   - Uses stroke_width=2.0 for better visibility
   - Includes assertions to verify shape counts and types
   - Shapes are organized by type in the JSON output (lines, rectangles, circles, arcs)
   - Fixed shape rendering by implementing proper render_shapes method
   - Fixed viewBox calculation to include shape coordinates
-- We are working on fixing the arc rendering in the SVG generator. The main issue is with the angle calculations and verification in the tests.
+  - Arc rendering is now working correctly:
+    - Arcs are rendered on the ellipse defined by the bounding box
+    - Arcs are rendered counter-clockwise from start_angle to end_angle
+    - Large arc flag is set correctly based on angle difference
+    - Test verifies all arc parameters (angles, direction, large arc flag)
 
 ## Technical Details
 - The project uses Python 3.12.9
@@ -34,6 +38,7 @@ This project aims to convert LTspice schematic files (.asc) to SVG format. The p
   - Shape types: lines, rectangles, circles/ellipses, arcs
   - Stroke width customization
   - Proper viewBox calculation for all shapes
+  - Arc rendering with correct angle handling and direction
 
 ## Project Structure
 ```
@@ -76,12 +81,22 @@ This project aims to convert LTspice schematic files (.asc) to SVG format. The p
 7. Arc shapes include start and end angles in their definition
 8. ViewBox calculation must consider all elements in the schematic, not just wires
 9. Shape rendering requires proper type information to be added to each shape
+10. Arc rendering requires careful handling of:
+    - Ellipse parameters from bounding box
+    - Start and end angles
+    - Counter-clockwise direction
+    - Large arc flag based on angle difference
 
 ### Arc Rendering Details
 - LTspice specifies arcs using 8 coordinates: `ARC Normal x1 y1 x2 y2 x3 y3 x4 y4`
   - (x1,y1) and (x2,y2): define the bounding box
   - (x3,y3): end point
   - (x4,y4): start point
+- SVG arc path format: `M start_x start_y A rx ry 0 large_arc sweep end_x end_y`
+  - rx, ry: ellipse radii from bounding box
+  - large_arc: 1 if angle difference > 180°
+  - sweep: 1 for counter-clockwise direction
+  - start/end points calculated from angles on the ellipse
 
 ### Implementation Status
 1. Shape Parser (`src/parsers/shape_parser.py`):
@@ -89,27 +104,28 @@ This project aims to convert LTspice schematic files (.asc) to SVG format. The p
    - Calculates start and end angles from control points
    - Normalizes angles to [0, 360) range
 
-2. Shape Renderer (`src/generators/shape_renderer.py`):
+2. Shape Renderer (`src/renderers/shape_renderer.py`):
    - Uses SVG path with arc command for rendering
-   - Currently using control points directly for start/end points
-   - Calculates large arc and sweep flags based on angle difference
+   - Calculates start and end points on the ellipse using angles
+   - Always renders counter-clockwise (sweep=1)
+   - Sets large arc flag based on angle difference
 
 3. Test Status (`tests/integration/test_svg_renderer/test3_shapes/test_shapes.py`):
-   - Test failing due to angle mismatch
-   - Current issue: test calculates angles from rendered SVG path points, but these points are the control points from LTspice
-   - Need to update test to verify angles using the actual start/end points from LTspice (x4,y4 and x3,y3)
+   - Test verifies all arc parameters
+   - Checks ellipse dimensions from bounding box
+   - Verifies counter-clockwise direction
+   - Verifies large arc flag based on angle difference
 
-### Current Issues
-1. Angle Verification:
-   - Test shows angle mismatch (e.g., rendered 135° vs expected 315°)
-   - Need to update test to calculate angles correctly from LTspice control points
+### Next Task: Test4 (Symbols)
+- Need to implement symbol rendering tests
+- Will need to handle:
+  - Symbol transformations (rotation, position)
+  - Symbol shape rendering
+  - Symbol text rendering
+  - Symbol group creation
+  - Symbol data handling
 
 ### Dependencies
 - SVG path command format: `M start_x start_y A rx ry x-axis-rotation large-arc sweep end_x end_y`
 - Using svgwrite library for SVG generation
 - pytest for testing
-
-## Project Structure
-- Main implementation in `src/generators/shape_renderer.py`
-- Tests in `tests/integration/test_svg_renderer/test3_shapes/`
-- Test data in `tests/integration/test_svg_renderer/test3_shapes/shapes.asc`

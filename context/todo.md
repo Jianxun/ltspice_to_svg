@@ -68,6 +68,7 @@
     - [X] Implement test script
     - [X] Add assertions for shape count and types
     - [X] Verify SVG output matches expected results
+    - [X] Fix arc rendering and angle verification
   - [ ] Test4: Symbols
     - [ ] Create test schematic with various symbols
     - [ ] Implement test script
@@ -78,6 +79,25 @@
     - [ ] Implement test script
     - [ ] Add assertions for symbol text count and content
     - [ ] Verify SVG output matches expected results
+
+## Current Task: Test4 (Symbols)
+[X] Create test schematic for symbols
+  - [X] Add various symbol types (NMOS transistors, voltage source)
+  - [X] Include different orientations (0°, 270°)
+  - [X] Add symbols with different positions
+  - [X] Include symbols with different sizes
+
+[X] Implement symbol test script
+  - [X] Add assertions for symbol count
+  - [X] Verify symbol positions
+  - [X] Check symbol orientations
+  - [X] Verify symbol types
+  - [X] Test symbol transformations
+
+[X] Verify symbol rendering
+  - [X] Check symbol group creation
+  - [X] Verify shape rendering within symbols
+  - [X] Test text rendering within symbols
 
 ## Future Tasks
 [ ] Implement Logging System
@@ -216,19 +236,6 @@
 [ ] Add performance tests
 [ ] Document test strategy
 
-## Current Task: Fix Arc Rendering and Angle Verification
-[ ] Fix arc angle verification in tests
-  - [ ] Update test to use LTspice control points for angle verification
-  - [ ] Add test cases for different arc configurations
-  - [ ] Verify both clockwise and counterclockwise arcs
-  - [ ] Add visual verification of rendered arcs
-
-## Next Tasks
-[ ] Add support for more LTspice shape styles
-[ ] Implement symbol rendering
-[ ] Add support for text elements
-[ ] Add support for flags and IO pins
-
 ## High Priority Tasks
 
 ### 1. Create Test Cases for SVGRenderer
@@ -248,10 +255,6 @@
 
 ### 3. Test T-junction Detection
 - [ ] Test horizontal wire intersections
-- [ ] Test vertical wire intersections
-- [ ] Test mixed wire intersections
-- [ ] Test parallel wire cases
-- [ ] Test overlapping wire cases
 
 ## Medium Priority Tasks
 

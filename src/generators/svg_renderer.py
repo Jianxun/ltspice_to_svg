@@ -89,9 +89,41 @@ class SVGRenderer:
         for x, y in t_junctions:
             wire_renderer.render_t_junction(x, y, stroke_width * dot_size_multiplier)
             
-    def render_symbols(self) -> None:
-        """Placeholder for symbol rendering."""
-        pass
+    def render_symbols(self, stroke_width: float = 1.0) -> None:
+        """Render all symbols in the schematic.
+        
+        Args:
+            stroke_width (float): Width of the symbol lines.
+        """
+        if not self.schematic_data or not self.dwg:
+            raise ValueError("Schematic not loaded or drawing not created")
+            
+        symbol_renderer = self._renderers['symbol']
+        for symbol in self.schematic_data.get('symbols', []):
+            # Get symbol definition from symbol_data
+            symbol_name = symbol.get('symbol_name', '')
+            symbol_def = self.symbol_data.get(symbol_name, {})
+            
+            # Create translation tuple from x, y coordinates
+            translation = (symbol['x'], symbol['y'])
+            
+            # Create symbol data dictionary
+            symbol_data = {
+                'rotation': symbol.get('rotation', 'R0'),
+                'translation': translation,
+                'instance_name': symbol.get('instance_name', ''),
+                'symbol_name': symbol_name,
+                'shapes': {
+                    'lines': symbol_def.get('lines', []),
+                    'circles': symbol_def.get('circles', []),
+                    'rectangles': symbol_def.get('rectangles', []),
+                    'arcs': symbol_def.get('arcs', [])
+                },
+                'texts': symbol_def.get('texts', [])
+            }
+            
+            # Render the symbol
+            symbol_renderer.render(symbol_data, stroke_width)
             
     def render_texts(self, font_size: float = 22.0) -> None:
         """Render all text elements in the schematic.
