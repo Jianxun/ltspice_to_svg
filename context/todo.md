@@ -69,35 +69,41 @@
     - [X] Add assertions for shape count and types
     - [X] Verify SVG output matches expected results
     - [X] Fix arc rendering and angle verification
-  - [ ] Test4: Symbols
-    - [ ] Create test schematic with various symbols
-    - [ ] Implement test script
-    - [ ] Add assertions for symbol count and types
-    - [ ] Verify SVG output matches expected results
+  - [X] Test4: Symbols
+    - [X] Create test schematic with various symbols
+    - [X] Implement test script
+    - [X] Add assertions for symbol count and types
+    - [X] Verify SVG output matches expected results
+    - [X] Test symbol transformations
+    - [X] Verify symbol shapes and texts
+    - [X] Test stroke width customization
   - [ ] Test5: Symbol Texts
     - [ ] Create test schematic with symbols containing text
     - [ ] Implement test script
     - [ ] Add assertions for symbol text count and content
     - [ ] Verify SVG output matches expected results
+    - [ ] Test text positioning and orientation
+    - [ ] Verify text visibility and readability
 
-## Current Task: Test4 (Symbols)
-[X] Create test schematic for symbols
-  - [X] Add various symbol types (NMOS transistors, voltage source)
-  - [X] Include different orientations (0°, 270°)
-  - [X] Add symbols with different positions
-  - [X] Include symbols with different sizes
+## Current Task: Test5 (Symbol Texts)
+[ ] Create test schematic for symbol texts
+  - [ ] Add symbols with various text elements
+  - [ ] Include different text positions
+  - [ ] Add symbols with different orientations
+  - [ ] Test text visibility with different stroke widths
 
-[X] Implement symbol test script
-  - [X] Add assertions for symbol count
-  - [X] Verify symbol positions
-  - [X] Check symbol orientations
-  - [X] Verify symbol types
-  - [X] Test symbol transformations
+[ ] Implement symbol text test script
+  - [ ] Add assertions for text count
+  - [ ] Verify text positions
+  - [ ] Check text orientations
+  - [ ] Verify text content
+  - [ ] Test text transformations
 
-[X] Verify symbol rendering
-  - [X] Check symbol group creation
-  - [X] Verify shape rendering within symbols
-  - [X] Test text rendering within symbols
+[ ] Verify symbol text rendering
+  - [ ] Check text group creation
+  - [ ] Verify text visibility
+  - [ ] Test text readability
+  - [ ] Verify text transformations
 
 ## Future Tasks
 [ ] Implement Logging System
