@@ -66,6 +66,13 @@ This project aims to convert LTspice schematic files (.asc) to SVG format. The p
     - Applies text transformations (mirroring, rotation)
     - Handles text justification and size multipliers
     - Successfully tested with various symbol types and orientations
+  - Fixed window text overrides bug:
+    - Created Test6 (Symbol Window Texts) to specifically test window text overrides
+    - Fixed type mismatch between string keys (in window definitions) and integer keys (in window overrides)
+    - Implemented robust key comparison supporting both integer and string keys
+    - Added detailed debug logging to track window overrides flow
+    - Added assertions to verify text positioning, rotation, and formatting
+    - Verified all window text overrides are properly applied in the SVG output
 
 ## Technical Details
 - The project uses Python 3.12.9

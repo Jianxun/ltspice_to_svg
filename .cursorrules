@@ -90,3 +90,14 @@ Example on how to invoke the tool
   2. A translate(-2*(x + x_offset),0) to adjust the position after mirroring
 - This approach preserves the text's position while ensuring it remains readable in mirrored symbols
 
+### Key Type Handling in Dictionaries
+- When using dictionary keys that could be represented as either strings or integers, ensure consistent key type handling
+- In our window text overrides bug, window definitions from symbol_def used string keys ('0', '3'), while window overrides in the rendered symbol used integer keys (0, 3)
+- This mismatch caused window overrides to not be applied, even though they were correctly parsed and available
+- The solution includes:
+  1. Convert string keys to integers when possible for comparison
+  2. Always check for both formats when looking up values
+  3. Use a clear indicator (like a boolean flag) to track whether an override was found
+  4. Use detailed logging to track values through the processing pipeline
+- This approach allows for flexible dictionary key handling while maintaining backward compatibility
+

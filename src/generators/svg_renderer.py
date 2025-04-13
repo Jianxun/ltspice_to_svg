@@ -109,10 +109,16 @@ class SVGRenderer:
             symbol_name = symbol.get('symbol_name', 'Unknown')
             rotation = symbol.get('rotation', 'R0')
             is_mirrored = rotation.startswith('M')
+            instance_name = symbol.get('instance_name', 'Unknown')
+            
             self.logger.debug(f"  Name: {symbol_name}")
-            self.logger.debug(f"  Instance: {symbol.get('instance_name', 'Unknown')}")
+            self.logger.debug(f"  Instance: {instance_name}")
             self.logger.debug(f"  Position: ({symbol.get('x', 0)}, {symbol.get('y', 0)})")
             self.logger.debug(f"  Rotation: {rotation} (mirrored: {is_mirrored})")
+            
+            # Log window overrides if present
+            if 'window_overrides' in symbol:
+                self.logger.debug(f"  Window overrides for {instance_name}: {symbol['window_overrides']}")
             
             # Get symbol definition
             if not symbol_name or symbol_name not in self.symbol_data:
@@ -121,6 +127,7 @@ class SVGRenderer:
                 
             symbol_def = self.symbol_data[symbol_name]
             self.logger.debug(f"  Definition found with {len(symbol_def.get('texts', []))} text elements")
+            self.logger.debug(f"  Windows in symbol definition: {symbol_def.get('windows', {})}")
             
             # Create symbol data for rendering
             render_data = {
@@ -138,6 +145,10 @@ class SVGRenderer:
                 'property_0': symbol.get('instance_name', ''),  # Add instance name as property_0
                 'property_3': symbol.get('value', '')  # Add value as property_3
             }
+            
+            # Debug log: Check if window_overrides is correctly added to render_data
+            if 'window_overrides' in symbol:
+                self.logger.debug(f"  Added window_overrides to render_data: {render_data['window_overrides']}")
             
             # Render the symbol
             symbol_renderer.render(render_data, stroke_width)

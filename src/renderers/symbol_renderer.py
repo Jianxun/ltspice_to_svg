@@ -149,23 +149,58 @@ class SymbolRenderer(BaseRenderer):
         try:
             # Get window definitions from symbol definition
             windows = symbol_def.get('windows', {})
+            self.logger.debug(f"Window definitions from symbol_def: {windows}")
+            
             if not windows:
                 self.logger.debug("No window definitions found in symbol")
                 return
 
             # Get window overrides from symbol instance
             window_overrides = symbol.get('window_overrides', {})
+            self.logger.debug(f"Window overrides from symbol: {window_overrides}")
+            
+            instance_name = symbol.get('property_0', 'Unknown')
+            self.logger.debug(f"Processing window texts for symbol: {instance_name}")
 
             # Process each window
             for property_id, window_def in windows.items():
+                self.logger.debug(f"Processing window {property_id} with default definition: {window_def}")
+                
+                # Convert property_id from string to integer for comparison (if possible)
+                try:
+                    int_property_id = int(property_id)
+                    self.logger.debug(f"Converted property_id '{property_id}' to integer: {int_property_id}")
+                except ValueError:
+                    int_property_id = None
+                    self.logger.debug(f"Could not convert property_id '{property_id}' to integer")
+                
+                # Check if there's an override for this window (using integer key)
+                has_override = False
+                if int_property_id is not None and int_property_id in window_overrides:
+                    self.logger.debug(f"Found integer override for window {property_id}: {window_overrides[int_property_id]}")
+                    has_override = True
+                elif property_id in window_overrides:
+                    self.logger.debug(f"Found string override for window {property_id}: {window_overrides[property_id]}")
+                    has_override = True
+                
                 # Get the property value from the symbol instance
                 property_value = symbol.get(f'property_{property_id}')
+                self.logger.debug(f"Property value for {property_id}: {property_value}")
+                
                 if not property_value:
                     self.logger.debug(f"No value found for property {property_id}")
                     continue
 
                 # Get window settings, using overrides if available
-                window_settings = window_overrides.get(property_id, window_def)
+                window_settings = window_def
+                if has_override:
+                    self.logger.debug(f"Using override settings for window {property_id}")
+                    if int_property_id is not None and int_property_id in window_overrides:
+                        window_settings = window_overrides[int_property_id]
+                    else:
+                        window_settings = window_overrides[property_id]
+                else:
+                    self.logger.debug(f"Using default settings for window {property_id}")
 
                 # Create text data
                 text_data = {
@@ -224,6 +259,13 @@ class SymbolRenderer(BaseRenderer):
             # Render texts if present
             if 'texts' in symbol:
                 self.render_texts(symbol['texts'])
+            
+            # Debug log the contents of the symbol dict
+            self.logger.debug(f"Symbol data keys: {list(symbol.keys())}")
+            if 'symbol_def' in symbol:
+                self.logger.debug(f"Symbol definition keys: {list(symbol['symbol_def'].keys())}")
+            if 'window_overrides' in symbol:
+                self.logger.debug(f"Window overrides present: {symbol['window_overrides']}")
             
             # Render window texts if present
             if 'symbol_def' in symbol:

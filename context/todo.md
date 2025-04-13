@@ -43,6 +43,7 @@
     - [X] Support property value resolution
     - [X] Apply text transformations
     - [X] Test with various symbol types and orientations
+    - [X] Fix window text overrides bug for integer/string keys
 
 [X] Create Integration Test Plan
   - [X] Define test structure
