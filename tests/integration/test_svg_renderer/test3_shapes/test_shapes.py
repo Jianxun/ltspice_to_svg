@@ -5,6 +5,11 @@ import math
 from src.generators.svg_renderer import SVGRenderer
 from src.parsers.asc_parser import ASCParser
 
+@pytest.fixture(autouse=True)
+def setup_ltspice_lib():
+    """Set up the LTspice library path environment variable."""
+    os.environ['LTSPICE_LIB_PATH'] = f"/Users/{os.getenv('USER')}/Library/Application Support/LTspice/lib/sym"
+
 def calculate_angle(x: float, y: float, center_x: float, center_y: float) -> float:
     """Calculate the angle of a point relative to the center."""
     dx = x - center_x

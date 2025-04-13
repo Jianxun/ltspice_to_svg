@@ -107,6 +107,14 @@
       - [X] Support property value resolution
       - [X] Apply text transformations
       - [X] Test with various symbol types and orientations
+      - [X] Fix window text overrides bug for integer/string keys
+    - [X] Test6: Symbol Window Texts
+      - [X] Create test schematic specifically for window text overrides
+      - [X] Implement test assertions for window text presence and content
+      - [X] Test with different symbol orientations and property values
+      - [X] Verify window text overrides are properly applied
+      - [X] Fix type mismatch between string and integer keys in window overrides
+      - [X] Add detailed assertions for text positioning and formatting
 
 ## Current Task: Test2 (Text)
 [ ] Create test schematic for standalone text elements

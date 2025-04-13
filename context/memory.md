@@ -220,3 +220,92 @@ This project aims to convert LTspice schematic files (.asc) to SVG format. The p
   - Property values (instance names and values)
   - Text transformations (mirroring, rotation)
   - Text justification and size multipliers
+
+## Project State
+
+The project is focused on converting LTspice schematic files (.asc) to SVG format. We've successfully implemented:
+
+1. Basic parsing of .asc files
+2. Rendering of wires, shapes (lines, rectangles, arcs, circles), texts, and symbols
+3. Tests for wires, shapes, symbols, symbol texts, and window texts
+4. Visual debugging and verification system
+5. SVG generation with proper styling and transformations
+6. Support for all basic elements in LTspice schematics
+7. Symbol rendering with proper transformations, including mirroring and rotation
+8. Text rendering including handling of special anchoring and justification
+9. Window text rendering with property value resolution and overrides
+
+Current focus is on Test2 (Text), which involves creating a test schematic for standalone text elements with various attributes.
+
+## Technical Details
+
+- Python version: 3.12.9
+- Testing framework: pytest with fixtures and parameterized tests
+- Core modules:
+  - `parsers`: Handle reading and interpreting LTspice files
+  - `renderers`: Convert parsed data to SVG elements
+  - `generators`: Assemble SVG elements into complete documents
+
+### File Organization
+- Source files in `ltspice_to_svg/`
+  - `parsers/`: Contains code for parsing different LTspice file formats
+  - `renderers/`: Contains renderers for different element types
+  - `generators/`: SVG document generation utilities
+- Test files in `tests/`
+  - Test cases organized by feature (wires, shapes, symbols, texts)
+  - Each test directory has schematic (.asc), expected output, and test code
+
+### Important Files
+- `ltspice_to_svg/parsers/schematic_parser.py`: Parses .asc files
+- `ltspice_to_svg/parsers/symbol_parser.py`: Parses .asy files
+- `ltspice_to_svg/renderers/base_renderer.py`: Base class for all renderers
+- `ltspice_to_svg/renderers/wire_renderer.py`: Renders wires
+- `ltspice_to_svg/renderers/shape_renderer.py`: Renders shapes (lines, rectangles, etc.)
+- `ltspice_to_svg/renderers/text_renderer.py`: Renders text elements
+- `ltspice_to_svg/renderers/symbol_renderer.py`: Renders symbols with proper transformations
+- `tools/fix_encoding.py`: Tool to fix encoding issues in LTspice files
+
+## Rendering Features
+
+1. **Wire Rendering**
+   - SVG path generation with proper styling
+   - Start and end point transformations
+   
+2. **Shape Rendering**
+   - Lines, rectangles, circles, arcs
+   - Fill and stroke styling
+   - Proper transformations for all coordinates
+   
+3. **Text Rendering**
+   - Font size and family handling
+   - Text rotation and mirroring
+   - Proper positioning based on anchor points and justification
+   - Special handling for mirrored text to maintain readability
+   
+4. **Symbol Rendering**
+   - Proper group creation with transformations
+   - Support for flipping and rotation
+   - Pin symbol rendering with correct orientation
+   - Text elements within symbols with proper positioning
+   - Handling of window texts with property value resolution
+   - Correct application of window text overrides with type-aware key handling
+
+## Recent Progress
+
+We've completed the successful implementation of window text rendering in symbols, including a key fix for window text overrides that had a type mismatch between string and integer keys. The implementation now correctly handles both key types when applying overrides.
+
+We also created and completed Test6 (Symbol Window Texts) to specifically test window text overrides with various symbol orientations and property values. This test validates that window text overrides are properly applied and text positioning and formatting are correct.
+
+The project now has comprehensive test coverage for all basic elements in LTspice schematics, including edge cases such as mirrored text rendering and window text overrides.
+
+## Next Steps
+
+The current focus is on Test2 (Text), which will create a comprehensive test for standalone text elements with various attributes, including:
+- Different font sizes
+- Font styles (bold, italic)
+- Text alignment (left, center, right)
+- Text rotation
+- Special characters
+- Multi-line text
+
+After completing Test2, we'll proceed with Test3 (Shapes) and Test4 (Integration), as outlined in the todo list.

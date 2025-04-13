@@ -20,14 +20,23 @@ class TestSVGRenderer:
                 {'x1': 50, 'y1': 0, 'x2': 50, 'y2': 100}
             ],
             'symbols': [
-                {'type': 'resistor', 'x': 50, 'y': 50, 'rotation': 0}
+                {'symbol_name': 'resistor', 'x': 50, 'y': 50, 'rotation': 'R0', 'instance_name': 'R1'}
             ],
             'texts': [
                 {'text': 'R1', 'x': 60, 'y': 50, 'rotation': 0}
             ],
-            'shapes': [
-                {'type': 'rectangle', 'x': 25, 'y': 25, 'width': 50, 'height': 50}
-            ]
+            'shapes': {
+                'lines': [
+                    {'x1': 10, 'y1': 10, 'x2': 90, 'y2': 90}
+                ],
+                'rectangles': [
+                    {'x1': 25, 'y1': 25, 'x2': 75, 'y2': 75}
+                ],
+                'circles': [
+                    {'x1': 50, 'y1': 50, 'x2': 60, 'y2': 60}
+                ],
+                'arcs': []
+            }
         }
     
     def test_initialization(self, renderer):

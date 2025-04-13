@@ -263,21 +263,36 @@ class SVGRenderer:
         # Calculate bounds from shapes
         shapes = self.schematic_data.get('shapes', {})
         
-        # Lines
-        for line in shapes.get('lines', []):
-            self._update_bounds(line['x1'], line['y1'], line['x2'], line['y2'])
-            
-        # Rectangles
-        for rect in shapes.get('rectangles', []):
-            self._update_bounds(rect['x1'], rect['y1'], rect['x2'], rect['y2'])
-            
-        # Circles
-        for circle in shapes.get('circles', []):
-            self._update_bounds(circle['x1'], circle['y1'], circle['x2'], circle['y2'])
-            
-        # Arcs
-        for arc in shapes.get('arcs', []):
-            self._update_bounds(arc['x1'], arc['y1'], arc['x2'], arc['y2'])
+        # Handle shapes based on format (list or dictionary)
+        if isinstance(shapes, list):
+            # Handle shapes as a list of shape objects with 'type' field
+            for shape in shapes:
+                shape_type = shape.get('type', '')
+                if shape_type == 'line':
+                    self._update_bounds(shape['x1'], shape['y1'], shape['x2'], shape['y2'])
+                elif shape_type == 'rectangle':
+                    self._update_bounds(shape['x'], shape['y'], shape['x'] + shape['width'], shape['y'] + shape['height'])
+                elif shape_type == 'circle':
+                    center_x, center_y = shape.get('x', 0), shape.get('y', 0)
+                    radius = shape.get('radius', 0)
+                    self._update_bounds(center_x - radius, center_y - radius, center_x + radius, center_y + radius)
+        else:
+            # Original approach: shapes as a dictionary of lists by shape type
+            # Lines
+            for line in shapes.get('lines', []):
+                self._update_bounds(line['x1'], line['y1'], line['x2'], line['y2'])
+                
+            # Rectangles
+            for rect in shapes.get('rectangles', []):
+                self._update_bounds(rect['x1'], rect['y1'], rect['x2'], rect['y2'])
+                
+            # Circles
+            for circle in shapes.get('circles', []):
+                self._update_bounds(circle['x1'], circle['y1'], circle['x2'], circle['y2'])
+                
+            # Arcs
+            for arc in shapes.get('arcs', []):
+                self._update_bounds(arc['x1'], arc['y1'], arc['x2'], arc['y2'])
             
         # Calculate dimensions
         width = self._max_x - self._min_x
