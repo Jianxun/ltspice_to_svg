@@ -465,7 +465,7 @@
         "y": 272,
         "justification": "Center",
         "text": "OUT",
-        "size_multiplier": 1.5,
+        "size_multiplier": 2,
         "type": "comment"
       },
       {
@@ -473,7 +473,7 @@
         "y": 312,
         "justification": "Center",
         "text": "IN_P",
-        "size_multiplier": 1.5,
+        "size_multiplier": 2,
         "type": "comment"
       },
       {
@@ -481,7 +481,7 @@
         "y": 312,
         "justification": "Center",
         "text": "IN_N",
-        "size_multiplier": 1.5,
+        "size_multiplier": 2,
         "type": "comment"
       },
       {
@@ -489,7 +489,7 @@
         "y": -48,
         "justification": "Center",
         "text": "2-Stage Miller OTA",
-        "size_multiplier": 3.5,
+        "size_multiplier": 5,
         "type": "comment"
       }
     ],

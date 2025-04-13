@@ -33,7 +33,9 @@ def drawing():
 @pytest.fixture
 def text_renderer(drawing):
     """Create a TextRenderer instance for testing."""
-    return TextRenderer(drawing)
+    renderer = TextRenderer(drawing)
+    renderer.base_font_size = DEFAULT_FONT_SIZE
+    return renderer
 
 def save_svg(dwg, test_name):
     """Save the SVG drawing to the results directory."""
@@ -48,6 +50,19 @@ def get_text_elements(dwg):
 def test_text_renderer_initialization(text_renderer, drawing):
     """Test that TextRenderer is properly initialized."""
     assert text_renderer.dwg == drawing
+    assert text_renderer.base_font_size == DEFAULT_FONT_SIZE
+
+def test_base_font_size_setter(text_renderer):
+    """Test the base_font_size setter."""
+    # Test valid values
+    text_renderer.base_font_size = 30.0
+    assert text_renderer.base_font_size == 30.0
+    
+    # Test invalid values
+    with pytest.raises(ValueError):
+        text_renderer.base_font_size = 0
+    with pytest.raises(ValueError):
+        text_renderer.base_font_size = -10.0
 
 def test_font_sizes(text_renderer, drawing):
     """Test rendering text with different font sizes."""
@@ -60,7 +75,7 @@ def test_font_sizes(text_renderer, drawing):
             'justification': 'Left',
             'size_multiplier': size_index
         }
-        text_renderer.render(text, font_size=DEFAULT_FONT_SIZE)
+        text_renderer.render(text)
     
     # Save SVG
     output_path = save_svg(drawing, 'test_font_sizes')
@@ -87,7 +102,7 @@ def test_justification(text_renderer, drawing):
             'justification': justification,
             'size_multiplier': 2
         }
-        text_renderer.render(text, font_size=DEFAULT_FONT_SIZE)
+        text_renderer.render(text)
     
     # Test vertical justification
     for i, justification in enumerate(['Top', 'Bottom']):
@@ -98,7 +113,7 @@ def test_justification(text_renderer, drawing):
             'justification': justification,
             'size_multiplier': 2
         }
-        text_renderer.render(text, font_size=DEFAULT_FONT_SIZE)
+        text_renderer.render(text)
     
     # Save SVG
     output_path = save_svg(drawing, 'test_justification')
@@ -125,7 +140,7 @@ def test_multiline_text(text_renderer, drawing):
         'justification': 'Center',
         'size_multiplier': 2
     }
-    text_renderer.render(text, font_size=DEFAULT_FONT_SIZE)
+    text_renderer.render(text)
     
     # Save SVG
     output_path = save_svg(drawing, 'test_multiline_text')
@@ -151,7 +166,7 @@ def test_special_characters(text_renderer, drawing):
         'justification': 'Center',
         'size_multiplier': 2
     }
-    text_renderer.render(text, font_size=DEFAULT_FONT_SIZE)
+    text_renderer.render(text)
     
     # Save SVG
     output_path = save_svg(drawing, 'test_special_characters')
@@ -183,7 +198,7 @@ def test_empty_text(text_renderer, drawing):
         'justification': 'Center',
         'size_multiplier': 2
     }
-    text_renderer.render(text, font_size=DEFAULT_FONT_SIZE)  # Should not raise an exception
+    text_renderer.render(text)  # Should not raise an exception
     
     # Save SVG
     output_path = save_svg(drawing, 'test_empty_text')
@@ -202,7 +217,7 @@ def test_default_values(text_renderer, drawing):
         'y': 0,
         'text': 'Default Values'
     }
-    text_renderer.render(text, font_size=DEFAULT_FONT_SIZE)
+    text_renderer.render(text)
     
     # Save SVG
     output_path = save_svg(drawing, 'test_default_values')

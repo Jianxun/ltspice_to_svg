@@ -7,7 +7,7 @@
       "y": 424,
       "justification": "Left",
       "text": ".op\n.tran",
-      "size_multiplier": 1.5,
+      "size_multiplier": 2,
       "type": "spice"
     },
     {
@@ -15,7 +15,7 @@
       "y": 512,
       "justification": "Left",
       "text": "Comment",
-      "size_multiplier": 1.5,
+      "size_multiplier": 2,
       "type": "comment"
     },
     {
@@ -23,7 +23,7 @@
       "y": 392,
       "justification": "VRight",
       "text": "Comment",
-      "size_multiplier": 1.5,
+      "size_multiplier": 2,
       "type": "comment"
     },
     {
@@ -31,7 +31,7 @@
       "y": 368,
       "justification": "Right",
       "text": "Comment",
-      "size_multiplier": 1.5,
+      "size_multiplier": 2,
       "type": "comment"
     },
     {
@@ -39,7 +39,7 @@
       "y": 488,
       "justification": "VLeft",
       "text": "Comment",
-      "size_multiplier": 1.5,
+      "size_multiplier": 2,
       "type": "comment"
     },
     {
@@ -47,7 +47,7 @@
       "y": 520,
       "justification": "Center",
       "text": "Comment",
-      "size_multiplier": 1.5,
+      "size_multiplier": 2,
       "type": "comment"
     },
     {
@@ -55,7 +55,7 @@
       "y": 448,
       "justification": "VCenter",
       "text": "Comment",
-      "size_multiplier": 1.5,
+      "size_multiplier": 2,
       "type": "comment"
     },
     {
@@ -63,7 +63,7 @@
       "y": 376,
       "justification": "Center",
       "text": "Comment",
-      "size_multiplier": 1.5,
+      "size_multiplier": 2,
       "type": "comment"
     },
     {
@@ -71,7 +71,7 @@
       "y": 448,
       "justification": "VCenter",
       "text": "Comment",
-      "size_multiplier": 1.5,
+      "size_multiplier": 2,
       "type": "comment"
     },
     {
@@ -79,7 +79,7 @@
       "y": 520,
       "justification": "Right",
       "text": "Comment",
-      "size_multiplier": 1.5,
+      "size_multiplier": 2,
       "type": "comment"
     },
     {
@@ -87,7 +87,7 @@
       "y": 496,
       "justification": "VLeft",
       "text": "Comment",
-      "size_multiplier": 1.5,
+      "size_multiplier": 2,
       "type": "comment"
     },
     {
@@ -95,7 +95,7 @@
       "y": 376,
       "justification": "Left",
       "text": "Comment",
-      "size_multiplier": 1.5,
+      "size_multiplier": 2,
       "type": "comment"
     },
     {
@@ -103,7 +103,7 @@
       "y": 392,
       "justification": "VRight",
       "text": "Comment",
-      "size_multiplier": 1.5,
+      "size_multiplier": 2,
       "type": "comment"
     },
     {
@@ -111,7 +111,7 @@
       "y": 320,
       "justification": "Top",
       "text": "Comment",
-      "size_multiplier": 1.5,
+      "size_multiplier": 2,
       "type": "comment"
     },
     {
@@ -119,7 +119,7 @@
       "y": 256,
       "justification": "VBottom",
       "text": "Comment",
-      "size_multiplier": 1.5,
+      "size_multiplier": 2,
       "type": "comment"
     },
     {
@@ -127,7 +127,7 @@
       "y": 192,
       "justification": "Bottom",
       "text": "Comment",
-      "size_multiplier": 1.5,
+      "size_multiplier": 2,
       "type": "comment"
     },
     {
@@ -135,7 +135,7 @@
       "y": 256,
       "justification": "VTop",
       "text": "Comment",
-      "size_multiplier": 1.5,
+      "size_multiplier": 2,
       "type": "comment"
     },
     {
@@ -143,7 +143,7 @@
       "y": 720,
       "justification": "Bottom",
       "text": "Comment",
-      "size_multiplier": 1.5,
+      "size_multiplier": 2,
       "type": "comment"
     },
     {
@@ -151,7 +151,7 @@
       "y": 640,
       "justification": "VTop",
       "text": "Comment",
-      "size_multiplier": 1.5,
+      "size_multiplier": 2,
       "type": "comment"
     },
     {
@@ -159,7 +159,7 @@
       "y": 560,
       "justification": "Top",
       "text": "Comment",
-      "size_multiplier": 1.5,
+      "size_multiplier": 2,
       "type": "comment"
     },
     {
@@ -167,7 +167,71 @@
       "y": 640,
       "justification": "VBottom",
       "text": "Comment",
-      "size_multiplier": 1.5,
+      "size_multiplier": 2,
+      "type": "comment"
+    },
+    {
+      "x": 976,
+      "y": 240,
+      "justification": "Left",
+      "text": "Comment",
+      "size_multiplier": 0,
+      "type": "comment"
+    },
+    {
+      "x": 976,
+      "y": 272,
+      "justification": "Left",
+      "text": "Comment",
+      "size_multiplier": 1,
+      "type": "comment"
+    },
+    {
+      "x": 976,
+      "y": 304,
+      "justification": "Left",
+      "text": "Comment",
+      "size_multiplier": 2,
+      "type": "comment"
+    },
+    {
+      "x": 976,
+      "y": 336,
+      "justification": "Left",
+      "text": "Comment",
+      "size_multiplier": 3,
+      "type": "comment"
+    },
+    {
+      "x": 976,
+      "y": 384,
+      "justification": "Left",
+      "text": "Comment",
+      "size_multiplier": 4,
+      "type": "comment"
+    },
+    {
+      "x": 976,
+      "y": 448,
+      "justification": "Left",
+      "text": "Comment",
+      "size_multiplier": 5,
+      "type": "comment"
+    },
+    {
+      "x": 976,
+      "y": 528,
+      "justification": "Left",
+      "text": "Comment",
+      "size_multiplier": 6,
+      "type": "comment"
+    },
+    {
+      "x": 976,
+      "y": 624,
+      "justification": "Left",
+      "text": "Comment",
+      "size_multiplier": 7,
       "type": "comment"
     }
   ],
@@ -176,7 +240,15 @@
   "shapes": {
     "lines": [],
     "circles": [],
-    "rectangles": [],
+    "rectangles": [
+      {
+        "x1": 60,
+        "y1": 84,
+        "x2": 1512,
+        "y2": 760,
+        "style": "0.001,2"
+      }
+    ],
     "arcs": []
   }
 }

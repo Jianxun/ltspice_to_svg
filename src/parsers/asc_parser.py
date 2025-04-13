@@ -309,11 +309,13 @@ class ASCParser:
                     justification = attrs_parts[3]
                     
                     # Extract size index and convert to actual multiplier if available
-                    size_multiplier = size_multipliers[2]  # Default to index 2 (1.5x)
+                    size_index = 2  # Default to index 2 (1.5x)
                     if len(attrs_parts) >= 5:
                         try:
                             size_index = int(attrs_parts[4])
-                            size_multiplier = size_multipliers.get(size_index, size_multipliers[2])
+                            if size_index not in size_multipliers:
+                                print(f"Warning: Invalid size index {size_index} in line: {line}, using default")
+                                size_index = 2
                         except ValueError:
                             print(f"Warning: Invalid size index in line: {line}, using default")
                     
@@ -322,7 +324,7 @@ class ASCParser:
                         'y': y,
                         'justification': justification,
                         'text': content.strip().replace('\\n', '\n'),  # Convert literal \n to newlines
-                        'size_multiplier': size_multiplier,  # Store actual multiplier value
+                        'size_multiplier': size_index,  # Store the size index, not the multiplier value
                         'type': content_type  # Store whether this is a SPICE directive or comment
                     }
                     self.texts.append(text)

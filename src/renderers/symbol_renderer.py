@@ -29,6 +29,21 @@ class SymbolRenderer(BaseRenderer):
         self._current_group = None
         self._is_mirrored = False
         
+    @property
+    def base_font_size(self) -> float:
+        """Get the base font size in pixels."""
+        return self.text_renderer.base_font_size
+        
+    @base_font_size.setter
+    def base_font_size(self, value: float) -> None:
+        """Set the base font size in pixels.
+        
+        Args:
+            value: The new base font size in pixels
+        """
+        self.text_renderer.base_font_size = value
+        self.logger.debug(f"Set base font size to {value}px")
+        
     def create_group(self) -> svgwrite.container.Group:
         """Create a new group for a symbol.
         
@@ -110,13 +125,11 @@ class SymbolRenderer(BaseRenderer):
             self.logger.error(f"Failed to render shapes: {str(e)}")
             raise
             
-    def render_texts(self, texts: Dict, font_size: float = 22.0,
-                    size_multipliers: Optional[Dict[int, float]] = None) -> None:
+    def render_texts(self, texts: Dict, size_multipliers: Optional[Dict[int, float]] = None) -> None:
         """Render texts for the current symbol.
         
         Args:
             texts: Dictionary containing text definitions
-            font_size: Base font size in pixels
             size_multipliers: Dictionary mapping size indices to font size multipliers
         """
         if not self._current_group:
@@ -129,19 +142,18 @@ class SymbolRenderer(BaseRenderer):
                 text_data = text.copy()
                 text_data['is_mirrored'] = self._is_mirrored
                 self.logger.info(f"Text data before rendering: {text_data}")
-                self.text_renderer.render(text_data, font_size, target_group=self._current_group)
+                self.text_renderer.render(text_data, target_group=self._current_group)
                 
         except Exception as e:
             self.logger.error(f"Failed to render texts: {str(e)}")
             raise
 
-    def render_window_texts(self, symbol: Dict, symbol_def: Dict, font_size: float = 22.0) -> None:
+    def render_window_texts(self, symbol: Dict, symbol_def: Dict) -> None:
         """Render window texts for the current symbol.
         
         Args:
             symbol: Dictionary containing symbol instance data
             symbol_def: Dictionary containing symbol definition
-            font_size: Base font size in pixels
         """
         if not self._current_group:
             raise ValueError("No group created. Call create_group() first.")
@@ -214,7 +226,7 @@ class SymbolRenderer(BaseRenderer):
 
                 # Render the text
                 self.logger.info(f"Rendering window text for property {property_id}: {text_data}")
-                self.text_renderer.render(text_data, font_size, target_group=self._current_group)
+                self.text_renderer.render(text_data, target_group=self._current_group)
 
         except Exception as e:
             self.logger.error(f"Failed to render window texts: {str(e)}")

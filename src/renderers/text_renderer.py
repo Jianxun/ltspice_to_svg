@@ -18,6 +18,7 @@ class TextRenderer(BaseRenderer):
         """
         super().__init__(dwg)
         self.logger = logging.getLogger(self.__class__.__name__)
+        self._base_font_size = 16.0  # Default base font size
     
     # Font size multiplier mapping
     SIZE_MULTIPLIERS = {
@@ -31,7 +32,24 @@ class TextRenderer(BaseRenderer):
         7: 7.0     # 7.0x base size
     }
     
-    def render(self, text: Dict, font_size: float = 22.0, target_group: Optional[svgwrite.container.Group] = None) -> None:
+    @property
+    def base_font_size(self) -> float:
+        """Get the base font size in pixels."""
+        return self._base_font_size
+    
+    @base_font_size.setter
+    def base_font_size(self, value: float) -> None:
+        """Set the base font size in pixels.
+        
+        Args:
+            value: The new base font size in pixels
+        """
+        if value <= 0:
+            raise ValueError("Base font size must be positive")
+        self._base_font_size = value
+        self.logger.debug(f"Base font size set to {value}px")
+    
+    def render(self, text: Dict, target_group: Optional[svgwrite.container.Group] = None) -> None:
         """Render a text element.
         
         Args:
@@ -43,7 +61,6 @@ class TextRenderer(BaseRenderer):
                 - size_multiplier: Font size multiplier index (0-7)
                 - type: Text type ('spice' or 'comment')
                 - is_mirrored: Whether the text is in a mirrored symbol
-            font_size: Base font size in pixels
             target_group: Optional group to add the text to. If None, adds to drawing.
         """
         # Skip if no text content
@@ -73,7 +90,7 @@ class TextRenderer(BaseRenderer):
             self.logger.debug("Removed ';' prefix from comment text")
             
         # Calculate actual font size
-        font_size = font_size * self.SIZE_MULTIPLIERS.get(size_multiplier, self.SIZE_MULTIPLIERS[2])
+        font_size = self._base_font_size * self.SIZE_MULTIPLIERS.get(size_multiplier, self.SIZE_MULTIPLIERS[2])
         self.logger.debug(f"Calculated font size: {font_size}px")
         
         # Handle vertical text (rotated 90 degrees counter-clockwise)
@@ -102,11 +119,11 @@ class TextRenderer(BaseRenderer):
         
         # Adjust vertical position based on justification
         if justification in ['Left', 'Center', 'Right']:
-            y_offset = font_size * 0.3  # Move up to center vertically
+            y_offset = font_size * 0.4  # Move up to center vertically
         elif justification == 'Top':
-            y_offset = font_size * 0.6  # Move down
+            y_offset = font_size * 0.7  # Move down
         else:  # Bottom
-            y_offset = font_size * 0.0  # Move up
+            y_offset = font_size * 0.1  # Move up slightly
         
         self.logger.debug(f"Position offsets: x={x_offset}, y={y_offset}")
         
@@ -128,22 +145,23 @@ class TextRenderer(BaseRenderer):
             text_element = text_group
             self.logger.debug(f"Added counter-mirroring transform: {text_group.attribs['transform']}")
         
-        # Add text to group or drawing
+        # For vertical text (VTop, VBottom), we need to rotate the text 90 degrees
         if is_vertical:
-            group.add(text_element)
-            if target_group is not None:
-                target_group.add(group)
-                self.logger.debug("Added vertical text group to target group")
-            else:
-                self.dwg.add(group)
-                self.logger.debug("Added vertical text group to drawing")
+            # Create a group for the text with rotation
+            text_group = self.dwg.g()
+            # Rotate around the text position
+            text_group.attribs['transform'] = f"rotate(-90, {x}, {y})"
+            text_group.add(text_element)
+            text_element = text_group
+            self.logger.debug(f"Added vertical text rotation transform: {text_group.attribs['transform']}")
+        
+        # Add text to target group or drawing
+        if target_group is not None:
+            target_group.add(text_element)
+            self.logger.debug("Added text element to target group")
         else:
-            if target_group is not None:
-                target_group.add(text_element)
-                self.logger.debug("Added text element to target group")
-            else:
-                self.dwg.add(text_element)
-                self.logger.debug("Added text element to drawing")
+            self.dwg.add(text_element)
+            self.logger.debug("Added text element to drawing")
         
     def _create_multiline_text(self, text_content: str, x: float, y: float, 
                             font_size: float, text_anchor: str = 'start', 

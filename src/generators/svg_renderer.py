@@ -191,7 +191,7 @@ class SVGRenderer:
             self.logger.debug(f"  Justification: {text.get('justification', 'Left')}")
             self.logger.debug(f"  Size multiplier: {text.get('size_multiplier', 2)}")
             self.logger.debug(f"  Type: {text.get('type', 'comment')}")
-            text_renderer.render(text, self._base_font_size)
+            text_renderer.render(text)
             
     def render_shapes(self) -> None:
         """Render all shapes in the schematic."""

@@ -1,97 +1,52 @@
 # Project Memory
 
 ## Project Overview
-This project aims to convert LTspice schematic files (.asc) to SVG format. The project is organized into several key components:
-
-1. **Parsers**: Handle the conversion of LTspice schematic files to an intermediate format
-2. **Renderers**: Convert the intermediate format to SVG
-3. **Generators**: Coordinate the overall conversion process
+This project aims to convert LTspice schematic files (.asc) to SVG format, maintaining high fidelity and accuracy in the conversion process.
 
 ## Current State
-- Python virtual environment is set up
-- Core SVG rendering functionality is implemented
-- Test1 (Wires and T-junctions) has been successfully implemented and verified
-  - Successfully detects and renders 9 T-junctions
-  - Uses dot_size_multiplier=2.0 for better visibility
-  - Includes assertion to verify T-junction count
-- Test3 (Shapes) has been successfully implemented and verified
-  - Successfully detects and renders 13 shapes (5 lines, 2 rectangles, 2 circles, 4 arcs)
-  - Uses stroke_width=2.0 for better visibility
-  - Includes assertions to verify shape counts and types
-  - Shapes are organized by type in the JSON output (lines, rectangles, circles, arcs)
-  - Fixed shape rendering by implementing proper render_shapes method
-  - Fixed viewBox calculation to include shape coordinates
-  - Arc rendering is now working correctly:
-    - Arcs are rendered on the ellipse defined by the bounding box
-    - Arcs are rendered counter-clockwise from start_angle to end_angle
-    - Large arc flag is set correctly based on angle difference
-    - Test verifies all arc parameters (angles, direction, large arc flag)
-- Test4 (Symbols) has been successfully implemented and verified
-  - Successfully detects and renders 3 symbols (2 NMOS transistors, 1 voltage source)
-  - Symbols are loaded from both local files and LTspice library
-  - Supports different orientations (0°, 270°)
-  - Symbol shapes are rendered correctly within their groups
-  - Symbol transformations (translation, rotation) are applied correctly
-  - Stroke width customization is supported for all elements
-  - Added detailed assertions for symbol elements:
-    - Voltage source: 5 lines, 1 circle
-    - NMOS: 14 lines
-  - LTSPICE_LIB_PATH environment variable is properly configured
-- Test5 (Symbol Texts) has been successfully implemented and verified
-  - Successfully implemented basic symbol text rendering
-  - Added support for text elements in symbols (pin labels, etc.)
-  - Fixed mirrored text rendering issues:
-    - Changed transformation order to apply rotation before mirroring
-    - Added mirrored state tracking in SymbolRenderer
-    - Adjusted text justification based on mirrored state (Left ↔ Right)
-    - Preserved font sizes and text content in mirrored symbols
-  - Successfully tested with NMOS transistors in different orientations (R0, R270, M0)
-  - Added comprehensive tests to verify:
-    - Text elements are present in SVG output
-    - Text content is preserved
-    - Mirroring transformations are applied correctly
-    - Text properties (position, justification, size) are maintained
-  - Fixed test assertions to expect 5 symbols (3 NMOS and 2 voltage sources)
-  - Successfully regenerated test5_symbol_texts.json with correct symbol count
-  - Updated window text metadata format to use property IDs as dictionary keys:
-    - Changed windows from array to dictionary format
-    - Property IDs are now used as keys instead of being stored in the data
-    - Structure is consistent between window definitions and overrides
-    - Updated documentation to reflect the new format
-  - Implemented window text rendering:
-    - Added render_window_texts method to SymbolRenderer
-    - Handles window definitions from symbol definitions
-    - Supports window overrides from symbol instances
-    - Properly handles property values (instance names and values)
-    - Applies text transformations (mirroring, rotation)
-    - Handles text justification and size multipliers
-    - Successfully tested with various symbol types and orientations
-  - Fixed window text overrides bug:
-    - Created Test6 (Symbol Window Texts) to specifically test window text overrides
-    - Fixed type mismatch between string keys (in window definitions) and integer keys (in window overrides)
-    - Implemented robust key comparison supporting both integer and string keys
-    - Added detailed debug logging to track window overrides flow
-    - Added assertions to verify text positioning, rotation, and formatting
-    - Verified all window text overrides are properly applied in the SVG output
+- Successfully implemented and tested core rendering components:
+  - BaseRenderer: Abstract base class with common functionality
+  - WireRenderer: Handles wire rendering with T-junction support
+  - TextRenderer: Handles text rendering with comprehensive support for justification, size, and transformations
+  - ShapeRenderer: Handles basic shape rendering
+  - SymbolRenderer: Handles symbol rendering with proper text delegation
+- All tests passing for implemented components
+- Comprehensive test coverage for T-junctions, shapes, symbols, and symbol texts
+- TextRenderer successfully integrated with base_font_size property and proper delegation
+- Ready to proceed with Test2 implementation for standalone text elements
+- Successfully implemented and tested text rendering with proper font size handling
+- Fixed bug in ASC parser where size multipliers were being stored instead of size indexes
+- Text renderer now correctly handles:
+  - Different text types (spice directives and comments)
+  - Multi-line text splitting
+  - Font size multipliers based on size indexes (0-7)
+  - Text justification (Left, Center, Right)
+  - Vertical text rendering
+  - Text mirroring for symbols
+
+## Key Features
+- Text rendering capabilities:
+  - Multiple justification options (left, center, right)
+  - Font size multipliers
+  - Special character support
+  - Multi-line text support
+  - Text transformations (rotation, mirroring)
+- Symbol rendering with proper text delegation
+- Comprehensive test coverage with visual verification
+- Proper property delegation between renderers
 
 ## Technical Details
-- The project uses Python 3.12.9
+- Python version: 3.12.9
 - Testing framework: pytest
-- SVG rendering is handled by the SVGRenderer class
-- Wire and T-junction detection is implemented in the WireRenderer class
-- Shape rendering is implemented in the ShapeRenderer class
-- Symbol rendering is implemented in the SymbolRenderer class
-- Text rendering is implemented in the TextRenderer class
-- Rendering features:
-  - Line styles: solid, dashed, dotted, dash-dot, dash-dot-dot
-  - Shape types: lines, rectangles, circles/ellipses, arcs
-  - Stroke width customization
-  - Proper viewBox calculation for all shapes
-  - Arc rendering with correct angle handling and direction
-  - Symbol group creation and transformation
-  - Symbol shape and text rendering
-  - Text justification and mirroring support
-  - Window text rendering with property resolution and overrides
+- SVG generation: svgwrite library
+- UTF-16LE encoding support for LTspice files
+- Property-based architecture for renderer configuration
+
+## Lessons Learned
+- Proper property delegation between renderers is crucial for consistent behavior
+- Text positioning requires careful consideration of justification and transformation
+- Comprehensive test coverage helps catch edge cases early
+- Visual verification is essential for complex rendering tasks
 
 ## Project Structure
 ```
@@ -137,42 +92,16 @@ This project aims to convert LTspice schematic files (.asc) to SVG format. The p
 │                   └── test5_symbol_texts.json
 ```
 
-## Lessons Learned
-1. T-junction detection requires careful consideration of both direct and indirect connections
-2. Visual debugging is important for verifying T-junction detection
-3. Using appropriate dot size multipliers improves visibility of T-junctions
-4. Assertions should be added to verify expected counts of detected elements
-5. Shape data is organized by type in the JSON output, requiring different handling than wire data
-6. Line styles in LTspice are represented as strings (e.g., "4,2" for dashed lines)
-7. Arc shapes include start and end angles in their definition
-8. ViewBox calculation must consider all elements in the schematic, not just wires
-9. Shape rendering requires proper type information to be added to each shape
-10. Arc rendering requires careful handling of:
-    - Ellipse parameters from bounding box
-    - Start and end angles
-    - Counter-clockwise direction
-    - Large arc flag based on angle difference
-11. Symbol rendering requires:
-    - Proper group creation and transformation
-    - Correct handling of symbol definitions from both local files and LTspice library
-    - Careful application of transformations (translation, rotation)
-    - Proper delegation of shape and text rendering to specialized renderers
-12. Detailed assertions for symbol elements help ensure correct parsing and rendering
-13. Environment variables (LTSPICE_LIB_PATH) are crucial for accessing LTspice library symbols
-14. Window text rendering requires:
-    - Proper handling of window definitions and overrides
-    - Careful property value resolution
-    - Correct application of text transformations
-    - Proper handling of text justification in mirrored symbols
-    - Consistent font size scaling
-
 ## Next Steps
-- Implement Test2 (Text) to handle standalone text elements
-  - Add text elements with different justifications
-  - Add text elements with different font sizes
-  - Add text elements with special characters
-  - Add text elements with multiple lines
-  - Add text elements with different orientations
+- Implement Test2 (Text) to handle standalone text elements:
+  - Create test schematic with various text attributes
+  - Verify text rendering in different contexts
+  - Ensure proper handling of special cases
+  - Document any new insights or requirements
+- Implement flag rendering (net labels, ground symbols, IO pins)
+- Add tests for flag rendering
+- Verify flag positioning and orientation
+- Handle flag text properties (size, justification)
 
 ### Arc Rendering Details
 - LTspice specifies arcs using 8 coordinates: `ARC Normal x1 y1 x2 y2 x3 y3 x4 y4`
@@ -220,6 +149,11 @@ This project aims to convert LTspice schematic files (.asc) to SVG format. The p
   - Property values (instance names and values)
   - Text transformations (mirroring, rotation)
   - Text justification and size multipliers
+  - Vertical text positioning with offsets based on font size:
+    - For VTop justification: y_offset = 0.7 * font_size
+    - For VBottom justification: y_offset = -0.3 * font_size
+    - Font size = base_font_size * size_multiplier
+  - Counter-rotation for text in rotated symbols to maintain readability
 
 ## Project State
 

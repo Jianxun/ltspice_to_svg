@@ -12,7 +12,9 @@ def dwg():
 @pytest.fixture
 def renderer(dwg):
     """Create a new SymbolRenderer for each test."""
-    return SymbolRenderer(dwg)
+    renderer = SymbolRenderer(dwg)
+    renderer.base_font_size = 22.0  # Set default font size
+    return renderer
 
 @pytest.fixture
 def sample_shapes():
@@ -62,6 +64,22 @@ def save_test_result(dwg, test_name):
     os.makedirs('tests/test_symbol_renderer/results', exist_ok=True)
     dwg.saveas(f'tests/test_symbol_renderer/results/{test_name}.svg')
 
+def test_base_font_size(renderer):
+    """Test the base_font_size property."""
+    # Test initial value
+    assert renderer.base_font_size == 22.0
+    
+    # Test setting valid values
+    renderer.base_font_size = 30.0
+    assert renderer.base_font_size == 30.0
+    assert renderer.text_renderer.base_font_size == 30.0
+    
+    # Test setting invalid values
+    with pytest.raises(ValueError):
+        renderer.base_font_size = 0
+    with pytest.raises(ValueError):
+        renderer.base_font_size = -10.0
+
 def test_create_group(renderer, dwg):
     """Test creating a new group."""
     group = renderer.create_group()
@@ -70,15 +88,12 @@ def test_create_group(renderer, dwg):
     renderer.add_to_drawing()
     #save_test_result(dwg, 'test_create_group')
 
-
 def test_render_texts(renderer, dwg, sample_texts):
     """Test rendering texts."""
     renderer.create_group()
-    renderer.render_texts(sample_texts, font_size=24.0)
+    renderer.render_texts(sample_texts)
     renderer.add_to_drawing()
     save_test_result(dwg, 'test_render_texts')
-
-
 
 def test_error_no_group(renderer):
     """Test error when no group is created."""

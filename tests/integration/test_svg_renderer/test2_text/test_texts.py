@@ -55,7 +55,7 @@ class TestTextRendering:
         text_elements = root.findall(".//{http://www.w3.org/2000/svg}text")
         
         # Verify text count
-        assert len(text_elements) == 22, f"Expected 22 text elements, got {len(text_elements)}"
+        assert len(text_elements) == 30, f"Expected 30 text elements, got {len(text_elements)}"
         
         # Verify text content and attributes
         for text in text_elements:
@@ -81,9 +81,17 @@ class TestTextRendering:
         op_text = next((t for t in text_elements if t.text == ".op"), None)
         assert op_text is not None, "Could not find .op directive text"
         
+        # Check for the .tran directive
+        tran_text = next((t for t in text_elements if t.text == ".tran"), None)
+        assert tran_text is not None, "Could not find .tran directive text"
+        
         # Check for comment texts
         comment_texts = [t for t in text_elements if t.text == "Comment"]
-        assert len(comment_texts) == 20, f"Expected 20 comment texts, got {len(comment_texts)}"
+        assert len(comment_texts) == 28, f"Expected 28 comment texts, got {len(comment_texts)}"
+        
+        # Check for spice directive texts
+        spice_texts = [t for t in text_elements if t.text in [".op", ".tran"]]
+        assert len(spice_texts) == 2, f"Expected 2 spice directive texts, got {len(spice_texts)}"
         
         # Verify text positions and alignments
         for text in text_elements:
