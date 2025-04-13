@@ -1,0 +1,182 @@
+{
+  "wires": [],
+  "symbols": [],
+  "texts": [
+    {
+      "x": 160,
+      "y": 424,
+      "justification": "Left",
+      "text": ".op\n.tran",
+      "size_multiplier": 1.5,
+      "type": "spice"
+    },
+    {
+      "x": 336,
+      "y": 512,
+      "justification": "Left",
+      "text": "Comment",
+      "size_multiplier": 1.5,
+      "type": "comment"
+    },
+    {
+      "x": 464,
+      "y": 392,
+      "justification": "VRight",
+      "text": "Comment",
+      "size_multiplier": 1.5,
+      "type": "comment"
+    },
+    {
+      "x": 440,
+      "y": 368,
+      "justification": "Right",
+      "text": "Comment",
+      "size_multiplier": 1.5,
+      "type": "comment"
+    },
+    {
+      "x": 304,
+      "y": 488,
+      "justification": "VLeft",
+      "text": "Comment",
+      "size_multiplier": 1.5,
+      "type": "comment"
+    },
+    {
+      "x": 616,
+      "y": 520,
+      "justification": "Center",
+      "text": "Comment",
+      "size_multiplier": 1.5,
+      "type": "comment"
+    },
+    {
+      "x": 680,
+      "y": 448,
+      "justification": "VCenter",
+      "text": "Comment",
+      "size_multiplier": 1.5,
+      "type": "comment"
+    },
+    {
+      "x": 616,
+      "y": 376,
+      "justification": "Center",
+      "text": "Comment",
+      "size_multiplier": 1.5,
+      "type": "comment"
+    },
+    {
+      "x": 536,
+      "y": 448,
+      "justification": "VCenter",
+      "text": "Comment",
+      "size_multiplier": 1.5,
+      "type": "comment"
+    },
+    {
+      "x": 864,
+      "y": 520,
+      "justification": "Right",
+      "text": "Comment",
+      "size_multiplier": 1.5,
+      "type": "comment"
+    },
+    {
+      "x": 872,
+      "y": 496,
+      "justification": "VLeft",
+      "text": "Comment",
+      "size_multiplier": 1.5,
+      "type": "comment"
+    },
+    {
+      "x": 768,
+      "y": 376,
+      "justification": "Left",
+      "text": "Comment",
+      "size_multiplier": 1.5,
+      "type": "comment"
+    },
+    {
+      "x": 744,
+      "y": 392,
+      "justification": "VRight",
+      "text": "Comment",
+      "size_multiplier": 1.5,
+      "type": "comment"
+    },
+    {
+      "x": 616,
+      "y": 320,
+      "justification": "Top",
+      "text": "Comment",
+      "size_multiplier": 1.5,
+      "type": "comment"
+    },
+    {
+      "x": 688,
+      "y": 256,
+      "justification": "VBottom",
+      "text": "Comment",
+      "size_multiplier": 1.5,
+      "type": "comment"
+    },
+    {
+      "x": 616,
+      "y": 192,
+      "justification": "Bottom",
+      "text": "Comment",
+      "size_multiplier": 1.5,
+      "type": "comment"
+    },
+    {
+      "x": 528,
+      "y": 256,
+      "justification": "VTop",
+      "text": "Comment",
+      "size_multiplier": 1.5,
+      "type": "comment"
+    },
+    {
+      "x": 616,
+      "y": 720,
+      "justification": "Bottom",
+      "text": "Comment",
+      "size_multiplier": 1.5,
+      "type": "comment"
+    },
+    {
+      "x": 672,
+      "y": 640,
+      "justification": "VTop",
+      "text": "Comment",
+      "size_multiplier": 1.5,
+      "type": "comment"
+    },
+    {
+      "x": 616,
+      "y": 560,
+      "justification": "Top",
+      "text": "Comment",
+      "size_multiplier": 1.5,
+      "type": "comment"
+    },
+    {
+      "x": 552,
+      "y": 640,
+      "justification": "VBottom",
+      "text": "Comment",
+      "size_multiplier": 1.5,
+      "type": "comment"
+    }
+  ],
+  "flags": [],
+  "io_pins": [],
+  "shapes": {
+    "lines": [],
+    "circles": [],
+    "rectangles": [],
+    "arcs": []
+  }
+}

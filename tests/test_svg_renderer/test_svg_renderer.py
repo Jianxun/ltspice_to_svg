@@ -123,10 +123,12 @@ class TestSVGRenderer:
             renderer.create_drawing(tmp.name)
             
             # Test custom stroke width
-            renderer.render_wires(stroke_width=2.0)
+            renderer.set_stroke_width(2.0)
+            renderer.render_wires()
             
             # Test custom font size
-            renderer.render_texts(font_size=24.0)
+            renderer.set_base_font_size(24.0)
+            renderer.render_texts()
             
             # Test custom dot size multiplier
             renderer.render_wires(dot_size_multiplier=1.0)
