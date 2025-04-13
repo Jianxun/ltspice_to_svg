@@ -31,8 +31,9 @@ def test_wires_and_tjunctions():
     renderer.load_schematic(schematic_data)
     renderer.create_drawing(output_path)
     
-    # Render wires with T-junctions
-    renderer.render_wires(stroke_width=2.0, dot_size_multiplier=2.0)
+    # Set stroke width and render wires with T-junctions
+    renderer.set_stroke_width(2.0)
+    renderer.render_wires(dot_size_multiplier=2.0)
     
     # Save the SVG
     renderer.save()

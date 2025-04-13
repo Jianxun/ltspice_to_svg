@@ -39,8 +39,9 @@ def test_shapes():
     renderer.load_schematic(schematic_data)
     renderer.create_drawing(output_path)
     
-    # Render shapes
-    renderer.render_shapes(stroke_width=2.0)
+    # Set stroke width and render shapes
+    renderer.set_stroke_width(2.0)
+    renderer.render_shapes()
     
     # Save the SVG
     renderer.save()

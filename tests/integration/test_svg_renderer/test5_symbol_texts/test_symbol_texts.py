@@ -56,11 +56,12 @@ def test_symbol_texts(test_schematic, output_dir):
     svg_output = os.path.join(output_dir, "test5_symbol_texts.svg")
     renderer.create_drawing(svg_output)
     
-    # Render components with increased stroke width
-    renderer.render_wires(stroke_width=2.0)
-    renderer.render_symbols(stroke_width=2.0)
+    # Set stroke width and render components
+    renderer.set_stroke_width(2.0)
+    renderer.render_wires()
+    renderer.render_symbols()
     renderer.render_texts()
-    renderer.render_shapes(stroke_width=2.0)
+    renderer.render_shapes()
     
     # Save the SVG
     renderer.save()

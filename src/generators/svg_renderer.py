@@ -19,6 +19,34 @@ class SVGRenderer:
         self._max_y = float('-inf')
         self.symbol_data = None  # Add symbol data storage
         self.logger = logging.getLogger(self.__class__.__name__)
+        self._stroke_width = 2.0  # Default stroke width
+        self._base_font_size = 22.0  # Default font size
+        
+    def set_stroke_width(self, stroke_width: float) -> None:
+        """Set the stroke width for all rendered elements.
+        
+        Args:
+            stroke_width (float): The stroke width in pixels.
+            
+        Raises:
+            ValueError: If stroke_width is not positive.
+        """
+        if stroke_width <= 0:
+            raise ValueError("Stroke width must be positive")
+        self._stroke_width = stroke_width
+        
+    def set_base_font_size(self, font_size: float) -> None:
+        """Set the base font size for all text elements.
+        
+        Args:
+            font_size (float): The base font size in pixels.
+            
+        Raises:
+            ValueError: If font_size is not positive.
+        """
+        if font_size <= 0:
+            raise ValueError("Font size must be positive")
+        self._base_font_size = font_size
         
     def _initialize_renderers(self):
         """Initialize all renderers."""
@@ -72,11 +100,10 @@ class SVGRenderer:
         self.dwg.viewbox(min_x, min_y, width, height)
         self._initialize_renderers()
         
-    def render_wires(self, stroke_width: float = 2.0, dot_size_multiplier: float = 1.5) -> None:
+    def render_wires(self, dot_size_multiplier: float = 1.5) -> None:
         """Render all wires in the schematic.
         
         Args:
-            stroke_width (float): Width of the wire lines.
             dot_size_multiplier (float): Size multiplier for T-junction dots.
         """
         if not self.schematic_data or not self.dwg:
@@ -84,19 +111,15 @@ class SVGRenderer:
             
         wire_renderer = self._renderers['wire']
         for wire in self.schematic_data.get('wires', []):
-            wire_renderer.render(wire, stroke_width)
+            wire_renderer.render(wire, self._stroke_width)
             
         # Add T-junction dots
         t_junctions = self._find_t_junctions(self.schematic_data['wires'])
         for x, y in t_junctions:
-            wire_renderer.render_t_junction(x, y, stroke_width * dot_size_multiplier)
+            wire_renderer.render_t_junction(x, y, self._stroke_width * dot_size_multiplier)
             
-    def render_symbols(self, stroke_width: float = 1.0) -> None:
-        """Render all symbols in the schematic.
-        
-        Args:
-            stroke_width (float): Width of lines in pixels.
-        """
+    def render_symbols(self) -> None:
+        """Render all symbols in the schematic."""
         if not self.schematic_data or not self.dwg:
             raise ValueError("Schematic not loaded or drawing not created")
             
@@ -151,14 +174,10 @@ class SVGRenderer:
                 self.logger.debug(f"  Added window_overrides to render_data: {render_data['window_overrides']}")
             
             # Render the symbol
-            symbol_renderer.render(render_data, stroke_width)
+            symbol_renderer.render(render_data, self._stroke_width)
             
-    def render_texts(self, font_size: float = 22.0) -> None:
-        """Render all text elements in the schematic.
-        
-        Args:
-            font_size (float): Base font size in pixels.
-        """
+    def render_texts(self) -> None:
+        """Render all text elements in the schematic."""
         if not self.schematic_data or not self.dwg:
             raise ValueError("Schematic not loaded or drawing not created")
             
@@ -172,14 +191,10 @@ class SVGRenderer:
             self.logger.debug(f"  Justification: {text.get('justification', 'Left')}")
             self.logger.debug(f"  Size multiplier: {text.get('size_multiplier', 2)}")
             self.logger.debug(f"  Type: {text.get('type', 'comment')}")
-            text_renderer.render(text, font_size)
+            text_renderer.render(text, self._base_font_size)
             
-    def render_shapes(self, stroke_width: float = 1.0) -> None:
-        """Render all shapes in the schematic.
-        
-        Args:
-            stroke_width (float): Width of the shape lines.
-        """
+    def render_shapes(self) -> None:
+        """Render all shapes in the schematic."""
         if not self.schematic_data or not self.dwg:
             raise ValueError("Schematic not loaded or drawing not created")
             
@@ -190,25 +205,25 @@ class SVGRenderer:
         for line in shapes.get('lines', []):
             shape_data = line.copy()
             shape_data['type'] = 'line'
-            shape_renderer.render(shape_data, stroke_width)
+            shape_renderer.render(shape_data, self._stroke_width)
             
         # Render rectangles
         for rect in shapes.get('rectangles', []):
             shape_data = rect.copy()
             shape_data['type'] = 'rectangle'
-            shape_renderer.render(shape_data, stroke_width)
+            shape_renderer.render(shape_data, self._stroke_width)
             
         # Render circles
         for circle in shapes.get('circles', []):
             shape_data = circle.copy()
             shape_data['type'] = 'circle'
-            shape_renderer.render(shape_data, stroke_width)
+            shape_renderer.render(shape_data, self._stroke_width)
             
         # Render arcs
         for arc in shapes.get('arcs', []):
             shape_data = arc.copy()
             shape_data['type'] = 'arc'
-            shape_renderer.render(shape_data, stroke_width)
+            shape_renderer.render(shape_data, self._stroke_width)
             
     def save(self) -> None:
         """Save the SVG drawing to file."""

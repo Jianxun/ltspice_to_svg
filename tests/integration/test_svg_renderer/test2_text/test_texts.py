@@ -39,8 +39,9 @@ class TestTextRendering:
         output_path = results_dir / "test2_texts.svg"
         svg_renderer.create_drawing(str(output_path))
         
-        # Render text elements
-        svg_renderer.render_texts(font_size=16.0)
+        # Set font size and render text elements
+        svg_renderer.set_base_font_size(16.0)
+        svg_renderer.render_texts()
         
         # Save the SVG
         svg_renderer.save()

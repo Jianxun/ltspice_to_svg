@@ -43,10 +43,13 @@ output/
 htmlcov/
 commit_msg.txt
 tools/
+*.svg
 
 # Test results
-tests/*/results/
-tests/*/*/results/
+tests/*/results/*.json
+tests/*/*/results/*.json
+tests/*/results/.DS_Store
+tests/*/*/results/.DS_Store
 
 # OS specific
 .DS_Store

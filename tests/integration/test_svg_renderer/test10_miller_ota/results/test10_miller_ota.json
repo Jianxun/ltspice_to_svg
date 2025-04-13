@@ -433,7 +433,8 @@
             "justification": "VTop",
             "size_multiplier": 2
           }
-        }
+        },
+        "value": "10p"
       },
       {
         "symbol_name": "res",
@@ -454,7 +455,8 @@
             "justification": "VTop",
             "size_multiplier": 2
           }
-        }
+        },
+        "value": "1k"
       }
     ],
     "texts": [
