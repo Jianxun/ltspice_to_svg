@@ -6,6 +6,7 @@ from src.renderers.wire_renderer import WireRenderer
 from src.renderers.symbol_renderer import SymbolRenderer
 from src.renderers.text_renderer import TextRenderer
 from src.renderers.shape_renderer import ShapeRenderer
+from src.renderers.flag_renderer import FlagRenderer
 
 class SVGRenderer:
     def __init__(self):
@@ -54,7 +55,8 @@ class SVGRenderer:
             'wire': WireRenderer(self.dwg),
             'symbol': SymbolRenderer(self.dwg),
             'text': TextRenderer(self.dwg),
-            'shape': ShapeRenderer(self.dwg)
+            'shape': ShapeRenderer(self.dwg),
+            'flag': FlagRenderer(self.dwg)
         }
         
     def load_schematic(self, schematic_data: Dict, symbol_data: Optional[Dict] = None) -> None:
@@ -224,6 +226,33 @@ class SVGRenderer:
             shape_data = arc.copy()
             shape_data['type'] = 'arc'
             shape_renderer.render(shape_data, self._stroke_width)
+            
+    def render_flags(self) -> None:
+        """Render all flags in the schematic."""
+        if not self.schematic_data or not self.dwg:
+            raise ValueError("Schematic not loaded or drawing not created")
+        
+        flags = self.schematic_data.get('flags', [])
+        self.logger.info(f"Found {len(flags)} flags to render")
+        
+        for flag in flags:
+            if flag['type'] == 'gnd':  # Note: ASCParser uses 'gnd' for ground flags
+                # Create a group for the ground flag
+                g = self.dwg.g()
+                g.attribs['class'] = 'ground-flag'
+                
+                # Add the ground flag to the group
+                self._renderers['flag'].render_ground_flag(
+                    {
+                        'x': flag['x'],
+                        'y': flag['y'],
+                        'orientation': flag['orientation']
+                    },
+                    g
+                )
+                
+                # Add the group to the drawing
+                self.dwg.add(g)
             
     def save(self) -> None:
         """Save the SVG drawing to file."""

@@ -1,0 +1,24 @@
+{
+    "name": "ground_flag",
+    "description": "Ground flag symbol with V shape",
+    "lines": [
+        {
+            "start": [-16, 0],
+            "end": [16, 0],
+            "stroke": "black",
+            "stroke_linecap": "round"
+        },
+        {
+            "start": [-16, 0],
+            "end": [0, 16],
+            "stroke": "black",
+            "stroke_linecap": "round"
+        },
+        {
+            "start": [16, 0],
+            "end": [0, 16],
+            "stroke": "black",
+            "stroke_linecap": "round"
+        }
+    ]
+} 
