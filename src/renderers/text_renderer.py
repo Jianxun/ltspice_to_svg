@@ -32,6 +32,16 @@ class TextRenderer(BaseRenderer):
         7: 7.0     # 7.0x base size
     }
     
+    # Vertical offset multipliers for normal text justification
+    TEXT_OFFSETS = {
+        'Top': 0.9,     # Move down from baseline
+        'Bottom': -0.2,  # Move up from baseline
+        'Center': 0.35,   # Center vertically
+        'VTop': 0.8,     # Move right from baseline
+        'VBottom': -0.2,  # Move left from baseline
+        'VCenter': 0   # Center horizontally
+    }
+    
     @property
     def base_font_size(self) -> float:
         """Get the base font size in pixels."""
@@ -84,10 +94,10 @@ class TextRenderer(BaseRenderer):
         # Strip prefix based on text type
         if text_type == 'spice' and content.startswith('!'):
             content = content[1:]  # Remove ! prefix
-            self.logger.debug("Removed '!' prefix from spice text")
+            #self.logger.debug("Removed '!' prefix from spice text")
         elif text_type == 'comment' and content.startswith(';'):
             content = content[1:]  # Remove ; prefix
-            self.logger.debug("Removed ';' prefix from comment text")
+            #self.logger.debug("Removed ';' prefix from comment text")
             
         # Calculate actual font size
         font_size = self._base_font_size * self.SIZE_MULTIPLIERS.get(size_multiplier, self.SIZE_MULTIPLIERS[2])
@@ -119,12 +129,21 @@ class TextRenderer(BaseRenderer):
         
         # Adjust vertical position based on justification
         if justification in ['Left', 'Center', 'Right']:
-            y_offset = font_size * 0.4  # Move up to center vertically
+            y_offset = font_size * self.TEXT_OFFSETS['Center']  # Move up to center vertically
         elif justification == 'Top':
-            y_offset = font_size * 0.7  # Move down
-        else:  # Bottom
-            y_offset = font_size * 0.1  # Move up slightly
+            y_offset = font_size * (self.TEXT_OFFSETS['Top'] if is_vertical else self.TEXT_OFFSETS['Top'])  # Move down
+        elif justification == 'Bottom':
+            y_offset = font_size * (self.TEXT_OFFSETS['Bottom'] if is_vertical else self.TEXT_OFFSETS['Bottom'])  # Move up slightly
+
+        # Adjust vertical position based on justification
+        if justification in ['VLeft', 'VCenter', 'VRight']:
+            y_offset = font_size * self.TEXT_OFFSETS['VCenter']  # Move up to center vertically
+        elif justification == 'VTop':
+            y_offset = font_size * (self.TEXT_OFFSETS['VTop'] if is_vertical else self.TEXT_OFFSETS['Top'])  # Move down
+        elif justification == 'VBottom':
+            y_offset = font_size * (self.TEXT_OFFSETS['VBottom'] if is_vertical else self.TEXT_OFFSETS['Bottom'])  # Move up slightly
         
+
         self.logger.debug(f"Position offsets: x={x_offset}, y={y_offset}")
         
         # Create multiline text element
@@ -181,6 +200,7 @@ class TextRenderer(BaseRenderer):
         """
         # Create a group to hold all text elements
         group = self.dwg.g()
+        group.attribs['class'] = 'text-group'  # Add class for testing
         
         # Split text into lines
         lines = text_content.split('\n')

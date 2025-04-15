@@ -9,6 +9,8 @@ from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass
 from enum import Enum
 from .base_renderer import BaseRenderer
+from .text_renderer import TextRenderer
+import logging
 
 @dataclass
 class LineDefinition:
@@ -16,6 +18,14 @@ class LineDefinition:
     end: Tuple[float, float]
     stroke: str
     stroke_linecap: str
+
+@dataclass
+class TextDefinition:
+    font_family: str
+    font_size: int
+    text_anchor: str
+    fill: str
+    distance: float
 
 class FlagType(Enum):
     GROUND = "ground"
@@ -39,6 +49,8 @@ class FlagRenderer(BaseRenderer):
         self._base_font_size = 12.0
         self._stroke_width = self.DEFAULT_STROKE_WIDTH
         self._flag_definitions: Dict[FlagType, List[LineDefinition]] = {}
+        self._text_definitions: Dict[FlagType, TextDefinition] = {}
+        self._text_renderer = TextRenderer(dwg)
         self._load_flag_definitions()
         
     @property
@@ -54,6 +66,7 @@ class FlagRenderer(BaseRenderer):
             value: The new base font size
         """
         self._base_font_size = value
+        self._text_renderer.base_font_size = value
         
     @property
     def stroke_width(self) -> float:
@@ -77,15 +90,24 @@ class FlagRenderer(BaseRenderer):
             if os.path.exists(json_path):
                 with open(json_path, 'r') as f:
                     data = json.load(f)
-                    self._flag_definitions[flag_type] = [
-                        LineDefinition(
-                            start=tuple(line["start"]),
-                            end=tuple(line["end"]),
-                            stroke=line["stroke"],
-                            stroke_linecap=line["stroke_linecap"]
+                    if "lines" in data:
+                        self._flag_definitions[flag_type] = [
+                            LineDefinition(
+                                start=tuple(line["start"]),
+                                end=tuple(line["end"]),
+                                stroke=line["stroke"],
+                                stroke_linecap=line["stroke_linecap"]
+                            )
+                            for line in data["lines"]
+                        ]
+                    if "text" in data:
+                        self._text_definitions[flag_type] = TextDefinition(
+                            font_family=data["text"]["font_family"],
+                            font_size=data["text"]["font_size"],
+                            text_anchor=data["text"]["text_anchor"],
+                            fill=data["text"]["fill"],
+                            distance=data["text"]["distance"]
                         )
-                        for line in data["lines"]
-                    ]
 
     def render_ground_flag(self, flag: Dict,
                           target_group: Optional[svgwrite.container.Group] = None) -> None:
@@ -115,22 +137,14 @@ class FlagRenderer(BaseRenderer):
         ]
         g.attribs['transform'] = ' '.join(transform)
         
-        # Add V shape
-        # Horizontal line
-        g.add(self.dwg.line(
-            (-16, 0), (16, 0),
-            stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-        ))
-        # Left diagonal line
-        g.add(self.dwg.line(
-            (-16, 0), (0, 16),
-            stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-        ))
-        # Right diagonal line
-        g.add(self.dwg.line(
-            (16, 0), (0, 16),
-            stroke='black', stroke_width=self.stroke_width, stroke_linecap='round'
-        ))
+        # Add lines from flag definition
+        for line in self._flag_definitions[FlagType.GROUND]:
+            g.add(self.dwg.line(
+                line.start, line.end,
+                stroke=line.stroke,
+                stroke_width=self.stroke_width,
+                stroke_linecap=line.stroke_linecap
+            ))
         
         # Add the group to the target group or drawing
         if target_group is not None:
@@ -150,8 +164,61 @@ class FlagRenderer(BaseRenderer):
                 - orientation: Rotation angle in degrees
             target_group: Optional group to add the flag to
         """
-        # TODO: Implement net label rendering
-        pass
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.debug("Rendering net label:")
+        self.logger.debug(f"  Position: ({flag.get('x', 0)}, {flag.get('y', 0)})")
+        self.logger.debug(f"  Net name: {flag.get('net_name', '')}")
+        self.logger.debug(f"  Orientation: {flag.get('orientation', 0)}")
+        self.logger.debug(f"  Target group provided: {target_group is not None}")
+        
+        # Use the provided group or create a new one
+        g = target_group if target_group is not None else self.dwg.g()
+        
+        # Apply translation and rotation
+        transform = [
+            f"translate({flag['x']},{flag['y']})",
+            f"rotate({flag['orientation']})"
+        ]
+        g.attribs['transform'] = ' '.join(transform)
+        self.logger.debug(f"  Applied transform: {g.attribs['transform']}")
+        
+        # Get text definition
+        text_def = self._text_definitions[FlagType.NET_LABEL]
+        self.logger.debug(f"  Text definition: {text_def}")
+        
+        # Create text group with normalized rotation
+        text_group = self.dwg.g()
+        self.logger.debug("  Created text group")
+        
+        # For 180° orientation, counter-rotate the text to make it appear as 0°
+        if flag['orientation'] == 180:
+            text_group.attribs['transform'] = f"rotate(-180)"
+            self.logger.debug("  Applied counter-rotation for 180° orientation")
+        
+        # Create text properties for TextRenderer
+        text_properties = {
+            'x': 0,
+            'y': 0,  # Position above the pin point
+            'text': flag['net_name'],
+            'justification': 'Bottom',  # Bottom-justified
+            'size_multiplier': text_def.font_size,
+            'type': 'comment',  # Net labels are treated as comments
+            'is_mirrored': False  # No mirroring for net labels
+        }
+        self.logger.debug(f"  Text properties: {text_properties}")
+        
+        # Use TextRenderer to render the text
+        self._text_renderer.render(text_properties, text_group)
+        self.logger.debug("  Rendered text using TextRenderer")
+        
+        # Add text group to main group
+        g.add(text_group)
+        self.logger.debug("  Added text group to main group")
+        
+        # Add the group to the drawing if no target group was provided
+        if target_group is None:
+            self.dwg.add(g)
+            self.logger.debug("  Added net label group directly to drawing")
         
     def render_io_pin(self, flag: Dict,
                      target_group: Optional[svgwrite.container.Group] = None) -> None:

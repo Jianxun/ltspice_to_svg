@@ -1,0 +1,11 @@
+{
+    "name": "net_label_flag",
+    "description": "Net label symbol with text",
+    "text": {
+        "font_family": "Arial",
+        "font_size": 2,
+        "text_anchor": "middle",
+        "fill": "black",
+        "distance": 52.0
+    }
+} 

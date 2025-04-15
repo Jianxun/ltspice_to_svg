@@ -36,6 +36,11 @@ class SVGRenderer:
             raise ValueError("Stroke width must be positive")
         self._stroke_width = stroke_width
         
+        # Update stroke width for all renderers that have it
+        for renderer in self._renderers.values():
+            if hasattr(renderer, 'stroke_width'):
+                renderer.stroke_width = stroke_width
+        
     def set_base_font_size(self, font_size: float) -> None:
         """Set the base font size for all text elements.
         
@@ -235,11 +240,17 @@ class SVGRenderer:
         flags = self.schematic_data.get('flags', [])
         self.logger.info(f"Found {len(flags)} flags to render")
         
-        for flag in flags:
+        for i, flag in enumerate(flags):
+            self.logger.debug(f"Rendering flag {i+1}/{len(flags)}:")
+            self.logger.debug(f"  Type: {flag['type']}")
+            self.logger.debug(f"  Position: ({flag.get('x', 0)}, {flag.get('y', 0)})")
+            self.logger.debug(f"  Orientation: {flag.get('orientation', 0)}")
+            
             if flag['type'] == 'gnd':  # Note: ASCParser uses 'gnd' for ground flags
                 # Create a group for the ground flag
                 g = self.dwg.g()
                 g.attribs['class'] = 'ground-flag'
+                self.logger.debug("  Created ground flag group")
                 
                 # Add the ground flag to the group
                 self._renderers['flag'].render_ground_flag(
@@ -253,7 +264,29 @@ class SVGRenderer:
                 
                 # Add the group to the drawing
                 self.dwg.add(g)
-            
+                self.logger.debug("  Added ground flag group to drawing")
+            elif flag['type'] == 'net_label':
+                # Create a group for the net label
+                g = self.dwg.g()
+                g.attribs['class'] = 'net-label'
+                self.logger.debug("  Created net label group")
+                self.logger.debug(f"  Net name: {flag.get('net_name', '')}")
+                
+                # Add the net label to the group
+                self._renderers['flag'].render_net_label(
+                    {
+                        'x': flag['x'],
+                        'y': flag['y'],
+                        'net_name': flag['net_name'],
+                        'orientation': flag['orientation']
+                    },
+                    g
+                )
+                
+                # Add the group to the drawing
+                self.dwg.add(g)
+                self.logger.debug("  Added net label group to drawing")
+        
     def save(self) -> None:
         """Save the SVG drawing to file."""
         if not self.dwg:

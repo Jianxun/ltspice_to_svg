@@ -4,7 +4,6 @@ Handles rendering of various flags (ground, IO pins, net labels) in SVG format.
 """
 import svgwrite
 from typing import Dict, List
-from .net_label_renderer import render_net_label
 
 def render_ground_flag(dwg: svgwrite.Drawing, flag: Dict, scale: float, stroke_width: float) -> None:
     """Add a ground flag to the SVG drawing with a V shape.
@@ -240,18 +239,9 @@ def render_flags(dwg: svgwrite.Drawing, flags: List[Dict], io_pins: List[Dict],
         net_label_distance: Distance of net label text from origin
         text_centering_compensation: Factor for text centering compensation
     """
-    # Add net labels and ground flags
+    # Add ground flags only (net labels are handled by FlagRenderer class)
     for flag in flags:
-        if flag['type'] == 'net_label':
-            render_net_label(
-                dwg,
-                flag,
-                scale,
-                font_size,
-                size_multipliers,
-                net_label_distance
-            )
-        elif flag['type'] == 'gnd':
+        if flag['type'] == 'gnd':
             render_ground_flag(
                 dwg,
                 flag,
