@@ -51,36 +51,12 @@ def test_miller_ota(test_schematic, output_dir):
     
     # Load schematic data with symbol definitions
     renderer.load_schematic(data['schematic'], data['symbols'])
-    
-    # Experiment with different stroke widths and font sizes
-    # Try different combinations to find the optimal values
-    stroke_widths = [1.0, 2.0, 3.0]
-    font_sizes = [16.0, 20.0, 24.0]
-    
-    for stroke_width in stroke_widths:
-        for font_size in font_sizes:
-            # Create a new SVG file for each combination
-            variant_svg = os.path.join(output_dir, f"test10_miller_ota_sw{stroke_width}_fs{font_size}.svg")
-            
-            # Create and save SVG with current parameters
-            renderer.create_drawing(variant_svg)
-            renderer.set_stroke_width(stroke_width)
-            renderer.set_base_font_size(font_size)
-            renderer.render_wires()
-            renderer.render_symbols()
-            renderer.render_texts()
-            renderer.render_shapes()
-            renderer.render_flags()  # Add flag rendering
-            renderer.save()
-            
-            print(f"\nGenerated SVG with stroke_width={stroke_width}, font_size={font_size}")
-            print(f"Saved to: {variant_svg}")
-    
+  
     # Create default SVG
     svg_output = os.path.join(output_dir, "test10_miller_ota.svg")
     renderer.create_drawing(svg_output)
-    renderer.set_stroke_width(1.0)  # Default stroke width
-    renderer.set_base_font_size(16.0)  # Default font size
+    #renderer.set_stroke_width(2.0)  # Default stroke width
+    #renderer.set_base_font_size(16.0)  # Default font size
     renderer.render_wires()
     renderer.render_symbols()
     renderer.render_texts()

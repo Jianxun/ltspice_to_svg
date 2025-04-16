@@ -8,7 +8,7 @@ class TestTextRendering:
     @pytest.fixture
     def test_schematic(self):
         """Load the test schematic"""
-        schematic_path = Path(__file__).parent / "test2_texts.asc"
+        schematic_path = Path(__file__).parent / "test_texts.asc"
         return schematic_path
 
     @pytest.fixture

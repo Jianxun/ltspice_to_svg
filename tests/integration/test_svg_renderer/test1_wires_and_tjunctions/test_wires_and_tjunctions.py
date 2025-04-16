@@ -14,9 +14,9 @@ def setup_ltspice_lib():
 def test_wires_and_tjunctions():
     # Setup paths
     test_dir = os.path.dirname(os.path.abspath(__file__))
-    schematic_path = os.path.join(test_dir, 'test1_wires_and_tjunctions.asc')
-    output_path = os.path.join(test_dir, 'results', 'test1_wires_and_tjunctions.svg')
-    json_path = os.path.join(test_dir, 'results', 'test1_wires_and_tjunctions.json')
+    schematic_path = os.path.join(test_dir, 'test_wires_and_tjunctions.asc')
+    output_path = os.path.join(test_dir, 'results', 'test_wires_and_tjunctions.svg')
+    json_path = os.path.join(test_dir, 'results', 'test_wires_and_tjunctions.json')
     
     # Create results directory if it doesn't exist
     os.makedirs(os.path.dirname(output_path), exist_ok=True)

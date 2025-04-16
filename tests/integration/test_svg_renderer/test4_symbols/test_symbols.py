@@ -11,7 +11,7 @@ def setup_ltspice_lib():
 
 @pytest.fixture
 def test_schematic():
-    return os.path.join(os.path.dirname(__file__), "test4_symbols.asc")
+    return os.path.join(os.path.dirname(__file__), "test_symbols.asc")
 
 @pytest.fixture
 def output_dir():

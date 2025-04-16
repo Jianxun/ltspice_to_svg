@@ -22,9 +22,9 @@ def calculate_angle(x: float, y: float, center_x: float, center_y: float) -> flo
 def test_shapes():
     # Setup paths
     test_dir = os.path.dirname(os.path.abspath(__file__))
-    schematic_path = os.path.join(test_dir, 'shapes.asc')
-    output_path = os.path.join(test_dir, 'results', 'shapes.svg')
-    json_path = os.path.join(test_dir, 'results', 'shapes.json')
+    schematic_path = os.path.join(test_dir, 'test_shapes.asc')
+    output_path = os.path.join(test_dir, 'results', 'test_shapes.svg')
+    json_path = os.path.join(test_dir, 'results', 'test_shapes.json')
     
     # Create results directory if it doesn't exist
     os.makedirs(os.path.dirname(output_path), exist_ok=True)

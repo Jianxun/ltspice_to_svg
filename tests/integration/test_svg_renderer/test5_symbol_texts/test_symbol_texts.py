@@ -16,7 +16,7 @@ def setup_ltspice_lib():
 @pytest.fixture
 def test_schematic():
     """Get the path to the test schematic file."""
-    return os.path.join(os.path.dirname(__file__), "test5_symbol_texts.asc")
+    return os.path.join(os.path.dirname(__file__), "test_symbol_texts.asc")
 
 @pytest.fixture
 def output_dir():
