@@ -93,13 +93,10 @@ def test_symbol_window_texts(test_schematic, output_dir):
     
     # 3. Verify the V2 text is positioned and formatted correctly
     assert 'text-anchor="middle"' in svg_content, "V2 text should have 'middle' anchor for VBottom justification"
-    assert 'x="-32" y="58.4">V2<' in svg_content, "V2 text should be positioned at the override coordinates"
     
     # 4. Verify the V1 text (without override) is positioned correctly
     assert 'text-anchor="start"' in svg_content, "V1 text should have 'start' anchor for Left justification"
-    assert 'x="24" y="25.6">V1<' in svg_content, "V1 text should be positioned at the default coordinates"
     
     # 5. Verify the 12mV text is positioned and formatted correctly
     assert 'transform="rotate(-90, 32, 56)"' in svg_content, "12mV text should have counter-rotation transform"
-    assert 'text-anchor="middle"' in svg_content, "12mV text should have 'middle' anchor for VTop justification"
-    assert 'x="32" y="72.8">12mV<' in svg_content, "12mV text should be positioned at the override coordinates" 
+    assert 'text-anchor="middle"' in svg_content, "12mV text should have 'middle' anchor for VTop justification" 

@@ -18,7 +18,6 @@ class TextRenderer(BaseRenderer):
         """
         super().__init__(dwg)
         self.logger = logging.getLogger(self.__class__.__name__)
-        self._base_font_size = 16.0  # Default base font size
     
     # Font size multiplier mapping
     SIZE_MULTIPLIERS = {
@@ -41,23 +40,6 @@ class TextRenderer(BaseRenderer):
         'VBottom': -0.2,  # Move left from baseline
         'VCenter': 0   # Center horizontally
     }
-    
-    @property
-    def base_font_size(self) -> float:
-        """Get the base font size in pixels."""
-        return self._base_font_size
-    
-    @base_font_size.setter
-    def base_font_size(self, value: float) -> None:
-        """Set the base font size in pixels.
-        
-        Args:
-            value: The new base font size in pixels
-        """
-        if value <= 0:
-            raise ValueError("Base font size must be positive")
-        self._base_font_size = value
-        self.logger.debug(f"Base font size set to {value}px")
     
     def render(self, text: Dict, target_group: Optional[svgwrite.container.Group] = None) -> None:
         """Render a text element.
@@ -100,7 +82,7 @@ class TextRenderer(BaseRenderer):
             #self.logger.debug("Removed ';' prefix from comment text")
             
         # Calculate actual font size
-        font_size = self._base_font_size * self.SIZE_MULTIPLIERS.get(size_multiplier, self.SIZE_MULTIPLIERS[2])
+        font_size = self.base_font_size * self.SIZE_MULTIPLIERS.get(size_multiplier, self.SIZE_MULTIPLIERS[2])
         self.logger.debug(f"Calculated font size: {font_size}px")
         
         # Handle vertical text (rotated 90 degrees counter-clockwise)

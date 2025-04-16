@@ -17,12 +17,12 @@ class WireRenderer(BaseRenderer):
         
         Args:
             wire: Dictionary containing wire properties
-            stroke_width: Width of the stroke. If None, uses the default stroke width.
+            stroke_width: Width of the stroke. If None, uses the instance's stroke width.
             target_group: Optional group to add the wire to. If None, adds to drawing.
         """
-        # Use default stroke width if not specified
+        # Use instance's stroke width if not specified
         if stroke_width is None:
-            stroke_width = self.DEFAULT_STROKE_WIDTH
+            stroke_width = self.stroke_width
             
         style = {
             'stroke': 'black',

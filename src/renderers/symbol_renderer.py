@@ -29,20 +29,29 @@ class SymbolRenderer(BaseRenderer):
         self._current_group = None
         self._is_mirrored = False
         
-    @property
-    def base_font_size(self) -> float:
-        """Get the base font size in pixels."""
-        return self.text_renderer.base_font_size
+        # Initialize child renderers with base properties
+        self.shape_renderer.stroke_width = self.stroke_width
+        self.text_renderer.base_font_size = self.base_font_size
         
-    @base_font_size.setter
+    @BaseRenderer.base_font_size.setter
     def base_font_size(self, value: float) -> None:
-        """Set the base font size in pixels.
+        """Override base_font_size setter to update TextRenderer's font size.
         
         Args:
-            value: The new base font size in pixels
+            value: The new base font size
         """
-        self.text_renderer.base_font_size = value
-        self.logger.debug(f"Set base font size to {value}px")
+        BaseRenderer.base_font_size.fset(self, value)  # Call parent's setter
+        self.text_renderer.base_font_size = value  # Update TextRenderer's font size
+        
+    @BaseRenderer.stroke_width.setter
+    def stroke_width(self, value: float) -> None:
+        """Override stroke_width setter to update ShapeRenderer's stroke width.
+        
+        Args:
+            value: The new stroke width
+        """
+        BaseRenderer.stroke_width.fset(self, value)  # Call parent's setter
+        self.shape_renderer.stroke_width = value  # Update ShapeRenderer's stroke width
         
     def create_group(self) -> svgwrite.container.Group:
         """Create a new group for a symbol.
@@ -102,12 +111,12 @@ class SymbolRenderer(BaseRenderer):
             self.logger.error(f"Failed to set transformation: {str(e)}")
             raise
             
-    def render_shapes(self, shapes: Dict, stroke_width: float = 1.0) -> None:
+    def render_shapes(self, shapes: Dict, stroke_width: float = None) -> None:
         """Render shapes for the current symbol.
         
         Args:
             shapes: Dictionary containing shape definitions
-            stroke_width: Width of lines
+            stroke_width: Width of lines. If None, uses the instance's stroke width.
         """
         if not self._current_group:
             raise ValueError("No group created. Call create_group() first.")
@@ -249,12 +258,12 @@ class SymbolRenderer(BaseRenderer):
             self.logger.error(f"Failed to add group to drawing: {str(e)}")
             raise
 
-    def render(self, symbol: Dict, stroke_width: float = 1.0) -> None:
+    def render(self, symbol: Dict, stroke_width: float = None) -> None:
         """Render a complete symbol.
         
         Args:
             symbol: Dictionary containing symbol data
-            stroke_width: Width of lines
+            stroke_width: Width of lines. If None, uses the instance's stroke width.
         """
         try:
             # Create a new group for the symbol

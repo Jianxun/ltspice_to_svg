@@ -8,7 +8,7 @@ from src.renderers.text_renderer import TextRenderer
 from src.renderers.shape_renderer import ShapeRenderer
 from src.renderers.flag_renderer import FlagRenderer
 
-class SVGRenderer:
+class SVGRenderer(BaseRenderer):
     def __init__(self):
         self.dwg = None
         self.schematic_data = None
@@ -20,23 +20,17 @@ class SVGRenderer:
         self._max_y = float('-inf')
         self.symbol_data = None  # Add symbol data storage
         self.logger = logging.getLogger(self.__class__.__name__)
-        self._stroke_width = 2.0  # Default stroke width
-        self._base_font_size = 22.0  # Default font size
+        # Initialize BaseRenderer with None for dwg, it will be set later in initialize_drawing
+        super().__init__(None)
         
     def set_stroke_width(self, stroke_width: float) -> None:
-        """Set the stroke width for all rendered elements.
+        """Set the stroke width for all renderers.
         
         Args:
-            stroke_width (float): The stroke width in pixels.
-            
-        Raises:
-            ValueError: If stroke_width is not positive.
+            stroke_width: The new stroke width
         """
-        if stroke_width <= 0:
-            raise ValueError("Stroke width must be positive")
-        self._stroke_width = stroke_width
-        
-        # Update stroke width for all renderers that have it
+        self.stroke_width = stroke_width
+        # Update stroke width for all renderers that have the property
         for renderer in self._renderers.values():
             if hasattr(renderer, 'stroke_width'):
                 renderer.stroke_width = stroke_width
@@ -50,9 +44,9 @@ class SVGRenderer:
         Raises:
             ValueError: If font_size is not positive.
         """
-        if font_size <= 0:
-            raise ValueError("Font size must be positive")
-        self._base_font_size = font_size
+        # Update base font size for all renderers
+        for renderer in self._renderers.values():
+            renderer.base_font_size = font_size
         
     def _initialize_renderers(self):
         """Initialize all renderers."""

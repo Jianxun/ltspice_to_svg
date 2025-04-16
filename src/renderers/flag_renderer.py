@@ -46,42 +46,22 @@ class FlagRenderer(BaseRenderer):
     
     def __init__(self, dwg: svgwrite.Drawing):
         super().__init__(dwg)
-        self._base_font_size = 12.0
-        self._stroke_width = self.DEFAULT_STROKE_WIDTH
         self._flag_definitions: Dict[FlagType, List[LineDefinition]] = {}
         self._text_definitions: Dict[FlagType, TextDefinition] = {}
         self._text_renderer = TextRenderer(dwg)
+        self._text_renderer.base_font_size = self.base_font_size  # Initialize with parent's base font size
         self._load_flag_definitions()
         
-    @property
-    def base_font_size(self) -> float:
-        """Get the base font size."""
-        return self._base_font_size
-        
-    @base_font_size.setter
+    @BaseRenderer.base_font_size.setter
     def base_font_size(self, value: float) -> None:
-        """Set the base font size.
+        """Override base_font_size setter to update TextRenderer's font size.
         
         Args:
             value: The new base font size
         """
-        self._base_font_size = value
-        self._text_renderer.base_font_size = value
-        
-    @property
-    def stroke_width(self) -> float:
-        """Get the stroke width."""
-        return self._stroke_width
-        
-    @stroke_width.setter
-    def stroke_width(self, value: float) -> None:
-        """Set the stroke width.
-        
-        Args:
-            value: The new stroke width
-        """
-        self._stroke_width = value
-        
+        BaseRenderer.base_font_size.fset(self, value)  # Call parent's setter
+        self._text_renderer.base_font_size = value  # Update TextRenderer's font size
+
     def _load_flag_definitions(self):
         """Load flag definitions from JSON files."""
         definitions_dir = os.path.join(os.path.dirname(__file__), "flag_definitions")
