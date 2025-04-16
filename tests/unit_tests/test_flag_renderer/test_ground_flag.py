@@ -143,7 +143,7 @@ def test_render_ground_flag_visual():
         renderer.render_ground_flag(flag)
     
     # Create results directory if it doesn't exist
-    results_dir = os.path.join('tests', 'test_flag_renderer', 'results')
+    results_dir = os.path.join('tests', 'unit_tests', 'test_flag_renderer', 'results')
     os.makedirs(results_dir, exist_ok=True)
     
     # Save the SVG file

@@ -56,13 +56,13 @@ def pin_shapes():
 @pytest.fixture
 def parsed_symbols():
     """Load parsed symbols data."""
-    with open('tests/test_symbol_renderer/parsed_symbols.json', 'r') as f:
+    with open('tests/unit_tests/test_symbol_renderer/parsed_symbols.json', 'r') as f:
         return json.load(f)
 
 def save_test_result(dwg, test_name):
     """Save the test result as an SVG file."""
-    os.makedirs('tests/test_symbol_renderer/results', exist_ok=True)
-    dwg.saveas(f'tests/test_symbol_renderer/results/{test_name}.svg')
+    os.makedirs('tests/unit_tests/test_symbol_renderer/results', exist_ok=True)
+    dwg.saveas(f'tests/unit_tests/test_symbol_renderer/results/{test_name}.svg')
 
 def test_base_font_size(renderer):
     """Test the base_font_size property."""

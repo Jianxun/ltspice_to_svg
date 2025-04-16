@@ -5,7 +5,7 @@ from src.renderers.svg_renderer import SVGRenderer
 from src.utils.logger import setup_logging
 
 # Setup logging for tests
-setup_logging('tests/test_svg_renderer/results/test.log')
+setup_logging('tests/unit_tests/test_svg_renderer/results/test.log')
 
 class TestSVGRenderer:
     @pytest.fixture

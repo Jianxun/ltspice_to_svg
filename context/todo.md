@@ -186,6 +186,17 @@
 [ ] Update documentation
 [ ] Add examples
 
+## Phase 9: Test Organization
+[X] Organize renderer tests under unit_tests directory
+  [X] Create unit_tests directory
+  [X] Move test_flag_renderer
+  [X] Move test_shape_renderer
+  [X] Move test_svg_renderer
+  [X] Move test_symbol_renderer
+  [X] Move test_wire_renderer
+  [X] Move test_text_renderers
+  [X] Update project structure documentation
+
 ## Notes
 - Each phase should maintain backward compatibility
 - All changes should be tested thoroughly
@@ -405,3 +416,46 @@
   - [ ] Update imports in all test files that use SVGRenderer
   - [ ] Verify all tests still pass after the move
   - [ ] Commit changes with descriptive message
+
+### Unit Test Reorganization
+[X] Reorganize unit tests into a dedicated directory
+  - [X] Create `tests/unit_tests/` directory
+  - [X] Move all renderer tests to the new directory
+  - [X] Update test file paths and references
+  - [X] Run tests to verify everything works
+  - [X] Update documentation and memory files
+
+### Integration Test Fixes
+[ ] Fix integration test failures
+  - [ ] Check and update import paths in all test files
+  - [ ] Verify test1 (wires_and_tjunctions) functionality
+  - [ ] Run all integration tests to ensure they pass
+  - [ ] Update documentation with any changes
+
+### Text Rendering Calibration
+[ ] Calibrate text rendering parameters
+  - [ ] Review current text rendering implementation
+  - [ ] Test different font sizes and styles
+  - [ ] Compare rendered text with LTspice output
+  - [ ] Adjust parameters to match LTspice appearance
+
+### Net Label Implementation
+[ ] Implement net label rendering
+  - [ ] Add net label parser
+  - [ ] Create net label renderer
+  - [ ] Add unit tests for net label functionality
+  - [ ] Add integration tests with net labels
+
+### Flag Rendering
+[ ] Implement flag rendering
+  - [ ] Add flag parser
+  - [ ] Create flag renderer
+  - [ ] Add unit tests for flag functionality
+  - [ ] Add integration tests with flags
+
+## Future Tasks
+- Add support for more LTspice schematic elements
+- Improve error handling and reporting
+- Add documentation for developers
+- Create user guide
+- Add CI/CD pipeline

@@ -6,15 +6,17 @@ This project aims to convert LTspice schematic files (.asc) to SVG format, maint
 ## Current State
 - The project is a Python-based tool for converting LTspice schematics to SVG format
 - Core functionality includes parsing LTspice files and generating SVG output
-- Currently working on fixing integration test failures:
-  - Found import path issues in test files (using old path 'src.generators.svg_renderer' instead of 'src.renderers.svg_renderer')
-  - Test1 (wires_and_tjunctions) failing due to incorrect import path
-  - Need to check and update import paths in all test files
+- Successfully reorganized unit tests into a dedicated `unit_tests` directory:
+  - Moved all renderer tests to `tests/unit_tests/`
+  - Updated test file paths and references
+  - All 36 unit tests are passing successfully
 - The codebase is organized into several key directories:
   - src/parsers: Contains parsers for different file formats
   - src/renderers: Contains renderers for different SVG elements
   - src/generators: Contains code for generating SVG output
   - tests/: Contains test cases and test data
+    - unit_tests/: Contains all unit tests for individual components
+    - integration/: Contains integration tests for the complete system
 - We have implemented basic SVG rendering including:
   - Wire rendering
   - Symbol rendering
@@ -125,6 +127,13 @@ This project aims to convert LTspice schematic files (.asc) to SVG format, maint
 │       ├── symbol_renderer.py
 │       └── text_renderer.py
 ├── tests/
+│   ├── unit_tests/
+│   │   ├── test_flag_renderer/
+│   │   ├── test_shape_renderer/
+│   │   ├── test_svg_renderer/
+│   │   ├── test_symbol_renderer/
+│   │   ├── test_wire_renderer/
+│   │   └── test_text_renderers/
 │   └── integration/
 │       └── test_svg_renderer/
 │           ├── test1_wires_and_tjunctions/

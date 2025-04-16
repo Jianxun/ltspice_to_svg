@@ -17,13 +17,13 @@ DEFAULT_FONT_SIZE = 22.0
 DEFAULT_VIEWBOX = (-1000, -1000, 2000, 2000)
 
 # Create results directory if it doesn't exist
-os.makedirs('tests/test_text_renderers/results', exist_ok=True)
+os.makedirs('tests/unit_tests/test_text_renderers/results', exist_ok=True)
 
 @pytest.fixture
 def drawing():
     """Create a new SVG drawing for testing."""
     dwg = svgwrite.Drawing(
-        'tests/test_text_renderers/results/temp.svg',
+        'tests/unit_tests/test_text_renderers/results/temp.svg',
         profile='tiny',
         size=('100%', '100%')
     )
@@ -39,7 +39,7 @@ def text_renderer(drawing):
 
 def save_svg(dwg, test_name):
     """Save the SVG drawing to the results directory."""
-    output_path = f'tests/test_text_renderers/results/{test_name}.svg'
+    output_path = f'tests/unit_tests/test_text_renderers/results/{test_name}.svg'
     dwg.saveas(output_path)
     return output_path
 

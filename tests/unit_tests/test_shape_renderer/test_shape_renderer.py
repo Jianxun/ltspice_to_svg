@@ -92,7 +92,7 @@ def test_basic_shapes(renderer, dwg):
     renderer.render(arc_270)
     
     # Save for manual inspection
-    dwg.saveas('tests/test_shape_renderer/results/basic_shapes.svg')
+    save_test_result(dwg, 'basic_shapes')
 
 def test_dotted_shapes(renderer, dwg):
     """Test rendering shapes with dotted style."""
@@ -176,7 +176,7 @@ def test_dotted_shapes(renderer, dwg):
     renderer.render(arc_270)
     
     # Save for manual inspection
-    dwg.saveas('tests/test_shape_renderer/results/dotted_shapes.svg')
+    save_test_result(dwg, 'dotted_shapes')
 
 def test_thick_shapes(renderer, dwg):
     """Test rendering shapes with thick stroke width."""
@@ -255,7 +255,7 @@ def test_thick_shapes(renderer, dwg):
     renderer.render(arc_270, stroke_width=stroke_width)
     
     # Save for manual inspection
-    dwg.saveas('tests/test_shape_renderer/results/thick_shapes.svg')
+    save_test_result(dwg, 'thick_shapes')
 
 def test_visual_line_styles(renderer, dwg):
     """Test visual rendering of all line styles."""
@@ -299,10 +299,10 @@ def test_visual_line_styles(renderer, dwg):
                         font_size='12px', font_family='Arial'))
     
     # Save for manual inspection
-    dwg.saveas('tests/test_shape_renderer/results/line_styles.svg')
+    save_test_result(dwg, 'line_styles')
     
     # Verify the file was created
-    assert os.path.exists('tests/test_shape_renderer/results/line_styles.svg')
+    assert os.path.exists('tests/unit_tests/test_shape_renderer/results/line_styles.svg')
     
     # Verify all lines were added (accounting for defs element and text elements)
     assert len(dwg.elements) == 1 + len(styles) * 2  # defs + (line + text) for each style 
@@ -357,7 +357,7 @@ def test_group_rendering(renderer, dwg):
     dwg.add(group)
     
     # Save for manual inspection
-    dwg.saveas('tests/test_shape_renderer/results/group_rendering.svg')
+    save_test_result(dwg, 'group_rendering')
     
     # Verify elements are in correct containers
     # Main drawing should have defs + 3 lines + group
@@ -367,3 +367,8 @@ def test_group_rendering(renderer, dwg):
     assert len(group.elements) == 3
     for element in group.elements:
         assert element.elementname == 'line' 
+
+def save_test_result(dwg, test_name):
+    """Save the test result as an SVG file."""
+    os.makedirs('tests/unit_tests/test_shape_renderer/results', exist_ok=True)
+    dwg.saveas(f'tests/unit_tests/test_shape_renderer/results/{test_name}.svg') 
