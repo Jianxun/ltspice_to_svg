@@ -1,7 +1,7 @@
 import pytest
 import os
 import tempfile
-from src.generators.svg_renderer import SVGRenderer
+from src.renderers.svg_renderer import SVGRenderer
 from src.utils.logger import setup_logging
 
 # Setup logging for tests

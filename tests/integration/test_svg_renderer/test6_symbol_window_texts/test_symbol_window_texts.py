@@ -1,7 +1,7 @@
 import os
 import pytest
 import logging
-from src.generators.svg_renderer import SVGRenderer
+from src.renderers.svg_renderer import SVGRenderer
 from src.parsers.schematic_parser import SchematicParser
 
 # Configure logging

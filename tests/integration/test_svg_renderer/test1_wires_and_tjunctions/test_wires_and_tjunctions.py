@@ -2,7 +2,7 @@ import os
 import pytest
 import xml.etree.ElementTree as ET
 import logging
-from src.generators.svg_renderer import SVGRenderer
+from src.renderers.svg_renderer import SVGRenderer
 from src.parsers.asc_parser import ASCParser
 from src.parsers.schematic_parser import SchematicParser
 

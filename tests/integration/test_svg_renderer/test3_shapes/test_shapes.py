@@ -2,7 +2,7 @@ import os
 import pytest
 import xml.etree.ElementTree as ET
 import math
-from src.generators.svg_renderer import SVGRenderer
+from src.renderers.svg_renderer import SVGRenderer
 from src.parsers.asc_parser import ASCParser
 
 @pytest.fixture(autouse=True)

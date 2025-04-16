@@ -1,6 +1,6 @@
 import pytest
 from pathlib import Path
-from src.generators.svg_renderer import SVGRenderer
+from src.renderers.svg_renderer import SVGRenderer
 from src.parsers.asc_parser import ASCParser
 
 class TestTextCalibration:

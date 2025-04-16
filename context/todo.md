@@ -70,7 +70,7 @@
 [X] Create test schematic for text calibration
   - [X] Include various text sizes
   - [X] Include different text justifications
-  - [X] Include special characters
+  [X] Include special characters
   - [X] Include mirrored text cases
   - [X] Include rotated text cases
 
@@ -81,6 +81,16 @@
   - [ ] Document justification settings
   - [ ] Document special character handling
   - [ ] Document text mirroring rules
+
+### 1. Fix Integration Test Failures
+[ ] Update import paths in all test files
+  [ ] Fix import in test1_wires_and_tjunctions
+  [ ] Check and update imports in remaining test files
+  [ ] Verify all imports use 'src.renderers.svg_renderer'
+[ ] Run all integration tests
+  [ ] Fix any additional issues found
+  [ ] Document any new issues discovered
+  [ ] Update test documentation if needed
 
 ## Future Tasks
 [ ] Implement Test7 (Complex Symbols)
@@ -388,3 +398,10 @@
 [X] Create basic renderer classes
 [X] Implement core SVG generation
 [X] Add basic test framework
+
+## Move SVG Renderer to Renderers Directory
+[ ] Move svg_renderer.py from generators to renderers directory
+  - [ ] Move file from src/generators/svg_renderer.py to src/renderers/svg_renderer.py
+  - [ ] Update imports in all test files that use SVGRenderer
+  - [ ] Verify all tests still pass after the move
+  - [ ] Commit changes with descriptive message

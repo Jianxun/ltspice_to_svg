@@ -4,7 +4,17 @@
 This project aims to convert LTspice schematic files (.asc) to SVG format, maintaining high fidelity and accuracy in the conversion process.
 
 ## Current State
-- The project is a tool to convert LTspice schematics to SVG format
+- The project is a Python-based tool for converting LTspice schematics to SVG format
+- Core functionality includes parsing LTspice files and generating SVG output
+- Currently working on fixing integration test failures:
+  - Found import path issues in test files (using old path 'src.generators.svg_renderer' instead of 'src.renderers.svg_renderer')
+  - Test1 (wires_and_tjunctions) failing due to incorrect import path
+  - Need to check and update import paths in all test files
+- The codebase is organized into several key directories:
+  - src/parsers: Contains parsers for different file formats
+  - src/renderers: Contains renderers for different SVG elements
+  - src/generators: Contains code for generating SVG output
+  - tests/: Contains test cases and test data
 - We have implemented basic SVG rendering including:
   - Wire rendering
   - Symbol rendering
@@ -472,3 +482,8 @@ After completing Test2, we'll proceed with Test3 (Shapes) and Test4 (Integration
 - Performance optimization
 - Documentation improvements
 - Code quality enhancements
+
+## Architecture Notes
+- The SVG generation is handled by SVGRenderer class, which is currently in src/generators/
+- SVGRenderer uses several specialized renderers (WireRenderer, SymbolRenderer, etc.) from src/renderers/
+- A move of SVGRenderer to src/renderers/ is planned to better align with the codebase architecture
