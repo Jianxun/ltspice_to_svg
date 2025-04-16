@@ -14,6 +14,9 @@ This project is a Python-based tool for converting LTspice schematics to SVG for
 - Test result locations have been updated to match the new directory structure:
   - Unit test results are saved in `tests/unit_tests/{test_name}/results/`
   - Integration test results are saved in `tests/integration/{test_name}/results/`
+- Removed the `no_symbol_text` option from the `convert_schematic` function in `src/ltspice_to_svg.py`
+- Removed the `test_ltspice_to_svg_no_symbol_text` test function from `tests/integration/test_ltspice_to_svg/test_ltspice_to_svg.py`
+- The symbol text rendering functionality will be refactored later
 
 ## Project Structure
 The project is organized into several key directories:
@@ -33,6 +36,9 @@ The project is organized into several key directories:
     - `test_svg_renderer/`
       - `test1_wires_and_tjunctions/`
       - `test2_text/`
+- Main conversion script: `src/ltspice_to_svg.py`
+- Test files located in `tests/integration/test_ltspice_to_svg/`
+- Test results saved in `tests/integration/test_ltspice_to_svg/results/`
 
 ## Recent Changes
 - Reorganized unit tests into a dedicated `unit_tests` directory
@@ -471,3 +477,27 @@ After completing Test2, we'll proceed with Test3 (Shapes) and Test4 (Integration
 - The SVG generation is handled by SVGRenderer class, which is currently in src/generators/
 - SVGRenderer uses several specialized renderers (WireRenderer, SymbolRenderer, etc.) from src/renderers/
 - A move of SVGRenderer to src/renderers/ is planned to better align with the codebase architecture
+
+## Key Components
+- `convert_schematic`: Main function for converting LTspice schematics to SVG
+- `SVGRenderer`: Handles the rendering of schematic elements to SVG
+- `SchematicParser`: Parses LTspice schematic files and symbol definitions
+
+## Configuration
+- LTspice library path is set via environment variable `LTSPICE_LIB_PATH`
+- Default rendering parameters:
+  - Stroke width: 3.0
+  - Font size: 16.0
+  - Scale: 1.0
+  - Dot size multiplier: 1.5
+
+## Text Rendering
+- Text size multipliers are defined in `TextRenderer.SIZE_MULTIPLIERS`:
+  - 0: 0.625x base size
+  - 1: 1.0x base size
+  - 2: 1.5x base size (default)
+  - 3: 2.0x base size
+  - 4: 2.5x base size
+  - 5: 3.5x base size
+  - 6: 5.0x base size
+  - 7: 7.0x base size

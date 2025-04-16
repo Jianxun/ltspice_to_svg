@@ -2,41 +2,14 @@
 Main script to convert LTspice schematics to SVG format.
 """
 import os
-import json
 from pathlib import Path
-from parsers.asc_parser import ASCParser
-from parsers.asy_parser import ASYParser
-from generators.svg_generator import SVGGenerator
-from typing import Optional
-
-def find_symbol_file(symbol_name: str, schematic_dir: str) -> Optional[str]:
-    """Find the symbol file for a given symbol name.
-    
-    Args:
-        symbol_name: Name of the symbol to find
-        schematic_dir: Directory containing the schematic file
-        
-    Returns:
-        Path to the symbol file if found, None otherwise
-    """
-    # First check in the schematic directory
-    asy_file = os.path.join(schematic_dir, f"{symbol_name}.asy")
-    if os.path.exists(asy_file):
-        return asy_file
-        
-    # Then check in the LTspice symbol library
-    lib_path = os.getenv('LTSPICE_LIB_PATH')
-    if lib_path:
-        asy_file = os.path.join(lib_path, f"{symbol_name}.asy")
-        if os.path.exists(asy_file):
-            return asy_file
-            
-    return None
+from src.parsers.schematic_parser import SchematicParser
+from src.renderers.svg_renderer import SVGRenderer
 
 def convert_schematic(asc_file: str, 
                      stroke_width: float = 3.0, dot_size_multiplier: float = 1.5,
                      scale: float = 1.0, font_size: float = 16.0, export_json: bool = False,
-                     no_text: bool = False, no_symbol_text: bool = False):
+                     no_text: bool = False):
     """
     Convert an LTspice schematic to SVG format.
     
@@ -48,7 +21,6 @@ def convert_schematic(asc_file: str,
         font_size: Font size in pixels (default: 16.0)
         export_json: Whether to export intermediate JSON files for debugging (default: False)
         no_text: Whether to skip rendering text elements (default: False)
-        no_symbol_text: Whether to skip rendering symbol text elements (default: False)
     """
     # Get the directory and base name of the schematic file
     asc_path = Path(asc_file)
@@ -60,78 +32,45 @@ def convert_schematic(asc_file: str,
         output_dir = schematic_dir / 'output'
         output_dir.mkdir(exist_ok=True)
     
-    # Parse the schematic file
-    asc_parser = ASCParser(str(asc_path))
-    schematic_data = asc_parser.parse()
+    # Parse the schematic and symbols
+    parser = SchematicParser(str(asc_path))
+    data = parser.parse()
     
     # Export schematic data to JSON if requested
     if export_json:
-        schematic_json = output_dir / f"{base_name}_schematic.json"
-        asc_parser.export_json(str(schematic_json))
-        print(f"Exported schematic data to {schematic_json}")
-    
-    # Parse symbol files and collect their data
-    symbols_data = {}
-    missing_symbols = []
-    symbol_cache = {}
-    
-    for symbol in schematic_data['symbols']:
-        symbol_name = symbol['symbol_name']
-        
-        # Skip if we've already parsed this symbol
-        if symbol_name in symbols_data:
-            continue
-            
-        # Try to find the symbol file
-        asy_file = find_symbol_file(symbol_name, schematic_dir)
-        
-        if asy_file:
-            # Use cached data if available
-            cache_key = str(asy_file)
-            if cache_key in symbol_cache:
-                symbol_data = symbol_cache[cache_key]
-            else:
-                asy_parser = ASYParser(str(asy_file))
-                symbol_data = asy_parser.parse()
-                symbol_cache[cache_key] = symbol_data
-                
-                # Export symbol data to JSON if requested
-                if export_json:
-                    symbol_json = output_dir / f"{symbol_name}_symbol.json"
-                    asy_parser.export_json(str(symbol_json))
-                    print(f"Exported symbol data for {symbol_name} to {symbol_json}")
-            
-            symbols_data[symbol_name] = symbol_data
-        elif symbol_name not in SVGGenerator.BUILTIN_SYMBOLS:  # Only add to missing if not built-in
-            missing_symbols.append(symbol_name)
-    
-    # Report missing symbols
-    if missing_symbols:
-        print("Warning: The following symbols were not found:")
-        print("  Local directory:", schematic_dir)
-        if os.environ.get('LTSPICE_LIB_PATH'):
-            print("  LTspice library:", os.environ.get('LTSPICE_LIB_PATH'))
-        else:
-            print("  Note: Set LTSPICE_LIB_PATH environment variable to use LTspice standard library")
-        for symbol in missing_symbols:
-            print(f"  - {symbol}")
+        json_output = output_dir / f"{base_name}_schematic.json"
+        parser.export_json(str(json_output))
+        print(f"Exported schematic data to {json_output}")
     
     # Generate SVG in the same directory as the schematic
     svg_file = schematic_dir / f"{base_name}.svg"
     
-    generator = SVGGenerator(stroke_width=stroke_width, 
-                           dot_size_multiplier=dot_size_multiplier, 
-                           scale=scale, 
-                           font_size=font_size,
-                           export_json=export_json,
-                           no_text=no_text,
-                           no_symbol_text=no_symbol_text)
-    generator.generate(schematic_data, str(svg_file), symbols_data)
+    # Create SVG renderer with custom parameters
+    renderer = SVGRenderer()
+    
+    # Load schematic data with symbol definitions
+    renderer.load_schematic(data['schematic'], data['symbols'])
+    
+    # Create SVG drawing
+    renderer.create_drawing(str(svg_file))
+    
+    # Set rendering parameters
+    renderer.set_stroke_width(stroke_width)
+    renderer.set_base_font_size(font_size)
+    
+    # Render components
+    renderer.render_wires()
+    renderer.render_symbols()
+    if not no_text:
+        renderer.render_texts()
+    renderer.render_shapes()
+    renderer.render_flags()
+    
+    # Save the SVG
+    renderer.save()
     
     if no_text:
         print("Text rendering disabled")
-    if no_symbol_text:
-        print("Symbol text rendering disabled")
 
 if __name__ == "__main__":
     import argparse
@@ -152,8 +91,6 @@ if __name__ == "__main__":
                       help="Path to LTspice symbol library (overrides LTSPICE_LIB_PATH)")
     parser.add_argument("--no-text", action="store_true",
                       help="Skip rendering text elements")
-    parser.add_argument("--no-symbol-text", action="store_true",
-                      help="Skip rendering symbol text elements")
     
     args = parser.parse_args()
     
@@ -163,4 +100,4 @@ if __name__ == "__main__":
         
     convert_schematic(args.asc_file, args.stroke_width, args.dot_size, 
                      args.scale, args.font_size, args.export_json,
-                     args.no_text, args.no_symbol_text) 
+                     args.no_text) 

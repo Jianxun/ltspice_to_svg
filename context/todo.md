@@ -459,3 +459,28 @@
 - Add documentation for developers
 - Create user guide
 - Add CI/CD pipeline
+
+## Completed Tasks
+[X] Remove no_symbol_text option
+  - [X] Remove parameter from convert_schematic function
+  - [X] Remove test case for no_symbol_text
+  - [X] Update documentation
+
+## Future Tasks
+[ ] Improve text rendering
+  - [ ] Add support for more text styles
+  - [ ] Improve text positioning
+  - [ ] Add support for text rotation
+  - [ ] Add support for text scaling
+
+[ ] Add more test cases
+  - [ ] Test different text sizes
+  - [ ] Test different text justifications
+  - [ ] Test text in mirrored symbols
+  - [ ] Test text in rotated symbols
+
+[ ] Documentation
+  - [ ] Update README with new features
+  - [ ] Add API documentation
+  - [ ] Add usage examples
+  - [ ] Add troubleshooting guide
