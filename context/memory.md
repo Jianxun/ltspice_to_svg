@@ -1,75 +1,50 @@
 # Project Memory
 
 ## Project Overview
-This project aims to convert LTspice schematic files (.asc) to SVG format, maintaining high fidelity and accuracy in the conversion process.
+This project is a Python-based tool for converting LTspice schematics to SVG format. The tool consists of several key components:
+
+1. Parsers for LTspice files (.asc and .asy)
+2. Renderers for converting parsed data to SVG
+3. Unit tests and integration tests for verifying functionality
 
 ## Current State
-- The project is a Python-based tool for converting LTspice schematics to SVG format
-- Core functionality includes parsing LTspice files and generating SVG output
-- Successfully reorganized unit tests into a dedicated `unit_tests` directory:
-  - Moved all renderer tests to `tests/unit_tests/`
-  - Updated test file paths and references
-  - All 36 unit tests are passing successfully
-- The codebase is organized into several key directories:
-  - src/parsers: Contains parsers for different file formats
-  - src/renderers: Contains renderers for different SVG elements
-  - src/generators: Contains code for generating SVG output
-  - tests/: Contains test cases and test data
-    - unit_tests/: Contains all unit tests for individual components
-    - integration/: Contains integration tests for the complete system
-- We have implemented basic SVG rendering including:
-  - Wire rendering
-  - Symbol rendering
-  - Text rendering
-  - Flag rendering (ground flags and net labels)
-- Successfully refactored renderer classes to use base properties from BaseRenderer:
-  - WireRenderer: Now uses stroke_width from BaseRenderer
-  - TextRenderer: Now uses base_font_size from BaseRenderer
-  - ShapeRenderer: Now uses stroke_width from BaseRenderer
-  - SymbolRenderer: Now properly propagates base properties to child renderers
-  - FlagRenderer: Now uses base_font_size and stroke_width from BaseRenderer
-- All integration tests passing:
-  - test1_wires_and_tjunctions: Wire and T-junction rendering
-  - test2_text: Text rendering with various properties
-  - test3_shapes: Basic shape rendering
-  - test4_symbols: Symbol rendering with transformations
-  - test5_symbol_texts: Symbol text rendering
-  - test6_symbol_window_texts: Window text rendering
-  - test7_flag_ground: Ground flag rendering
-  - test8_flag_net_label: Net label rendering
-- The test suite has been updated to include flag rendering tests
-- The Miller OTA test case has been modified for manual inspection of rendered elements
-- Successfully implemented and tested core rendering components:
-  - BaseRenderer: Abstract base class with common functionality
-  - WireRenderer: Handles wire rendering with T-junction support
-  - TextRenderer: Handles text rendering with comprehensive support for justification, size, and transformations
-  - ShapeRenderer: Handles basic shape rendering
-  - SymbolRenderer: Handles symbol rendering with proper text delegation
-- All tests passing for implemented components
-- Comprehensive test coverage for T-junctions, shapes, symbols, and symbol texts
-- TextRenderer successfully integrated with base_font_size property and proper delegation
-- Ready to proceed with Test2 implementation for standalone text elements
-- Successfully implemented and tested text rendering with proper font size handling
-- Fixed bug in ASC parser where size multipliers were being stored instead of size indexes
-- Text renderer now correctly handles:
-  - Different text types (spice directives and comments)
-  - Multi-line text splitting
-  - Font size multipliers based on size indexes (0-7)
-  - Text justification (Left, Center, Right)
-  - Vertical text rendering
-  - Text mirroring for symbols
-- Ground flag rendering is working correctly
-- Integration test `test7_flag_ground` passes successfully
-- Ground flags are rendered with proper V shape and orientation
-- Wires are rendered before ground flags for proper visual inspection
-- T-junctions are properly rendered at wire intersections
-- We are working on fixing the net label rendering issue
-- The problem appears to be double rendering of net labels (12 instead of 6)
-- We have identified that there are two places where net labels are being rendered:
-  1. In `SVGRenderer.render_flags()` using the new `FlagRenderer` class
-  2. In `src/generators/flag_renderer.py` which still has a reference to the old `net_label_renderer` module
-- We have removed the old net label rendering code from `flag_renderer.py`, but the double rendering issue persists
-- The test case `test_net_label_rendering` in `tests/integration/test_svg_renderer/test8_flag_net_label/test_flag_net_label.py` is failing
+- All 36 unit tests are passing successfully
+- Unit tests have been reorganized into a dedicated `unit_tests` directory
+- Integration tests are organized under the `integration` directory
+- Test result locations have been updated to match the new directory structure:
+  - Unit test results are saved in `tests/unit_tests/{test_name}/results/`
+  - Integration test results are saved in `tests/integration/{test_name}/results/`
+
+## Project Structure
+The project is organized into several key directories:
+
+- `src/`: Contains the main source code
+  - `parsers/`: LTspice file parsers
+  - `renderers/`: SVG renderers
+  - `generators/`: SVG generator components
+- `tests/`: Contains all test files
+  - `unit_tests/`: Unit tests for individual components
+    - `test_wire_renderer/`
+    - `test_text_renderers/`
+    - `test_shape_renderer/`
+    - `test_symbol_renderer/`
+    - `test_flag_renderer/`
+  - `integration/`: Complete system tests
+    - `test_svg_renderer/`
+      - `test1_wires_and_tjunctions/`
+      - `test2_text/`
+
+## Recent Changes
+- Reorganized unit tests into a dedicated `unit_tests` directory
+- Updated test result locations to match the new directory structure
+- Fixed import paths in test files
+- Cleaned up duplicate test files
+
+## Next Steps
+- Continue cleaning up test cases
+- Fix remaining integration test failures
+- Implement missing features (net labels, flags)
+- Improve text rendering calibration
 
 ## Key Features
 - Text rendering capabilities:
