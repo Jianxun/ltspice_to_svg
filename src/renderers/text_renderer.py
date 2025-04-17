@@ -69,17 +69,15 @@ class TextRenderer(BaseRenderer):
         text_type = text.get('type', 'comment')  # Default to comment type
         is_mirrored = text.get('is_mirrored', False)  # Default to not mirrored
         
-        self.logger.info(f"Rendering text: '{content}' at ({x},{y})")
-        self.logger.info(f"Properties: justification={justification}, size_multiplier={size_multiplier}, "
+        self.logger.debug(f"Rendering text: '{content}' at ({x},{y})")
+        self.logger.debug(f"Properties: justification={justification}, size_multiplier={size_multiplier}, "
                          f"text_type={text_type}, is_mirrored={is_mirrored}")
         
         # Strip prefix based on text type
         if text_type == 'spice' and content.startswith('!'):
             content = content[1:]  # Remove ! prefix
-            #self.logger.debug("Removed '!' prefix from spice text")
         elif text_type == 'comment' and content.startswith(';'):
             content = content[1:]  # Remove ; prefix
-            #self.logger.debug("Removed ';' prefix from comment text")
             
         # Calculate actual font size
         font_size = self.base_font_size * self.SIZE_MULTIPLIERS.get(size_multiplier, self.SIZE_MULTIPLIERS[2])
@@ -107,7 +105,7 @@ class TextRenderer(BaseRenderer):
             text_anchor = 'middle'
             x_offset = 0
         
-        self.logger.info(f"Text anchor: {text_anchor} (original justification: {justification}, mirrored: {is_mirrored})")
+        self.logger.debug(f"Text anchor: {text_anchor} (original justification: {justification}, mirrored: {is_mirrored})")
         
         # Adjust vertical position based on justification
         if justification in ['Left', 'Center', 'Right']:
@@ -125,7 +123,6 @@ class TextRenderer(BaseRenderer):
         elif justification == 'VBottom':
             y_offset = font_size * (self.TEXT_OFFSETS['VBottom'] if is_vertical else self.TEXT_OFFSETS['Bottom'])  # Move up slightly
         
-
         self.logger.debug(f"Position offsets: x={x_offset}, y={y_offset}")
         
         # Create multiline text element
@@ -148,13 +145,8 @@ class TextRenderer(BaseRenderer):
         
         # For vertical text (VTop, VBottom), we need to rotate the text 90 degrees
         if is_vertical:
-            # Create a group for the text with rotation
-            text_group = self.dwg.g()
-            # Rotate around the text position
-            text_group.attribs['transform'] = f"rotate(-90, {x}, {y})"
-            text_group.add(text_element)
-            text_element = text_group
-            self.logger.debug(f"Added vertical text rotation transform: {text_group.attribs['transform']}")
+            group.add(text_element)
+            text_element = group
         
         # Add text to target group or drawing
         if target_group is not None:

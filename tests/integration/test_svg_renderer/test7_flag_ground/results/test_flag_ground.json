@@ -1,0 +1,71 @@
+{
+  "wires": [
+    {
+      "x1": 560,
+      "y1": 624,
+      "x2": 560,
+      "y2": 528
+    },
+    {
+      "x1": 560,
+      "y1": 624,
+      "x2": 464,
+      "y2": 624
+    },
+    {
+      "x1": 656,
+      "y1": 624,
+      "x2": 560,
+      "y2": 624
+    },
+    {
+      "x1": 560,
+      "y1": 720,
+      "x2": 560,
+      "y2": 624
+    }
+  ],
+  "symbols": [],
+  "texts": [],
+  "flags": [
+    {
+      "x": 560,
+      "y": 720,
+      "net_name": "0",
+      "type": "gnd",
+      "orientation": 0,
+      "attached_to_wire_end": true
+    },
+    {
+      "x": 656,
+      "y": 624,
+      "net_name": "0",
+      "type": "gnd",
+      "orientation": 270,
+      "attached_to_wire_end": true
+    },
+    {
+      "x": 560,
+      "y": 528,
+      "net_name": "0",
+      "type": "gnd",
+      "orientation": 180,
+      "attached_to_wire_end": true
+    },
+    {
+      "x": 464,
+      "y": 624,
+      "net_name": "0",
+      "type": "gnd",
+      "orientation": 90,
+      "attached_to_wire_end": true
+    }
+  ],
+  "io_pins": [],
+  "shapes": {
+    "lines": [],
+    "circles": [],
+    "rectangles": [],
+    "arcs": []
+  }
+}

@@ -39,9 +39,9 @@ pip install -r requirements.txt
 
 ## Usage
 
-Basic usage:
+Basic usage (from project root directory):
 ```bash
-python src/ltspice_to_svg.py your_schematic.asc
+python -m src.ltspice_to_svg your_schematic.asc
 ```
 
 This will generate `your_schematic.svg` in the same directory as your schematic file.
@@ -58,8 +58,10 @@ This will generate `your_schematic.svg` in the same directory as your schematic 
 
 Example with options:
 ```bash
-python src/ltspice_to_svg.py your_schematic.asc --stroke-width 2.0 --font-size 14.0 --scale 1.2
+python -m src.ltspice_to_svg your_schematic.asc --stroke-width 2.0 --font-size 14.0 --scale 1.2
 ```
+
+Note: The script must be run from the project root directory to ensure proper module imports.
 
 ### Environment Variables
 

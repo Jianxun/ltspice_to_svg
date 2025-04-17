@@ -3,8 +3,8 @@ Main script to convert LTspice schematics to SVG format.
 """
 import os
 from pathlib import Path
-from src.parsers.schematic_parser import SchematicParser
-from src.renderers.svg_renderer import SVGRenderer
+from .parsers.schematic_parser import SchematicParser
+from .renderers.svg_renderer import SVGRenderer
 
 def convert_schematic(asc_file: str, 
                      stroke_width: float = 3.0, dot_size_multiplier: float = 1.5,
@@ -48,18 +48,16 @@ def convert_schematic(asc_file: str,
     # Create SVG renderer with custom parameters
     renderer = SVGRenderer()
     
-    # Load schematic data with symbol definitions
+    # Load schematic and symbol data
     renderer.load_schematic(data['schematic'], data['symbols'])
     
-    # Create SVG drawing
+    # Create drawing and set parameters
     renderer.create_drawing(str(svg_file))
-    
-    # Set rendering parameters
     renderer.set_stroke_width(stroke_width)
     renderer.set_base_font_size(font_size)
     
     # Render components
-    renderer.render_wires()
+    renderer.render_wires(dot_size_multiplier)
     renderer.render_symbols()
     if not no_text:
         renderer.render_texts()

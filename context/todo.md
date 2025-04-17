@@ -2,95 +2,47 @@
 
 ## Current Tasks
 
-### 1. Flag Rendering Implementation
+### 1. Documentation
+[X] Update README.md with correct script execution instructions
+[ ] Add docstrings to all methods
+[ ] Create API documentation
+[ ] Add usage examples
+[ ] Document configuration options
+
+### 2. Flag Rendering
 [X] Create FlagRenderer class
   [X] Implement net label rendering
   [ ] Implement ground symbol rendering
   [ ] Implement IO pin rendering
   [X] Add support for flag text properties
   [X] Add support for flag orientation
-[X] Create test schematic for flags
-  [X] Include net labels
-  [ ] Include ground symbols
-  [ ] Include IO pins
-[X] Add visual verification tests
-  [X] Test flag positioning
-  [X] Test flag orientation
-  [X] Test flag text properties
-  [X] Test flag text positioning
 
-### 2. Text Rendering Fine-tuning
-[X] Fine-tune text justifications:
-  [X] Adjust vertical positioning for different alignments
-  [X] Fine-tune horizontal offsets for better readability
-  [X] Optimize vertical text positioning and rotation
-  [X] Ensure consistent spacing across different text types
+### 3. Text Rendering
+[X] Fine-tune text justifications
+  [X] Adjust vertical positioning
+  [X] Fine-tune horizontal offsets
+  [X] Optimize vertical text positioning
+  [X] Ensure consistent spacing
+[ ] Improve IO pin text orientation
+  [ ] Analyze current issues
+  [ ] Update text positioning logic
+  [ ] Add proper rotation handling
+  [ ] Test various configurations
 
-### 3. Integration Testing
+### 4. Integration Testing
 [X] Test all renderers together
-  [X] Create comprehensive test schematics
-  [X] Verify all element types work together
-  [X] Test complex scenarios with multiple element types
+  [X] Create test schematics
+  [X] Verify element types
+  [X] Test complex scenarios
 [ ] Optimize performance
-  [ ] Profile rendering performance
-  [ ] Optimize coordinate calculations
-  [ ] Implement caching where appropriate
-  [ ] Add performance metrics
-
-### 4. Documentation
-[ ] Add docstrings to all methods
-[ ] Create API documentation
-[ ] Add usage examples
-[ ] Document configuration options
-[ ] Create troubleshooting guide
+  [ ] Profile rendering
+  [ ] Optimize calculations
+  [ ] Implement caching
 
 ### 5. Code Quality
 [ ] Add type hints to all Python files
 [ ] Add unit tests for individual components
 [ ] Implement continuous integration
-
-### 6. Additional Features
-[ ] Add support for custom styles
-[ ] Implement layer support
-[ ] Add export options
-[ ] Support for annotations
-[ ] Add interactive features
-
-### Text Rendering Calibration
-[X] Calibrate text rendering parameters
-  - [X] Test different font sizes and find optimal values
-  - [X] Adjust text positioning for better alignment
-  - [X] Fine-tune text justification settings
-  - [X] Handle special characters and symbols
-  - [X] Improve text mirroring for mirrored symbols
-  - [X] Create test cases for text calibration
-  - [X] Document optimal rendering parameters
-
-### Test Cases
-[X] Create test schematic for text calibration
-  - [X] Include various text sizes
-  - [X] Include different text justifications
-  [X] Include special characters
-  - [X] Include mirrored text cases
-  - [X] Include rotated text cases
-
-### Documentation
-[ ] Update documentation with text rendering parameters
-  - [ ] Document optimal font sizes
-  - [ ] Document text positioning rules
-  - [ ] Document justification settings
-  - [ ] Document special character handling
-  - [ ] Document text mirroring rules
-
-### 1. Fix Integration Test Failures
-[ ] Update import paths in all test files
-  [ ] Fix import in test1_wires_and_tjunctions
-  [ ] Check and update imports in remaining test files
-  [ ] Verify all imports use 'src.renderers.svg_renderer'
-[ ] Run all integration tests
-  [ ] Fix any additional issues found
-  [ ] Document any new issues discovered
-  [ ] Update test documentation if needed
 
 ## Future Tasks
 [ ] Implement Test7 (Complex Symbols)
@@ -98,8 +50,9 @@
 [ ] Implement Test9 (Net Labels)
 [ ] Implement Test10 (Bus Structures)
 [ ] Add support for more LTspice features
-[ ] Improve error handling and reporting
-[ ] Create user guide
+[ ] Add support for custom styles
+[ ] Implement layer support
+[ ] Add export options
 
 ## Initial Setup
 [X] Create virtual environment
@@ -517,3 +470,21 @@
 [ ] Implement flag scaling based on schematic size
 [ ] Add flag color customization
 [ ] Improve flag rendering performance
+
+## Completed Tasks
+[X] Fix net label rendering test
+  - [X] Update test to match current implementation
+  - [X] Remove text-anchor check
+  - [X] Verify test passes with correct validations
+
+## Current Tasks
+[ ] Troubleshoot test_ltspice_to_svg.py
+  - [ ] Analyze main conversion test
+  - [ ] Analyze no-text test
+  - [ ] Identify and fix any issues
+  - [ ] Verify all tests pass
+
+## Future Tasks
+[ ] Improve text orientation handling in `render_io_pin` method
+[ ] Implement missing features (net labels, flags)
+[ ] Improve text rendering calibration

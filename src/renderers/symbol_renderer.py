@@ -8,6 +8,7 @@ import logging
 from .base_renderer import BaseRenderer
 from .shape_renderer import ShapeRenderer
 from .text_renderer import TextRenderer
+import os
 
 class SymbolRenderer(BaseRenderer):
     """Renders LTspice symbols as SVG groups.
@@ -234,7 +235,7 @@ class SymbolRenderer(BaseRenderer):
                 }
 
                 # Render the text
-                self.logger.info(f"Rendering window text for property {property_id}: {text_data}")
+                self.logger.debug(f"Rendering window text for property {property_id}: {text_data}")
                 self.text_renderer.render(text_data, target_group=self._current_group)
 
         except Exception as e:
@@ -285,6 +286,15 @@ class SymbolRenderer(BaseRenderer):
             self.logger.debug(f"Symbol data keys: {list(symbol.keys())}")
             if 'symbol_def' in symbol:
                 self.logger.debug(f"Symbol definition keys: {list(symbol['symbol_def'].keys())}")
+                if 'file_path' in symbol['symbol_def']:
+                    self.logger.info(f"Rendering symbol from file: {symbol['symbol_def']['file_path']}")
+                    self.logger.info(f"Symbol file exists: {os.path.exists(symbol['symbol_def']['file_path'])}")
+                    if os.path.exists(symbol['symbol_def']['file_path']):
+                        self.logger.info(f"Symbol file size: {os.path.getsize(symbol['symbol_def']['file_path'])} bytes")
+                if 'name' in symbol['symbol_def']:
+                    self.logger.info(f"Symbol name: {symbol['symbol_def']['name']}")
+                if 'windows' in symbol['symbol_def']:
+                    self.logger.info(f"Symbol has {len(symbol['symbol_def']['windows'])} windows defined")
             if 'window_overrides' in symbol:
                 self.logger.debug(f"Window overrides present: {symbol['window_overrides']}")
             
