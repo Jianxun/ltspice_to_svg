@@ -94,6 +94,7 @@ class FlagRenderer(BaseRenderer):
                 - y: Y coordinate
                 - net_name: Name of the net/signal
                 - orientation: Rotation angle in degrees
+                - attached_to_wire_end: Boolean indicating if the label is at a wire end
             target_group: Optional group to add the flag to
         """
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -101,56 +102,53 @@ class FlagRenderer(BaseRenderer):
         self.logger.debug(f"  Position: ({flag.get('x', 0)}, {flag.get('y', 0)})")
         self.logger.debug(f"  Net name: {flag.get('net_name', '')}")
         self.logger.debug(f"  Orientation: {flag.get('orientation', 0)}")
-        self.logger.debug(f"  Target group provided: {target_group is not None}")
-        
-        # Use the provided group or create a new one
-        g = target_group if target_group is not None else self.dwg.g()
-        
-        # Apply translation and rotation
-        transform = [
-            f"translate({flag['x']},{flag['y']})",
-            f"rotate({flag['orientation']})"
-        ]
-        g.attribs['transform'] = ' '.join(transform)
-        self.logger.debug(f"  Applied transform: {g.attribs['transform']}")
+        self.logger.debug(f"  Attached to wire end: {flag.get('attached_to_wire_end', False)}")
         
         # Get text definition
         text_def = self._flag_definitions["net_label"]["text"]
         self.logger.debug(f"  Text definition: {text_def}")
         
-        # Create text group with normalized rotation
-        text_group = self.dwg.g()
-        self.logger.debug("  Created text group")
+        # Get anchor point coordinates
+        anchor_x = text_def["anchor"]["x"]
+        anchor_y = text_def["anchor"]["y"]
         
-        # For 180° orientation, counter-rotate the text to make it appear as 0°
-        if flag['orientation'] == 180:
-            text_group.attribs['transform'] = f"rotate(-180)"
-            self.logger.debug("  Applied counter-rotation for 180° orientation")
+        # Calculate text position and justification based on orientation
+        orientation = flag['orientation']
+        if orientation == 0:  # Right
+            text_x = flag['x'] + anchor_x
+            text_y = flag['y'] + anchor_y
+            justification = "VRight" if flag.get('attached_to_wire_end', False) else "VBottom"
+        elif orientation == 90:  # Up
+            text_x = flag['x'] - anchor_y
+            text_y = flag['y'] + anchor_x
+            justification = "Right" if flag.get('attached_to_wire_end', False) else "VBottom"
+        elif orientation == 180:  # Left
+            text_x = flag['x'] - anchor_x
+            text_y = flag['y'] - anchor_y
+            justification = "VLeft" if flag.get('attached_to_wire_end', False) else "Bottom"
+        else:  # 270, Down
+            text_x = flag['x'] + anchor_y
+            text_y = flag['y'] - anchor_x
+            justification = "Left" if flag.get('attached_to_wire_end', False) else "VBottom"
+            
+        self.logger.debug(f"  Text position: ({text_x}, {text_y})")
+        self.logger.debug(f"  Text justification: {justification}")
         
         # Create text properties for TextRenderer
         text_properties = {
-            'x': text_def["anchor"]["x"],
-            'y': text_def["anchor"]["y"],
+            'x': text_x,
+            'y': text_y,
             'text': flag['net_name'],
-            'justification': text_def["justification"],
-            'size_multiplier': 1.5,  # Size 2 (1.5x)
+            'justification': justification,
+            'size_multiplier': 2,
             'type': 'comment',  # Net labels are treated as comments
             'is_mirrored': False  # No mirroring for net labels
         }
         self.logger.debug(f"  Text properties: {text_properties}")
         
-        # Use TextRenderer to render the text
-        self._text_renderer.render(text_properties, text_group)
+        # Render text directly to the drawing
+        self._text_renderer.render(text_properties, self.dwg)
         self.logger.debug("  Rendered text using TextRenderer")
-        
-        # Add text group to main group
-        g.add(text_group)
-        self.logger.debug("  Added text group to main group")
-        
-        # Add the group to the drawing if no target group was provided
-        if target_group is None:
-            self.dwg.add(g)
-            self.logger.debug("  Added net label group directly to drawing")
         
     def render_io_pin(self, flag: Dict,
                      target_group: Optional[svgwrite.container.Group] = None) -> None:
