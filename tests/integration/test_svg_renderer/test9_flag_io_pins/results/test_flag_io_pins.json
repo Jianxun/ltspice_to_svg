@@ -1,0 +1,171 @@
+{
+  "wires": [
+    {
+      "x1": 560,
+      "y1": 624,
+      "x2": 560,
+      "y2": 528
+    },
+    {
+      "x1": 560,
+      "y1": 624,
+      "x2": 464,
+      "y2": 624
+    },
+    {
+      "x1": 656,
+      "y1": 624,
+      "x2": 560,
+      "y2": 624
+    },
+    {
+      "x1": 896,
+      "y1": 624,
+      "x2": 896,
+      "y2": 528
+    },
+    {
+      "x1": 896,
+      "y1": 624,
+      "x2": 800,
+      "y2": 624
+    },
+    {
+      "x1": 992,
+      "y1": 624,
+      "x2": 896,
+      "y2": 624
+    },
+    {
+      "x1": 1264,
+      "y1": 624,
+      "x2": 1264,
+      "y2": 528
+    },
+    {
+      "x1": 1264,
+      "y1": 624,
+      "x2": 1168,
+      "y2": 624
+    },
+    {
+      "x1": 1360,
+      "y1": 624,
+      "x2": 1264,
+      "y2": 624
+    },
+    {
+      "x1": 560,
+      "y1": 720,
+      "x2": 560,
+      "y2": 624
+    },
+    {
+      "x1": 896,
+      "y1": 720,
+      "x2": 896,
+      "y2": 624
+    },
+    {
+      "x1": 1264,
+      "y1": 720,
+      "x2": 1264,
+      "y2": 624
+    }
+  ],
+  "symbols": [],
+  "texts": [],
+  "flags": [],
+  "io_pins": [
+    {
+      "x": 464,
+      "y": 624,
+      "net_name": "in",
+      "direction": "In",
+      "orientation": 90
+    },
+    {
+      "x": 560,
+      "y": 720,
+      "net_name": "in",
+      "direction": "In",
+      "orientation": 0
+    },
+    {
+      "x": 656,
+      "y": 624,
+      "net_name": "in",
+      "direction": "In",
+      "orientation": 270
+    },
+    {
+      "x": 560,
+      "y": 528,
+      "net_name": "in",
+      "direction": "In",
+      "orientation": 180
+    },
+    {
+      "x": 896,
+      "y": 720,
+      "net_name": "out",
+      "direction": "Out",
+      "orientation": 0
+    },
+    {
+      "x": 992,
+      "y": 624,
+      "net_name": "out",
+      "direction": "Out",
+      "orientation": 270
+    },
+    {
+      "x": 800,
+      "y": 624,
+      "net_name": "out",
+      "direction": "Out",
+      "orientation": 90
+    },
+    {
+      "x": 896,
+      "y": 528,
+      "net_name": "out",
+      "direction": "Out",
+      "orientation": 180
+    },
+    {
+      "x": 1264,
+      "y": 528,
+      "net_name": "bi_dir",
+      "direction": "BiDir",
+      "orientation": 180
+    },
+    {
+      "x": 1168,
+      "y": 624,
+      "net_name": "bi_dir",
+      "direction": "BiDir",
+      "orientation": 90
+    },
+    {
+      "x": 1360,
+      "y": 624,
+      "net_name": "bi_dir",
+      "direction": "BiDir",
+      "orientation": 270
+    },
+    {
+      "x": 1264,
+      "y": 720,
+      "net_name": "bi_dir",
+      "direction": "BiDir",
+      "orientation": 0
+    }
+  ],
+  "shapes": {
+    "lines": [],
+    "circles": [],
+    "rectangles": [],
+    "arcs": []
+  }
+}

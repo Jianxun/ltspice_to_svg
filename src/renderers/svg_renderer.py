@@ -227,10 +227,11 @@ class SVGRenderer(BaseRenderer):
             shape_renderer.render(shape_data, self._stroke_width)
             
     def render_flags(self) -> None:
-        """Render all flags in the schematic."""
+        """Render all flags and IO pins in the schematic."""
         if not self.schematic_data or not self.dwg:
             raise ValueError("Schematic not loaded or drawing not created")
         
+        # Render flags
         flags = self.schematic_data.get('flags', [])
         self.logger.info(f"Found {len(flags)} flags to render")
         
@@ -247,14 +248,7 @@ class SVGRenderer(BaseRenderer):
                 self.logger.debug("  Created ground flag group")
                 
                 # Add the ground flag to the group
-                self._renderers['flag'].render_ground_flag(
-                    {
-                        'x': flag['x'],
-                        'y': flag['y'],
-                        'orientation': flag['orientation']
-                    },
-                    g
-                )
+                self._renderers['flag'].render_ground_flag(flag, g)
                 
                 # Add the group to the drawing
                 self.dwg.add(g)
@@ -264,22 +258,36 @@ class SVGRenderer(BaseRenderer):
                 g = self.dwg.g()
                 g.attribs['class'] = 'net-label'
                 self.logger.debug("  Created net label group")
-                self.logger.debug(f"  Net name: {flag.get('net_name', '')}")
                 
                 # Add the net label to the group
-                self._renderers['flag'].render_net_label(
-                    {
-                        'x': flag['x'],
-                        'y': flag['y'],
-                        'net_name': flag['net_name'],
-                        'orientation': flag['orientation']
-                    },
-                    g
-                )
+                self._renderers['flag'].render_net_label(flag, g)
                 
                 # Add the group to the drawing
                 self.dwg.add(g)
                 self.logger.debug("  Added net label group to drawing")
+                
+        # Render IO pins
+        io_pins = self.schematic_data.get('io_pins', [])
+        self.logger.info(f"Found {len(io_pins)} IO pins to render")
+        
+        for i, pin in enumerate(io_pins):
+            self.logger.debug(f"Rendering IO pin {i+1}/{len(io_pins)}:")
+            self.logger.debug(f"  Net name: {pin.get('net_name', '')}")
+            self.logger.debug(f"  Position: ({pin.get('x', 0)}, {pin.get('y', 0)})")
+            self.logger.debug(f"  Direction: {pin.get('direction', 'BiDir')}")
+            self.logger.debug(f"  Orientation: {pin.get('orientation', 0)}")
+            
+            # Create a group for the IO pin
+            g = self.dwg.g()
+            g.attribs['class'] = 'io-pin'
+            self.logger.debug("  Created IO pin group")
+            
+            # Add the IO pin to the group
+            self._renderers['flag'].render_io_pin(pin, g)
+            
+            # Add the group to the drawing
+            self.dwg.add(g)
+            self.logger.debug("  Added IO pin group to drawing")
         
     def save(self) -> None:
         """Save the SVG drawing to file."""

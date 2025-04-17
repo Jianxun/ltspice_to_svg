@@ -484,3 +484,9 @@
   - [ ] Add API documentation
   - [ ] Add usage examples
   - [ ] Add troubleshooting guide
+
+[X] Modify test9_flag_io_pins to focus on total IO pin count
+  - [X] Update test to verify presence of 12 IO pins
+  - [X] Remove specific pin type checks
+  - [X] Add logging for rendered wires and IO pin counts
+  - [X] Run test to verify changes

@@ -5,27 +5,11 @@ Handles rendering of various flags (ground, IO pins, net labels) with proper sca
 import svgwrite
 import json
 import os
-from typing import Dict, List, Tuple, Optional
-from dataclasses import dataclass
+from typing import Dict, Optional
 from enum import Enum
 from .base_renderer import BaseRenderer
 from .text_renderer import TextRenderer
 import logging
-
-@dataclass
-class LineDefinition:
-    start: Tuple[float, float]
-    end: Tuple[float, float]
-    stroke: str
-    stroke_linecap: str
-
-@dataclass
-class TextDefinition:
-    font_family: str
-    font_size: int
-    text_anchor: str
-    fill: str
-    distance: float
 
 class FlagType(Enum):
     GROUND = "ground"
@@ -41,13 +25,9 @@ class FlagOrientation(Enum):
 class FlagRenderer(BaseRenderer):
     """Renderer for flags in the schematic."""
     
-    # Constants
-    NET_LABEL_DISTANCE = 52.0  # Distance of net label text from origin
-    
     def __init__(self, dwg: svgwrite.Drawing):
         super().__init__(dwg)
-        self._flag_definitions: Dict[FlagType, List[LineDefinition]] = {}
-        self._text_definitions: Dict[FlagType, TextDefinition] = {}
+        self._flag_definitions: Dict = {}
         self._text_renderer = TextRenderer(dwg)
         self._text_renderer.base_font_size = self.base_font_size  # Initialize with parent's base font size
         self._load_flag_definitions()
@@ -63,42 +43,14 @@ class FlagRenderer(BaseRenderer):
         self._text_renderer.base_font_size = value  # Update TextRenderer's font size
 
     def _load_flag_definitions(self):
-        """Load flag definitions from JSON files."""
-        definitions_dir = os.path.join(os.path.dirname(__file__), "flag_definitions")
-        for flag_type in FlagType:
-            json_path = os.path.join(definitions_dir, f"{flag_type.value}_flag.json")
-            if os.path.exists(json_path):
-                with open(json_path, 'r') as f:
-                    data = json.load(f)
-                    if "lines" in data:
-                        self._flag_definitions[flag_type] = [
-                            LineDefinition(
-                                start=tuple(line["start"]),
-                                end=tuple(line["end"]),
-                                stroke=line["stroke"],
-                                stroke_linecap=line["stroke_linecap"]
-                            )
-                            for line in data["lines"]
-                        ]
-                    if "text" in data:
-                        self._text_definitions[flag_type] = TextDefinition(
-                            font_family=data["text"]["font_family"],
-                            font_size=data["text"]["font_size"],
-                            text_anchor=data["text"]["text_anchor"],
-                            fill=data["text"]["fill"],
-                            distance=data["text"]["distance"]
-                        )
+        """Load flag definitions from JSON file."""
+        json_path = os.path.join(os.path.dirname(__file__), "flag_definitions", "flags.json")
+        with open(json_path, 'r') as f:
+            self._flag_definitions = json.load(f)
 
     def render_ground_flag(self, flag: Dict,
                           target_group: Optional[svgwrite.container.Group] = None) -> None:
         """Render a ground flag.
-        
-        The ground flag is rendered with a V shape pointing in the direction of the flag's orientation.
-        The shape is based on the gnd.asy reference file:
-        - Horizontal line at top: (-16,0) to (16,0)
-        - Two diagonal lines forming a V:
-          - Left line: (-16,0) to (0,16)
-          - Right line: (16,0) to (0,16)
         
         Args:
             flag: Dictionary containing ground flag properties:
@@ -118,12 +70,12 @@ class FlagRenderer(BaseRenderer):
         g.attribs['transform'] = ' '.join(transform)
         
         # Add lines from flag definition
-        for line in self._flag_definitions[FlagType.GROUND]:
+        for line in self._flag_definitions["ground"]["lines"]:
             g.add(self.dwg.line(
-                line.start, line.end,
-                stroke=line.stroke,
+                line["start"], line["end"],
+                stroke='black',
                 stroke_width=self.stroke_width,
-                stroke_linecap=line.stroke_linecap
+                stroke_linecap='round'
             ))
         
         # Add the group to the target group or drawing
@@ -163,7 +115,7 @@ class FlagRenderer(BaseRenderer):
         self.logger.debug(f"  Applied transform: {g.attribs['transform']}")
         
         # Get text definition
-        text_def = self._text_definitions[FlagType.NET_LABEL]
+        text_def = self._flag_definitions["net_label"]["text"]
         self.logger.debug(f"  Text definition: {text_def}")
         
         # Create text group with normalized rotation
@@ -177,11 +129,11 @@ class FlagRenderer(BaseRenderer):
         
         # Create text properties for TextRenderer
         text_properties = {
-            'x': 0,
-            'y': 0,  # Position above the pin point
+            'x': text_def["anchor"]["x"],
+            'y': text_def["anchor"]["y"],
             'text': flag['net_name'],
-            'justification': 'Bottom',  # Bottom-justified
-            'size_multiplier': text_def.font_size,
+            'justification': text_def["justification"],
+            'size_multiplier': 1.5,  # Size 2 (1.5x)
             'type': 'comment',  # Net labels are treated as comments
             'is_mirrored': False  # No mirroring for net labels
         }
@@ -213,5 +165,69 @@ class FlagRenderer(BaseRenderer):
                 - direction: Pin direction ('BiDir', 'In', or 'Out')
             target_group: Optional group to add the flag to
         """
-        # TODO: Implement IO pin rendering
-        pass 
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.debug("Rendering IO pin:")
+        self.logger.debug(f"  Position: ({flag.get('x', 0)}, {flag.get('y', 0)})")
+        self.logger.debug(f"  Net name: {flag.get('net_name', '')}")
+        self.logger.debug(f"  Orientation: {flag.get('orientation', 0)}")
+        self.logger.debug(f"  Direction: {flag.get('direction', 'BiDir')}")
+        self.logger.debug(f"  Target group provided: {target_group is not None}")
+        
+        # Use the provided group or create a new one
+        g = target_group if target_group is not None else self.dwg.g()
+        
+        # Apply translation and rotation for the shape
+        transform = [
+            f"translate({flag['x']},{flag['y']})",
+            f"rotate({flag['orientation']})"
+        ]
+        g.attribs['transform'] = ' '.join(transform)
+        self.logger.debug(f"  Applied transform: {g.attribs['transform']}")
+        
+        # Get line definitions for the specific direction
+        direction = flag.get('direction', 'BiDir')
+        if direction not in self._flag_definitions["io_pin"]["directions"]:
+            self.logger.warning(f"Unknown IO pin direction: {direction}, using BiDir")
+            direction = 'BiDir'
+            
+        # Add lines for the pin shape
+        for line in self._flag_definitions["io_pin"]["directions"][direction]["lines"]:
+            g.add(self.dwg.line(
+                line["start"], line["end"],
+                stroke='black',  # Default stroke color
+                stroke_width=self.stroke_width,
+                stroke_linecap='round'  # Default line cap style
+            ))
+        
+        # Get text definition for this direction
+        text_def = self._flag_definitions["io_pin"]["directions"][direction]["text"]
+        self.logger.debug(f"  Text definition: {text_def}")
+        
+        # Create text group with normalized rotation
+        text_group = self.dwg.g()
+        self.logger.debug("  Created text group")
+        
+        # Create text properties for TextRenderer
+        text_properties = {
+            'x': text_def["anchor"]["x"],
+            'y': text_def["anchor"]["y"],
+            'text': flag['net_name'],
+            'justification': text_def["justification"],
+            'size_multiplier': 2,
+            'type': 'comment',  # IO pin labels are treated as comments
+            'is_mirrored': False  # No mirroring for IO pin labels
+        }
+        self.logger.debug(f"  Text properties: {text_properties}")
+        
+        # Use TextRenderer to render the text
+        self._text_renderer.render(text_properties, text_group)
+        self.logger.debug("  Rendered text using TextRenderer")
+        
+        # Add text group to main group
+        g.add(text_group)
+        self.logger.debug("  Added text group to main group")
+        
+        # Add the group to the drawing if no target group was provided
+        if target_group is None:
+            self.dwg.add(g)
+            self.logger.debug("  Added IO pin group directly to drawing") 
