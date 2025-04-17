@@ -19,39 +19,39 @@
       "y2": 624
     },
     {
-      "x1": 896,
+      "x1": 1008,
       "y1": 624,
-      "x2": 896,
+      "x2": 1008,
       "y2": 528
     },
     {
-      "x1": 896,
+      "x1": 1008,
       "y1": 624,
-      "x2": 800,
+      "x2": 912,
       "y2": 624
     },
     {
-      "x1": 992,
+      "x1": 1104,
       "y1": 624,
-      "x2": 896,
+      "x2": 1008,
       "y2": 624
     },
     {
-      "x1": 1264,
+      "x1": 1456,
       "y1": 624,
-      "x2": 1264,
+      "x2": 1456,
       "y2": 528
     },
     {
-      "x1": 1264,
+      "x1": 1456,
       "y1": 624,
-      "x2": 1168,
+      "x2": 1360,
       "y2": 624
     },
     {
-      "x1": 1360,
+      "x1": 1552,
       "y1": 624,
-      "x2": 1264,
+      "x2": 1456,
       "y2": 624
     },
     {
@@ -61,15 +61,15 @@
       "y2": 624
     },
     {
-      "x1": 896,
+      "x1": 1008,
       "y1": 720,
-      "x2": 896,
+      "x2": 1008,
       "y2": 624
     },
     {
-      "x1": 1264,
+      "x1": 1456,
       "y1": 720,
-      "x2": 1264,
+      "x2": 1456,
       "y2": 624
     }
   ],
@@ -82,84 +82,96 @@
       "y": 624,
       "net_name": "in",
       "direction": "In",
-      "orientation": 90
+      "orientation": 90,
+      "attached_to_wire_end": true
     },
     {
       "x": 560,
       "y": 720,
       "net_name": "in",
       "direction": "In",
-      "orientation": 0
+      "orientation": 0,
+      "attached_to_wire_end": true
     },
     {
       "x": 656,
       "y": 624,
       "net_name": "in",
       "direction": "In",
-      "orientation": 270
+      "orientation": 270,
+      "attached_to_wire_end": true
     },
     {
       "x": 560,
       "y": 528,
       "net_name": "in",
       "direction": "In",
-      "orientation": 180
+      "orientation": 180,
+      "attached_to_wire_end": true
     },
     {
-      "x": 896,
+      "x": 1008,
       "y": 720,
       "net_name": "out",
       "direction": "Out",
-      "orientation": 0
+      "orientation": 0,
+      "attached_to_wire_end": true
     },
     {
-      "x": 992,
+      "x": 1104,
       "y": 624,
       "net_name": "out",
       "direction": "Out",
-      "orientation": 270
+      "orientation": 270,
+      "attached_to_wire_end": true
     },
     {
-      "x": 800,
+      "x": 912,
       "y": 624,
       "net_name": "out",
       "direction": "Out",
-      "orientation": 90
+      "orientation": 90,
+      "attached_to_wire_end": true
     },
     {
-      "x": 896,
+      "x": 1008,
       "y": 528,
       "net_name": "out",
       "direction": "Out",
-      "orientation": 180
+      "orientation": 180,
+      "attached_to_wire_end": true
     },
     {
-      "x": 1264,
+      "x": 1456,
       "y": 528,
       "net_name": "bi_dir",
       "direction": "BiDir",
-      "orientation": 180
-    },
-    {
-      "x": 1168,
-      "y": 624,
-      "net_name": "bi_dir",
-      "direction": "BiDir",
-      "orientation": 90
+      "orientation": 180,
+      "attached_to_wire_end": true
     },
     {
       "x": 1360,
       "y": 624,
       "net_name": "bi_dir",
       "direction": "BiDir",
-      "orientation": 270
+      "orientation": 90,
+      "attached_to_wire_end": true
     },
     {
-      "x": 1264,
+      "x": 1552,
+      "y": 624,
+      "net_name": "bi_dir",
+      "direction": "BiDir",
+      "orientation": 270,
+      "attached_to_wire_end": true
+    },
+    {
+      "x": 1456,
       "y": 720,
       "net_name": "bi_dir",
       "direction": "BiDir",
-      "orientation": 0
+      "orientation": 0,
+      "attached_to_wire_end": true
     }
   ],
   "shapes": {

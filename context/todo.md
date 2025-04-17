@@ -490,3 +490,30 @@
   - [X] Remove specific pin type checks
   - [X] Add logging for rendered wires and IO pin counts
   - [X] Run test to verify changes
+
+## Completed Tasks
+[X] Consolidate flag definition JSON files
+  - [X] Create new `flags.json` file
+  - [X] Combine ground, net label, and IO pin definitions
+  - [X] Add descriptive names and descriptions
+  - [X] Maintain all existing properties and structures
+
+[X] Simplify flag renderer
+  - [X] Remove `LineDefinition` and `TextDefinition` classes
+  - [X] Update `_load_flag_definitions` to use single JSON file
+  - [X] Modify rendering methods to use JSON structure directly
+  - [X] Run tests to verify changes
+
+## Current Tasks
+[ ] Improve IO pin text orientation
+  - [ ] Analyze current text orientation issues
+  - [ ] Update text positioning logic in `render_io_pin`
+  - [ ] Add proper rotation handling for different orientations
+  - [ ] Test with various IO pin configurations
+  - [ ] Verify text readability in all orientations
+
+## Future Tasks
+[ ] Add support for additional flag types
+[ ] Implement flag scaling based on schematic size
+[ ] Add flag color customization
+[ ] Improve flag rendering performance

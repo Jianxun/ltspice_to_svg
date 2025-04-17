@@ -191,13 +191,18 @@ class ASCParser:
                 # Calculate orientation based on connected wires
                 orientation = self._calculate_flag_orientation(x, y)
                 
+                # Check if flag is attached to a single wire end
+                connected_wires = self._get_connected_wires(x, y)
+                attached_to_wire_end = len(connected_wires) == 1
+                
                 # Create flag with type and orientation
                 flag = {
                     'x': x,
                     'y': y,
                     'net_name': net_name,
                     'type': 'gnd' if net_name == '0' else 'net_label',
-                    'orientation': orientation
+                    'orientation': orientation,
+                    'attached_to_wire_end': attached_to_wire_end
                 }
                 self.flags.append(flag)
                 self._flag_positions.add((x, y))
@@ -239,17 +244,21 @@ class ASCParser:
                 # Calculate orientation based on connected wires
                 orientation = self._calculate_flag_orientation(flag_x, flag_y)
                 
+                # Check if IO pin is attached to a single wire end
+                connected_wires = self._get_connected_wires(flag_x, flag_y)
+                attached_to_wire_end = len(connected_wires) == 1
+                
                 # Add IO pin with orientation
                 io_pin = {
                     'x': flag_x,
                     'y': flag_y,
                     'net_name': net_name,
                     'direction': direction,
-                    'orientation': orientation
+                    'orientation': orientation,
+                    'attached_to_wire_end': attached_to_wire_end
                 }
                 self.io_pins.append(io_pin)
-                self._flag_positions.add((flag_x, flag_y))  # Track position to avoid duplicates
-                
+                self._flag_positions.add((flag_x, flag_y))
             except ValueError as e:
                 print(f"Warning: Invalid flag/iopin data in lines: {flag_line} / {iopin_line} - {e}")
     

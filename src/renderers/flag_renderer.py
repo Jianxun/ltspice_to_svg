@@ -203,31 +203,49 @@ class FlagRenderer(BaseRenderer):
         text_def = self._flag_definitions["io_pin"]["directions"][direction]["text"]
         self.logger.debug(f"  Text definition: {text_def}")
         
-        # Create text group with normalized rotation
-        text_group = self.dwg.g()
-        self.logger.debug("  Created text group")
+        # Get anchor point coordinates
+        anchor_x = text_def["anchor"]["x"]
+        anchor_y = text_def["anchor"]["y"]
+        
+        # Calculate text position and justification based on orientation
+        orientation = flag['orientation']
+        if orientation == 0:  # Down
+            text_x = flag['x'] + anchor_x
+            text_y = flag['y'] + anchor_y
+            justification = "VRight"
+        elif orientation == 90:  # Left
+            text_x = flag['x'] - anchor_y
+            text_y = flag['y'] + anchor_x
+            justification = "Right"
+        elif orientation == 180:  # Up
+            text_x = flag['x'] - anchor_x
+            text_y = flag['y'] - anchor_y
+            justification = "VLeft"
+        else:  # 270, Right
+            text_x = flag['x'] + anchor_y
+            text_y = flag['y'] - anchor_x
+            justification = "Left"
+            
+        self.logger.debug(f"  Text position: ({text_x}, {text_y})")
+        self.logger.debug(f"  Text justification: {justification}")
         
         # Create text properties for TextRenderer
         text_properties = {
-            'x': text_def["anchor"]["x"],
-            'y': text_def["anchor"]["y"],
+            'x': text_x,
+            'y': text_y,
             'text': flag['net_name'],
-            'justification': text_def["justification"],
+            'justification': justification,
             'size_multiplier': 2,
             'type': 'comment',  # IO pin labels are treated as comments
             'is_mirrored': False  # No mirroring for IO pin labels
         }
         self.logger.debug(f"  Text properties: {text_properties}")
         
-        # Use TextRenderer to render the text
-        self._text_renderer.render(text_properties, text_group)
+        # Render text directly to the drawing
+        self._text_renderer.render(text_properties, self.dwg)
         self.logger.debug("  Rendered text using TextRenderer")
         
-        # Add text group to main group
-        g.add(text_group)
-        self.logger.debug("  Added text group to main group")
-        
-        # Add the group to the drawing if no target group was provided
+        # Add the shape group to the drawing if no target group was provided
         if target_group is None:
             self.dwg.add(g)
             self.logger.debug("  Added IO pin group directly to drawing") 
