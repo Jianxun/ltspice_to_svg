@@ -37,6 +37,11 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+4. Alternatively, install directly from GitHub:
+```bash
+pip install git+https://github.com/yourusername/ltspice_to_svg.git
+```
+
 ## Usage
 
 There are several ways to run the tool:
