@@ -55,6 +55,16 @@ This project is a Python-based tool for converting LTspice schematics to SVG for
 - Added specific tests for different element types
 - Updated test fixtures for better reuse
 
+### Tool Execution Improvements
+- Fixed import issues in the main script (removing relative imports)
+- Created a shell script wrapper for easier execution
+- Added setup.py for installation as a package
+- Updated README with comprehensive usage instructions
+- Provided three different methods to run the tool:
+  1. Using the shell script (./ltspice_to_svg.sh)
+  2. Setting PYTHONPATH manually
+  3. Installing as a package with pip
+
 ## Technical Details
 - **Python version**: 3.12.9
 - **Testing framework**: pytest

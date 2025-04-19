@@ -39,29 +39,47 @@ pip install -r requirements.txt
 
 ## Usage
 
-Basic usage (from project root directory):
+There are several ways to run the tool:
+
+### 1. Using the shell script (recommended)
+
 ```bash
-python -m src.ltspice_to_svg your_schematic.asc
+./ltspice_to_svg.sh your_schematic.asc
 ```
 
 This will generate `your_schematic.svg` in the same directory as your schematic file.
+
+### 2. Setting PYTHONPATH manually
+
+```bash
+PYTHONPATH=$PYTHONPATH:$(pwd) python src/ltspice_to_svg.py your_schematic.asc
+```
+
+### 3. Installing as a package
+
+```bash
+pip install -e .
+ltspice_to_svg your_schematic.asc
+```
 
 ### Command Line Options
 
 - `--stroke-width`: Width of lines in the SVG (default: 3.0)
 - `--dot-size`: Size of junction dots relative to stroke width (default: 1.5)
-- `--scale`: Scale factor for coordinates (default: 1.0)
-- `--font-size`: Font size in pixels (default: 16.0)
-- `--ltspice-lib`: Path to LTspice symbol library (overrides LTSPICE_LIB_PATH)
-- `--no-text`: Skip rendering text elements
-- `--no-symbol-text`: Skip rendering symbol text elements
+- `--base-font-size`: Base font size in pixels (default: 16.0)
+- `--export-json`: Export intermediate JSON files for debugging
+- `--ltspice-lib`: Path to LTspice symbol library (overrides system default)
+- `--no-text`: Skip rendering all text elements
+- `--no-schematic-comment`: Skip rendering schematic comments
+- `--no-spice-directive`: Skip rendering SPICE directives
+- `--no-nested-symbol-text`: Skip rendering nested symbol text
+- `--no-component-name`: Skip rendering component names
+- `--no-component-value`: Skip rendering component values
 
 Example with options:
 ```bash
-python -m src.ltspice_to_svg your_schematic.asc --stroke-width 2.0 --font-size 14.0 --scale 1.2
+./ltspice_to_svg.sh your_schematic.asc --stroke-width 2.0 --base-font-size 14.0
 ```
-
-Note: The script must be run from the project root directory to ensure proper module imports.
 
 ### Environment Variables
 

@@ -32,6 +32,13 @@
   - [X] Fix test assertions to work with updated renderer
   - [X] Verify all tests pass
 
+[X] Create a shell script for running the tool directly
+  - [X] Fix import issues in the ltspice_to_svg.py script
+  - [X] Create a shell script wrapper
+  - [X] Update README.md with correct usage instructions
+  - [X] Create setup.py for installation as package
+  - [X] Test the tool with example schematic
+
 [X] Set up the project structure
   - [X] Create the virtual environment
   - [X] Set up the directory structure

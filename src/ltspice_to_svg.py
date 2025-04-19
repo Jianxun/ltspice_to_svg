@@ -5,9 +5,9 @@ import os
 import platform
 import warnings
 from pathlib import Path
-from .parsers.schematic_parser import SchematicParser
-from .renderers.svg_renderer import SVGRenderer
-from .renderers.rendering_config import RenderingConfig
+from parsers.schematic_parser import SchematicParser
+from renderers.svg_renderer import SVGRenderer
+from renderers.rendering_config import RenderingConfig
 
 def get_ltspice_lib_path() -> str:
     """
