@@ -208,6 +208,10 @@ class SVGRenderer(BaseRenderer):
         symbols = self.schematic_data.get('symbols', [])
         self.logger.info(f"Found {len(symbols)} symbols to render")
         
+        # If property_id is specified, log it
+        if property_id:
+            self.logger.info(f"Filtering for property_id: {property_id}")
+        
         for i, symbol in enumerate(symbols):
             self.logger.info(f"Rendering symbol {i+1}/{len(symbols)}:")
             symbol_name = symbol.get('symbol_name', 'Unknown')
@@ -220,10 +224,6 @@ class SVGRenderer(BaseRenderer):
             self.logger.debug(f"  Position: ({symbol.get('x', 0)}, {symbol.get('y', 0)})")
             self.logger.debug(f"  Rotation: {rotation} (mirrored: {is_mirrored})")
             
-            # Log window overrides if present
-            if 'window_overrides' in symbol:
-                self.logger.debug(f"  Window overrides for {instance_name}: {symbol['window_overrides']}")
-            
             # Get symbol definition
             if not symbol_name or symbol_name not in self.symbol_data:
                 self.logger.warning(f"Symbol definition not found for {symbol_name}")
@@ -231,44 +231,60 @@ class SVGRenderer(BaseRenderer):
                 
             symbol_def = self.symbol_data[symbol_name]
             
-            # Skip rendering if text should be excluded and this is a text-only symbol
-            if self.config.get_option('no_nested_symbol_text') and not any([
-                symbol_def.get('lines', []),
-                symbol_def.get('circles', []),
-                symbol_def.get('rectangles', []),
-                symbol_def.get('arcs', [])
-            ]):
-                self.logger.debug(f"Skipping text-only symbol: {symbol_name}")
-                continue
+            # Begin a new symbol
+            symbol_renderer.begin_symbol()
             
-            # Prepare rendering data for the symbol renderer
-            render_data = {
-                'symbol_name': symbol_name,
-                'rotation': rotation,
-                'rotation_degrees': symbol.get('rotation_degrees', 0),
-                'translation': (symbol.get('x', 0), symbol.get('y', 0)),
-                'shapes': {
-                    'lines': symbol_def.get('lines', []),
-                    'circles': symbol_def.get('circles', []),
-                    'rectangles': symbol_def.get('rectangles', []),
-                    'arcs': symbol_def.get('arcs', [])
-                },
-                'texts': symbol_def.get('texts', []),
-                'symbol_def': symbol_def,  # Add symbol definition for window text rendering
-                'window_overrides': symbol.get('window_overrides', {}),  # Add window overrides
-                'property_0': symbol.get('instance_name', ''),  # Add instance name as property_0
-                'property_3': symbol.get('value', ''),  # Add value as property_3
-                'property_id': property_id,  # Add property_id for window text rendering
-                'no_component_name': self.config.get_option('no_component_name'),
-                'no_component_value': self.config.get_option('no_component_value')
-            }
+            # Set the symbol transformation
+            symbol_renderer.set_transformation(
+                rotation, 
+                (symbol.get('x', 0), symbol.get('y', 0))
+            )
             
-            # Debug log: Check if window_overrides is correctly added to render_data
+            # Set the symbol definition for window text handling
+            symbol_renderer.set_symbol_definition(symbol_def)
+            
+            # Set window overrides if present
             if 'window_overrides' in symbol:
-                self.logger.debug(f"  Added window_overrides to render_data: {render_data['window_overrides']}")
+                symbol_renderer.set_window_overrides(symbol['window_overrides'])
+                self.logger.debug(f"  Window overrides set for {instance_name}: {symbol['window_overrides']}")
             
-            # Render the symbol
-            symbol_renderer.render(render_data, self.stroke_width)
+            # Render the symbol shapes from the definition
+            shapes = {
+                'lines': symbol_def.get('lines', []),
+                'circles': symbol_def.get('circles', []),
+                'rectangles': symbol_def.get('rectangles', []),
+                'arcs': symbol_def.get('arcs', [])
+            }
+            symbol_renderer.render_shapes(shapes, self.stroke_width)
+            
+            # Render symbol text elements (unless nested text is disabled)
+            symbol_renderer.render_texts(symbol_def.get('texts', []))
+            
+            # Handle property rendering based on property_id
+            if property_id:
+                # If a specific property ID was requested, only render that property
+                property_value = symbol.get(f'property_{property_id}', '')
+                if property_value:
+                    self.logger.debug(f"  Rendering specific property {property_id} with value: {property_value}")
+                    if property_id == "0":
+                        # Property 0 is component name
+                        symbol_renderer.render_component_name(property_value)
+                    elif property_id == "3":
+                        # Property 3 is component value
+                        symbol_renderer.render_component_value(property_value)
+                    else:
+                        # Other properties are rendered as custom
+                        symbol_renderer.render_custom_window_property(property_id, property_value)
+            else:
+                # No specific property ID, render both component name and value if enabled
+                if not self.config.get_option('no_component_name'):
+                    symbol_renderer.render_component_name(instance_name)
+                
+                if not self.config.get_option('no_component_value'):
+                    symbol_renderer.render_component_value(symbol.get('value', ''))
+            
+            # Finish rendering the symbol
+            symbol_renderer.finish_symbol()
             
     def render_texts(self) -> None:
         """Render all text elements in the schematic.

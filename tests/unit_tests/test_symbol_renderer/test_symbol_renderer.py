@@ -80,34 +80,34 @@ def test_base_font_size(renderer):
     with pytest.raises(ValueError):
         renderer.base_font_size = -10.0
 
-def test_create_group(renderer, dwg):
-    """Test creating a new group."""
-    group = renderer.create_group()
+def test_begin_symbol(renderer, dwg):
+    """Test creating a new symbol group."""
+    group = renderer.begin_symbol()
     assert group is not None
     assert renderer._current_group == group
-    renderer.add_to_drawing()
-    #save_test_result(dwg, 'test_create_group')
+    renderer.finish_symbol()
+    #save_test_result(dwg, 'test_begin_symbol')
 
 def test_render_texts(renderer, dwg, sample_texts):
     """Test rendering texts."""
-    renderer.create_group()
+    renderer.begin_symbol()
     renderer.render_texts(sample_texts)
-    renderer.add_to_drawing()
+    renderer.finish_symbol()
     save_test_result(dwg, 'test_render_texts')
 
 def test_error_no_group(renderer):
-    """Test error when no group is created."""
-    with pytest.raises(ValueError, match="No group created"):
+    """Test error when no symbol is started."""
+    with pytest.raises(ValueError, match="No symbol started"):
         renderer.set_transformation('R0', (0, 0))
     
-    with pytest.raises(ValueError, match="No group created"):
+    with pytest.raises(ValueError, match="No symbol started"):
         renderer.render_shapes({})
     
-    with pytest.raises(ValueError, match="No group created"):
+    with pytest.raises(ValueError, match="No symbol started"):
         renderer.render_texts([])
     
-    with pytest.raises(ValueError, match="No group created"):
-        renderer.add_to_drawing()
+    with pytest.raises(ValueError, match="No symbol started"):
+        renderer.finish_symbol()
 
 def test_pin_symbol_rendering(renderer, dwg, pin_shapes, parsed_symbols):
     """Test rendering pins with various transformations.
@@ -125,10 +125,10 @@ def test_pin_symbol_rendering(renderer, dwg, pin_shapes, parsed_symbols):
     # Render each pin from the JSON data
     for symbol in parsed_symbols['symbols']:
         if symbol['symbol_name'] == 'pin':
-            renderer.create_group()
+            renderer.begin_symbol()
             renderer.set_transformation(symbol['rotation'], (symbol['x'], symbol['y']))
             renderer.render_shapes(pin_shapes, stroke_width=2.0)
-            renderer.add_to_drawing()
+            renderer.finish_symbol()
     
     # Save the result
     save_test_result(dwg, 'test_pin_symbols')

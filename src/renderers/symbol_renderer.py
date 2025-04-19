@@ -3,8 +3,9 @@ Symbol renderer for LTspice schematics.
 Handles rendering of circuit symbols in SVG format.
 """
 import svgwrite
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, List, Union, Any
 import logging
+import warnings
 from .base_renderer import BaseRenderer
 from .shape_renderer import ShapeRenderer
 from .text_renderer import TextRenderer
@@ -31,6 +32,8 @@ class SymbolRenderer(BaseRenderer):
         self.text_renderer = TextRenderer(dwg, config)
         self._current_group = None
         self._is_mirrored = False
+        self._symbol_def = None
+        self._window_overrides = {}
         
         # Initialize child renderers with base properties
         self.shape_renderer.stroke_width = self.stroke_width
@@ -56,25 +59,30 @@ class SymbolRenderer(BaseRenderer):
         BaseRenderer.stroke_width.fset(self, value)  # Call parent's setter
         self.shape_renderer.stroke_width = value  # Update ShapeRenderer's stroke width
         
-    def create_group(self) -> svgwrite.container.Group:
-        """Create a new group for a symbol.
+    def begin_symbol(self) -> svgwrite.container.Group:
+        """Begin rendering a new symbol by creating a group.
         
         Returns:
             An SVG group element
         """
         self._current_group = self.dwg.g()
         self._is_mirrored = False
+        self._symbol_def = None
+        self._window_overrides = {}
         return self._current_group
         
     def set_transformation(self, rotation: str, translation: Tuple[float, float]) -> None:
-        """Set the transformation for the current group.
+        """Set the transformation for the current symbol group.
         
         Args:
             rotation: Rotation string (e.g. 'R0', 'M90')
             translation: Tuple of (x, y) coordinates
+        
+        Raises:
+            ValueError: If begin_symbol() has not been called
         """
         if not self._current_group:
-            raise ValueError("No group created. Call create_group() first.")
+            raise ValueError("No symbol started. Call begin_symbol() first.")
             
         try:
             transform = []
@@ -113,16 +121,47 @@ class SymbolRenderer(BaseRenderer):
         except Exception as e:
             self.logger.error(f"Failed to set transformation: {str(e)}")
             raise
+    
+    def set_symbol_definition(self, symbol_def: Dict) -> None:
+        """Set the symbol definition for window text rendering.
+        
+        Args:
+            symbol_def: Dictionary containing symbol definition
             
-    def render_shapes(self, shapes: Dict, stroke_width: float = None) -> None:
+        Raises:
+            ValueError: If begin_symbol() has not been called
+        """
+        if not self._current_group:
+            raise ValueError("No symbol started. Call begin_symbol() first.")
+            
+        self._symbol_def = symbol_def
+    
+    def set_window_overrides(self, window_overrides: Dict) -> None:
+        """Set window overrides for the current symbol.
+        
+        Args:
+            window_overrides: Dictionary mapping window IDs to override settings
+            
+        Raises:
+            ValueError: If begin_symbol() has not been called
+        """
+        if not self._current_group:
+            raise ValueError("No symbol started. Call begin_symbol() first.")
+            
+        self._window_overrides = window_overrides or {}
+            
+    def render_shapes(self, shapes: Dict[str, List[Dict]], stroke_width: float = None) -> None:
         """Render shapes for the current symbol.
         
         Args:
-            shapes: Dictionary containing shape definitions
+            shapes: Dictionary containing shape definitions by type
             stroke_width: Width of lines. If None, uses the instance's stroke width.
+            
+        Raises:
+            ValueError: If begin_symbol() has not been called
         """
         if not self._current_group:
-            raise ValueError("No group created. Call create_group() first.")
+            raise ValueError("No symbol started. Call begin_symbol() first.")
             
         try:
             for shape_type, shape_list in shapes.items():
@@ -137,15 +176,22 @@ class SymbolRenderer(BaseRenderer):
             self.logger.error(f"Failed to render shapes: {str(e)}")
             raise
             
-    def render_texts(self, texts: Dict, size_multipliers: Optional[Dict[int, float]] = None) -> None:
-        """Render texts for the current symbol.
+    def render_texts(self, texts: List[Dict]) -> None:
+        """Render text elements for the current symbol.
         
         Args:
-            texts: Dictionary containing text definitions
-            size_multipliers: Dictionary mapping size indices to font size multipliers
+            texts: List containing text element definitions
+            
+        Raises:
+            ValueError: If begin_symbol() has not been called
         """
         if not self._current_group:
-            raise ValueError("No group created. Call create_group() first.")
+            raise ValueError("No symbol started. Call begin_symbol() first.")
+        
+        # Skip if text rendering is disabled
+        if self.config.get_option('no_nested_symbol_text'):
+            self.logger.debug("Skipping text rendering due to no_nested_symbol_text option")
+            return
             
         try:
             self.logger.info(f"Rendering {len(texts)} text elements for {'mirrored' if self._is_mirrored else 'normal'} symbol")
@@ -160,158 +206,238 @@ class SymbolRenderer(BaseRenderer):
             self.logger.error(f"Failed to render texts: {str(e)}")
             raise
 
-    def render_window_texts(self, symbol: Dict, symbol_def: Dict, symbol_property_id: Optional[str] = None) -> None:
-        """Render window texts for the current symbol.
+    def render_component_name(self, instance_name: str) -> None:
+        """Render the component name (instance name) for the current symbol.
         
         Args:
-            symbol: Dictionary containing symbol instance data
-            symbol_def: Dictionary containing symbol definition
-            symbol_property_id: Optional property ID to render. If provided, only renders window text for this property.
-                              If None, renders all defined window texts.
+            instance_name: The instance name of the component (e.g., "R1")
+            
+        Raises:
+            ValueError: If begin_symbol() has not been called or symbol definition is not set
         """
         if not self._current_group:
-            raise ValueError("No group created. Call create_group() first.")
-
+            raise ValueError("No symbol started. Call begin_symbol() first.")
+            
+        if not self._symbol_def:
+            raise ValueError("Symbol definition not set. Call set_symbol_definition() first.")
+            
+        # Skip if component name rendering is disabled
+        if self.config.get_option('no_component_name'):
+            self.logger.debug("Skipping component name rendering due to no_component_name option")
+            return
+            
+        # Skip if instance name is empty
+        if not instance_name:
+            self.logger.debug("Skipping component name rendering: empty instance name")
+            return
+            
+        # Render window for property 0 (instance name)
+        self._render_window_property("0", instance_name)
+        
+    def render_component_value(self, value: str) -> None:
+        """Render the component value for the current symbol.
+        
+        Args:
+            value: The value of the component (e.g., "10k")
+            
+        Raises:
+            ValueError: If begin_symbol() has not been called or symbol definition is not set
+        """
+        if not self._current_group:
+            raise ValueError("No symbol started. Call begin_symbol() first.")
+            
+        if not self._symbol_def:
+            raise ValueError("Symbol definition not set. Call set_symbol_definition() first.")
+            
+        # Skip if component value rendering is disabled
+        if self.config.get_option('no_component_value'):
+            self.logger.debug("Skipping component value rendering due to no_component_value option")
+            return
+            
+        # Skip if value is empty
+        if not value:
+            self.logger.debug("Skipping component value rendering: empty value")
+            return
+            
+        # Render window for property 3 (value)
+        self._render_window_property("3", value)
+        
+    def _render_window_property(self, property_id: str, property_value: str) -> None:
+        """Render a window text for a specific property.
+        
+        Args:
+            property_id: The ID of the property (e.g., "0" for instance name)
+            property_value: The value to render
+            
+        Raises:
+            ValueError: If begin_symbol() has not been called or symbol definition is not set
+        """
+        if not self._current_group:
+            raise ValueError("No symbol started. Call begin_symbol() first.")
+            
+        if not self._symbol_def:
+            raise ValueError("Symbol definition not set. Call set_symbol_definition() first.")
+            
         try:
             # Get window definitions from symbol definition
-            windows = symbol_def.get('windows', {})
-            self.logger.debug(f"Window definitions from symbol_def: {windows}")
+            windows = self._symbol_def.get('windows', {})
             
             if not windows:
                 self.logger.debug("No window definitions found in symbol")
                 return
-
-            # Get window overrides from symbol instance
-            window_overrides = symbol.get('window_overrides', {})
-            self.logger.debug(f"Window overrides from symbol: {window_overrides}")
+                
+            # Skip if this property doesn't have a window definition
+            if property_id not in windows:
+                self.logger.debug(f"No window definition for property {property_id}")
+                return
+                
+            # Get window definition
+            window_def = windows[property_id]
             
-            instance_name = symbol.get('property_0', 'Unknown')
-            self.logger.debug(f"Processing window texts for symbol: {instance_name}")
-
-            # Process each window
-            for property_id, window_def in windows.items():
-                # Skip if a specific property ID was requested and this isn't it
-                if symbol_property_id is not None and property_id != symbol_property_id:
-                    continue
-
-                self.logger.debug(f"Processing window {property_id} with default definition: {window_def}")
+            # Try to convert property_id to integer for override lookup
+            try:
+                int_property_id = int(property_id)
+            except ValueError:
+                int_property_id = None
                 
-                # Convert property_id from string to integer for comparison (if possible)
-                try:
-                    int_property_id = int(property_id)
-                    self.logger.debug(f"Converted property_id '{property_id}' to integer: {int_property_id}")
-                except ValueError:
-                    int_property_id = None
-                    self.logger.debug(f"Could not convert property_id '{property_id}' to integer")
+            # Check for overrides
+            window_settings = window_def
+            
+            # Check integer key first, then string key
+            if int_property_id is not None and int_property_id in self._window_overrides:
+                window_settings = self._window_overrides[int_property_id]
+                self.logger.debug(f"Using integer key override for window {property_id}")
+            elif property_id in self._window_overrides:
+                window_settings = self._window_overrides[property_id]
+                self.logger.debug(f"Using string key override for window {property_id}")
                 
-                # Check if there's an override for this window (using integer key)
-                has_override = False
-                if int_property_id is not None and int_property_id in window_overrides:
-                    self.logger.debug(f"Found integer override for window {property_id}: {window_overrides[int_property_id]}")
-                    has_override = True
-                elif property_id in window_overrides:
-                    self.logger.debug(f"Found string override for window {property_id}: {window_overrides[property_id]}")
-                    has_override = True
+            # Create text data
+            text_data = {
+                'x': window_settings['x'],
+                'y': window_settings['y'],
+                'text': property_value,
+                'justification': window_settings['justification'],
+                'size_multiplier': window_settings.get('size_multiplier', 0),
+                'is_mirrored': self._is_mirrored
+            }
+            
+            # Render the text
+            self.logger.debug(f"Rendering window text for property {property_id}: {text_data}")
+            self.text_renderer.render(text_data, target_group=self._current_group)
                 
-                # Get the property value from the symbol instance
-                property_value = symbol.get(f'property_{property_id}')
-                self.logger.debug(f"Property value for {property_id}: {property_value}")
-                
-                if not property_value:
-                    self.logger.debug(f"No value found for property {property_id}")
-                    continue
-
-                # Get window settings, using overrides if available
-                window_settings = window_def
-                if has_override:
-                    self.logger.debug(f"Using override settings for window {property_id}")
-                    if int_property_id is not None and int_property_id in window_overrides:
-                        window_settings = window_overrides[int_property_id]
-                    else:
-                        window_settings = window_overrides[property_id]
-                else:
-                    self.logger.debug(f"Using default settings for window {property_id}")
-
-                # Create text data
-                text_data = {
-                    'x': window_settings['x'],
-                    'y': window_settings['y'],
-                    'text': property_value,
-                    'justification': window_settings['justification'],
-                    'size_multiplier': window_settings['size_multiplier'],
-                    'is_mirrored': self._is_mirrored
-                }
-
-                # Render the text
-                self.logger.debug(f"Rendering window text for property {property_id}: {text_data}")
-                self.text_renderer.render(text_data, target_group=self._current_group)
-
         except Exception as e:
-            self.logger.error(f"Failed to render window texts: {str(e)}")
+            self.logger.error(f"Failed to render window property {property_id}: {str(e)}")
             raise
             
-    def add_to_drawing(self) -> None:
-        """Add the current group to the drawing.
+    def render_custom_window_property(self, property_id: str, property_value: str) -> None:
+        """Render a custom window property not handled by component name or value.
         
-        This should be called after all rendering operations are complete.
+        Args:
+            property_id: The ID of the property
+            property_value: The value to render
+            
+        Raises:
+            ValueError: If begin_symbol() has not been called or symbol definition is not set
         """
         if not self._current_group:
-            raise ValueError("No group created. Call create_group() first.")
+            raise ValueError("No symbol started. Call begin_symbol() first.")
+            
+        if not self._symbol_def:
+            raise ValueError("Symbol definition not set. Call set_symbol_definition() first.")
+            
+        # Skip standard properties that have their own methods
+        if property_id in ["0", "3"]:
+            return
+            
+        # Render the window property
+        self.logger.debug(f"Rendering custom window property {property_id} with value: {property_value}")
+        self._render_window_property(property_id, property_value)
+            
+    def finish_symbol(self) -> None:
+        """Finish rendering the current symbol and add it to the drawing.
+        
+        This should be called after all rendering operations are complete.
+        
+        Raises:
+            ValueError: If begin_symbol() has not been called
+        """
+        if not self._current_group:
+            raise ValueError("No symbol started. Call begin_symbol() first.")
             
         try:
             self.dwg.add(self._current_group)
             self._current_group = None  # Reset current group
             self._is_mirrored = False  # Reset mirrored state
+            self._symbol_def = None  # Reset symbol definition
+            self._window_overrides = {}  # Reset window overrides
             
         except Exception as e:
-            self.logger.error(f"Failed to add group to drawing: {str(e)}")
+            self.logger.error(f"Failed to add symbol to drawing: {str(e)}")
             raise
 
+    # Legacy render method for backward compatibility
     def render(self, symbol: Dict, stroke_width: float = None) -> None:
-        """Render a complete symbol.
+        """DEPRECATED: Use specific rendering methods instead.
+        
+        This method is maintained for backward compatibility only and may be removed in future versions.
+        The preferred approach is to use the individual rendering methods:
+        
+        ```python
+        symbol_renderer.begin_symbol()
+        symbol_renderer.set_transformation(rotation, position)
+        symbol_renderer.set_symbol_definition(symbol_def)
+        symbol_renderer.render_shapes(shapes)
+        symbol_renderer.render_texts(texts)
+        symbol_renderer.render_component_name(name)
+        symbol_renderer.render_component_value(value)
+        symbol_renderer.finish_symbol()
+        ```
         
         Args:
             symbol: Dictionary containing symbol data
             stroke_width: Width of lines. If None, uses the instance's stroke width.
         """
+        warnings.warn(
+            "SymbolRenderer.render() is deprecated and will be removed in a future version. "
+            "Use individual rendering methods instead.", 
+            DeprecationWarning, 
+            stacklevel=2
+        )
+        
         try:
-            # Create a new group for the symbol
-            self.create_group()
+            # Begin symbol
+            self.begin_symbol()
             
             # Set transformation if provided
             if 'rotation' in symbol and 'translation' in symbol:
                 self.set_transformation(symbol['rotation'], symbol['translation'])
             
+            # Set symbol definition if present
+            if 'symbol_def' in symbol:
+                self.set_symbol_definition(symbol['symbol_def'])
+                
+            # Set window overrides if present
+            if 'window_overrides' in symbol:
+                self.set_window_overrides(symbol['window_overrides'])
+            
             # Render shapes if present
             if 'shapes' in symbol:
                 self.render_shapes(symbol['shapes'], stroke_width)
             
-            # Render texts if present
-            if 'texts' in symbol:
+            # Render texts if present and not disabled
+            if 'texts' in symbol and not symbol.get('no_nested_symbol_text', False):
                 self.render_texts(symbol['texts'])
             
-            # Debug log the contents of the symbol dict
-            self.logger.debug(f"Symbol data keys: {list(symbol.keys())}")
-            if 'symbol_def' in symbol:
-                self.logger.debug(f"Symbol definition keys: {list(symbol['symbol_def'].keys())}")
-                if 'file_path' in symbol['symbol_def']:
-                    self.logger.info(f"Rendering symbol from file: {symbol['symbol_def']['file_path']}")
-                    self.logger.info(f"Symbol file exists: {os.path.exists(symbol['symbol_def']['file_path'])}")
-                    if os.path.exists(symbol['symbol_def']['file_path']):
-                        self.logger.info(f"Symbol file size: {os.path.getsize(symbol['symbol_def']['file_path'])} bytes")
-                if 'name' in symbol['symbol_def']:
-                    self.logger.info(f"Symbol name: {symbol['symbol_def']['name']}")
-                if 'windows' in symbol['symbol_def']:
-                    self.logger.info(f"Symbol has {len(symbol['symbol_def']['windows'])} windows defined")
-            if 'window_overrides' in symbol:
-                self.logger.debug(f"Window overrides present: {symbol['window_overrides']}")
-            
-            # Render window texts if present
-            if 'symbol_def' in symbol:
-                self.render_window_texts(symbol, symbol['symbol_def'], symbol.get('property_id'))
-            
-            # Add the group to the drawing
-            self.add_to_drawing()
+            # Render component name if present and not disabled
+            if 'property_0' in symbol and not symbol.get('no_component_name', False):
+                self.render_component_name(symbol['property_0'])
+                
+            # Render component value if present and not disabled
+            if 'property_3' in symbol and not symbol.get('no_component_value', False):
+                self.render_component_value(symbol['property_3'])
+                
+            # Finish symbol
+            self.finish_symbol()
             
         except Exception as e:
             self.logger.error(f"Failed to render symbol: {str(e)}")

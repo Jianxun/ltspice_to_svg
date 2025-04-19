@@ -55,8 +55,6 @@ def test_symbol_window_texts(test_schematic, output_dir):
     # Create SVG with custom parameters
     svg_output = os.path.join(output_dir, "test6_symbol_window_texts.svg")
     renderer.create_drawing(svg_output)
-    renderer.set_stroke_width(2.0)  # Custom stroke width
-    renderer.set_base_font_size(20.0)  # Custom font size
     renderer.render_wires()
     renderer.render_symbols()
     renderer.render_texts()
@@ -101,8 +99,8 @@ def test_symbol_window_texts(test_schematic, output_dir):
     assert 'transform="rotate(-90, 32, 56)"' in svg_content, "12mV text should have counter-rotation transform"
     assert 'text-anchor="middle"' in svg_content, "12mV text should have 'middle' anchor for VTop justification"
 
-def test_symbol_window_texts_property_0(test_schematic, output_dir):
-    """Test rendering only property 0 window texts."""
+def test_symbol_window_texts_component_name(test_schematic, output_dir):
+    """Test rendering only component names (property 0)."""
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
     
@@ -117,12 +115,18 @@ def test_symbol_window_texts_property_0(test_schematic, output_dir):
     renderer.load_schematic(data['schematic'], data['symbols'])
     
     # Create SVG with custom parameters
-    svg_output = os.path.join(output_dir, "test6_symbol_window_texts_property_0.svg")
+    svg_output = os.path.join(output_dir, "test6_symbol_window_texts_component_name.svg")
     renderer.create_drawing(svg_output)
-    renderer.set_stroke_width(2.0)
-    renderer.set_base_font_size(20.0)
+    
+    # Configure to only show component names
+    renderer.config.set_text_options(
+        no_component_value=True,     # Disable component values
+        no_spice_directive=True,     # Disable SPICE directives
+        no_schematic_comment=True    # Disable schematic comments
+    )
+    
     renderer.render_wires()
-    renderer.render_symbols(property_id="0")
+    renderer.render_symbols()
     renderer.render_texts()
     renderer.render_shapes()
     renderer.save()
@@ -130,19 +134,19 @@ def test_symbol_window_texts_property_0(test_schematic, output_dir):
     # Verify the output file exists
     assert os.path.exists(svg_output)
     
-    # Read the SVG output to verify only property 0 texts are rendered
+    # Read the SVG output to verify only component names are rendered
     with open(svg_output, 'r') as f:
         svg_content = f.read()
     
-    # Verify property 0 texts are present
-    assert 'V1' in svg_content, "Property 0 text 'V1' should be present"
-    assert 'V2' in svg_content, "Property 0 text 'V2' should be present"
+    # Verify component names are present
+    assert 'V1' in svg_content, "Component name 'V1' should be present"
+    assert 'V2' in svg_content, "Component name 'V2' should be present"
     
-    # Verify property 3 texts are not present
-    assert '12mV' not in svg_content, "Property 3 text '12mV' should not be present"
+    # Verify component value is not present
+    assert '12mV' not in svg_content, "Component value '12mV' should not be present"
 
-def test_symbol_window_texts_property_3(test_schematic, output_dir):
-    """Test rendering only property 3 window texts."""
+def test_symbol_window_texts_component_value(test_schematic, output_dir):
+    """Test rendering only component values (property 3)."""
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
     
@@ -157,12 +161,18 @@ def test_symbol_window_texts_property_3(test_schematic, output_dir):
     renderer.load_schematic(data['schematic'], data['symbols'])
     
     # Create SVG with custom parameters
-    svg_output = os.path.join(output_dir, "test6_symbol_window_texts_property_3.svg")
+    svg_output = os.path.join(output_dir, "test6_symbol_window_texts_component_value.svg")
     renderer.create_drawing(svg_output)
-    renderer.set_stroke_width(2.0)
-    renderer.set_base_font_size(20.0)
+    
+    # Configure to only show component values
+    renderer.config.set_text_options(
+        no_component_name=True,      # Disable component names
+        no_spice_directive=True,     # Disable SPICE directives
+        no_schematic_comment=True    # Disable schematic comments
+    )
+    
     renderer.render_wires()
-    renderer.render_symbols(property_id="3")
+    renderer.render_symbols()
     renderer.render_texts()
     renderer.render_shapes()
     renderer.save()
@@ -170,13 +180,13 @@ def test_symbol_window_texts_property_3(test_schematic, output_dir):
     # Verify the output file exists
     assert os.path.exists(svg_output)
     
-    # Read the SVG output to verify only property 3 texts are rendered
+    # Read the SVG output to verify only component values are rendered
     with open(svg_output, 'r') as f:
         svg_content = f.read()
     
-    # Verify property 3 texts are present
-    assert '12mV' in svg_content, "Property 3 text '12mV' should be present"
+    # Verify component value is present
+    assert '12mV' in svg_content, "Component value '12mV' should be present"
     
-    # Verify property 0 texts are not present
-    assert 'V1' not in svg_content, "Property 0 text 'V1' should not be present"
-    assert 'V2' not in svg_content, "Property 0 text 'V2' should not be present" 
+    # Verify component names are not present
+    assert 'V1' not in svg_content, "Component name 'V1' should not be present"
+    assert 'V2' not in svg_content, "Component name 'V2' should not be present" 

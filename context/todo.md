@@ -9,6 +9,12 @@
   - [X] Understand the text rendering hierarchy (SVGRenderer -> TextRenderer)
   - [X] Document findings in memory.md
 
+[X] Examine window text rendering in integration tests
+  - [X] Understand how symbol window texts are rendered 
+  - [X] Analyze the test case for window text rendering
+  - [X] Examine how property values are displayed in symbols
+  - [X] Document findings in memory.md
+
 ## Completed Tasks
 
 [X] Debug and fix the failing test related to text rendering
@@ -19,6 +25,13 @@
   - [X] Verify the fix with the test
   - [X] Update documentation to reflect the fix
 
+[X] Fix window text rendering in tests
+  - [X] Identify the issue with window text property rendering
+  - [X] Update tests to use the new configuration API
+  - [X] Rename tests to better reflect their purpose
+  - [X] Fix test assertions to work with updated renderer
+  - [X] Verify all tests pass
+
 [X] Set up the project structure
   - [X] Create the virtual environment
   - [X] Set up the directory structure
@@ -28,7 +41,7 @@
 
 ## Current Tasks
 
-### [ ] Replace direct property access with config.get_option() calls
+### [X] Replace direct property access with config.get_option() calls
 - [X] Update test_text_rendering_switches.py to use config interface
   - [X] Replace direct property assignment with config.set_option() calls
   - [X] Run tests to verify functionality
@@ -39,10 +52,13 @@
 - [X] Remove property getters/setters from SVGRenderer
   - [X] Ensure all internal references use self.config.get_option()
   - [X] Run tests to verify functionality
-- [ ] Document API changes
+- [X] Update symbol window text tests 
+  - [X] Fix window text tests to use new config API
+  - [X] Rename tests to be more descriptive
+- [X] Document API changes
 
 ### [ ] Implement Rendering Configuration
-- [ ] Create RenderingConfig class
+- [X] Create RenderingConfig class
   - [X] Implement initialization with defaults
   - [X] Add methods for getting/setting options
   - [X] Add validation for option types

@@ -79,6 +79,31 @@ This project is a Python-based tool for converting LTspice schematics to SVG for
   - `no_component_name`: Skip rendering component names
   - `no_component_value`: Skip rendering component values
 
+### Symbol Window Texts
+- Window texts are special text elements in symbols used for displaying property values like component names and values
+- Key components in window text rendering:
+  - `SymbolRenderer` manages window definitions and overrides
+  - `_render_window_property` method handles window property rendering
+  - Properties are identified by ID, with '0' for component name and '3' for component value
+  - Window overrides can modify position, justification, and size of text
+- The renderer supports two key property IDs by default:
+  - Property 0: Component name (e.g., "V1", "R1")
+  - Property 3: Component value (e.g., "12mV", "1k")
+- Key issues discovered in testing:
+  - String vs. integer key handling in window overrides dictionary
+  - The renderer now checks for both string and integer format keys when looking up window overrides
+  - Integration test `test_symbol_window_texts` verifies correct handling of window overrides
+
+### Test Cases for Window Texts
+The integration test suite includes specific tests for window text rendering:
+- `test_symbol_window_texts`: Validates full rendering with window overrides
+- `test_symbol_window_texts_property_0`: Tests rendering only component names
+- `test_symbol_window_texts_property_3`: Tests rendering only component values
+These tests verify that:
+- Window overrides are correctly applied
+- Selective property rendering works as expected
+- Text positioning and justification are correctly handled
+
 ### Text Rendering Options
 - Currently, options are set individually via direct property access
 - The command-line interface (`ltspice_to_svg.py`) sets these options directly
@@ -118,14 +143,22 @@ This project is a Python-based tool for converting LTspice schematics to SVG for
 - Updated Flag Rendering
 - Improved Text Rendering
 - Fixed text rendering options in SVGRenderer
-- Refactored configuration interface to use direct config access
+- Fixed failing test in `test_text_rendering_switches.py` by properly connecting direct property access to the configuration system
+- Improved configuration interface by removing property getters/setters and using `config.set_option()` directly
+- Updated tests to use the configuration interface directly
+- Fixed and renamed window text tests to better reflect their functionality
 
 ### Recent Fixes
 - Added property getters and setters to SVGRenderer to handle direct property access for text rendering options
 - Fixed failing test in `test_text_rendering_switches.py` by properly connecting direct property access to the configuration system
-- Ensured consistent handling of text rendering options across the renderer
 - Improved configuration interface by removing property getters/setters and using `config.set_option()` directly
 - Updated tests to use the configuration interface directly
+- Fixed window text rendering tests by:
+  - Renaming tests from property-based naming to function-based naming
+  - Replacing direct property access with configuration API calls
+  - Updating test assertions to match the expected output
+  - Removing the dependency on property_id for rendering specific text types
+  - Using `set_text_options` to control which text elements are rendered
 
 ### Current Task
 - Implementing text rendering options:
