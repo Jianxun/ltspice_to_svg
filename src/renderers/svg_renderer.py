@@ -8,35 +8,61 @@ from src.renderers.text_renderer import TextRenderer
 from src.renderers.shape_renderer import ShapeRenderer
 from src.renderers.flag_renderer import FlagRenderer
 from src.renderers.viewbox_calculator import ViewboxCalculator
+from src.renderers.rendering_config import RenderingConfig
 
 class SVGRenderer(BaseRenderer):
-    def __init__(self):
+    def __init__(self, config: Optional[RenderingConfig] = None):
         self.dwg = None
         self.schematic_data = None
         self.view_box = None
         self._renderers = {}
         self.symbol_data = None  # Add symbol data storage
         self.logger = logging.getLogger(self.__class__.__name__)
-        # Initialize BaseRenderer with None for dwg, it will be set later in initialize_drawing
-        super().__init__(None)
+        
+        # Initialize BaseRenderer with None for dwg and the config
+        # The drawing will be set later in create_drawing
+        super().__init__(None, config)
         
         # Initialize viewbox calculator
         self._viewbox_calculator = ViewboxCalculator()
         
-        # Initialize text rendering options
-        self.no_schematic_comment = False
-        self.no_spice_directive = False
-        self.no_nested_symbol_text = False
-        self.no_component_name = False
-        self.no_component_value = False
+    def set_text_rendering_options(self, **kwargs) -> None:
+        """Set multiple text rendering options at once.
         
+        Args:
+            **kwargs: Keyword arguments with text option names and boolean values.
+                Supported options: no_schematic_comment, no_spice_directive,
+                no_nested_symbol_text, no_component_name, no_component_value
+                
+        Raises:
+            ValueError: If any of the provided options are not text options or values are not boolean.
+        """
+        self.config.set_text_options(**kwargs)
+        self.logger.debug(f"Updated text rendering options: {', '.join(f'{k}={v}' for k, v in kwargs.items())}")
+        
+    def set_text_rendering_option(self, option: str, value: bool) -> None:
+        """Set a text rendering option and log the change.
+        
+        Args:
+            option: The option name (e.g., 'no_schematic_comment')
+            value: The new value
+            
+        Raises:
+            ValueError: If the option name is invalid
+        """
+        # Forward to the config object
+        self.config.set_option(option, value)
+        self.logger.debug(f"Text rendering option '{option}' set to {value}")
+    
     def set_stroke_width(self, stroke_width: float) -> None:
         """Set the stroke width for all renderers.
         
         Args:
             stroke_width: The new stroke width
         """
-        self.stroke_width = stroke_width
+        # Update in the config
+        self.config.set_option("stroke_width", stroke_width)
+        
         # Update stroke width for all renderers that have the property
         for renderer in self._renderers.values():
             if hasattr(renderer, 'stroke_width'):
@@ -51,18 +77,21 @@ class SVGRenderer(BaseRenderer):
         Raises:
             ValueError: If base_font_size is not positive.
         """
+        # Update in the config
+        self.config.set_option("base_font_size", base_font_size)
+        
         # Update base font size for all renderers
         for renderer in self._renderers.values():
             renderer.base_font_size = base_font_size
-        
+    
     def _initialize_renderers(self):
         """Initialize all renderers."""
         self._renderers = {
-            'wire': WireRenderer(self.dwg),
-            'symbol': SymbolRenderer(self.dwg),
-            'text': TextRenderer(self.dwg),
-            'shape': ShapeRenderer(self.dwg),
-            'flag': FlagRenderer(self.dwg)
+            'wire': WireRenderer(self.dwg, self.config),
+            'symbol': SymbolRenderer(self.dwg, self.config),
+            'text': TextRenderer(self.dwg, self.config),
+            'shape': ShapeRenderer(self.dwg, self.config),
+            'flag': FlagRenderer(self.dwg, self.config)
         }
         
     def load_schematic(self, schematic_data: Dict, symbol_data: Optional[Dict] = None) -> None:
@@ -158,12 +187,12 @@ class SVGRenderer(BaseRenderer):
             
         wire_renderer = self._renderers['wire']
         for wire in self.schematic_data.get('wires', []):
-            wire_renderer.render(wire, self._stroke_width)
+            wire_renderer.render(wire, self.stroke_width)
             
         # Add T-junction dots
         t_junctions = self._find_t_junctions(self.schematic_data['wires'])
         for x, y in t_junctions:
-            wire_renderer.render_t_junction(x, y, self._stroke_width * dot_size_multiplier)
+            wire_renderer.render_t_junction(x, y, self.stroke_width * dot_size_multiplier)
             
     def render_symbols(self, property_id: Optional[str] = None) -> None:
         """Render all symbols in the schematic.
@@ -201,12 +230,22 @@ class SVGRenderer(BaseRenderer):
                 continue
                 
             symbol_def = self.symbol_data[symbol_name]
-            self.logger.debug(f"  Definition found with {len(symbol_def.get('texts', []))} text elements")
-            self.logger.debug(f"  Windows in symbol definition: {symbol_def.get('windows', {})}")
             
-            # Create symbol data for rendering
+            # Skip rendering if text should be excluded and this is a text-only symbol
+            if self.config.get_option('no_nested_symbol_text') and not any([
+                symbol_def.get('lines', []),
+                symbol_def.get('circles', []),
+                symbol_def.get('rectangles', []),
+                symbol_def.get('arcs', [])
+            ]):
+                self.logger.debug(f"Skipping text-only symbol: {symbol_name}")
+                continue
+            
+            # Prepare rendering data for the symbol renderer
             render_data = {
+                'symbol_name': symbol_name,
                 'rotation': rotation,
+                'rotation_degrees': symbol.get('rotation_degrees', 0),
                 'translation': (symbol.get('x', 0), symbol.get('y', 0)),
                 'shapes': {
                     'lines': symbol_def.get('lines', []),
@@ -219,7 +258,9 @@ class SVGRenderer(BaseRenderer):
                 'window_overrides': symbol.get('window_overrides', {}),  # Add window overrides
                 'property_0': symbol.get('instance_name', ''),  # Add instance name as property_0
                 'property_3': symbol.get('value', ''),  # Add value as property_3
-                'property_id': property_id  # Add property_id for window text rendering
+                'property_id': property_id,  # Add property_id for window text rendering
+                'no_component_name': self.config.get_option('no_component_name'),
+                'no_component_value': self.config.get_option('no_component_value')
             }
             
             # Debug log: Check if window_overrides is correctly added to render_data
@@ -227,7 +268,7 @@ class SVGRenderer(BaseRenderer):
                 self.logger.debug(f"  Added window_overrides to render_data: {render_data['window_overrides']}")
             
             # Render the symbol
-            symbol_renderer.render(render_data, self._stroke_width)
+            symbol_renderer.render(render_data, self.stroke_width)
             
     def render_texts(self) -> None:
         """Render all text elements in the schematic.
@@ -264,22 +305,15 @@ class SVGRenderer(BaseRenderer):
                 continue
                 
             # Skip rendering based on text type and options
-            if text_type == 'comment' and self.no_schematic_comment:
+            if text_type == 'comment' and self.config.get_option('no_schematic_comment'):
                 self.logger.debug(f"Skipping schematic comment: {text.get('text', '')}")
                 skipped_counts['comment'] += 1
                 continue
-            elif text_type == 'spice' and self.no_spice_directive:
+            elif text_type == 'spice' and self.config.get_option('no_spice_directive'):
                 self.logger.debug(f"Skipping SPICE directive: {text.get('text', '')}")
                 skipped_counts['spice'] += 1
                 continue
                 
-            # self.logger.debug(f"Rendering text {i+1}/{len(texts)}:")
-            # self.logger.debug(f"  Content: {text.get('text', '')}")
-            # self.logger.debug(f"  Position: ({text.get('x', 0)}, {text.get('y', 0)})")
-            # self.logger.debug(f"  Justification: {text.get('justification', 'Left')}")
-            # self.logger.debug(f"  Size multiplier: {text.get('size_multiplier', 2)}")
-            # self.logger.debug(f"  Type: {text_type}")
-            
             # Render the text
             text_renderer.render(text)
             rendered_counts[text_type] += 1
@@ -312,7 +346,7 @@ class SVGRenderer(BaseRenderer):
             for shape in shapes.get(collection_name, []):
                 shape_data = shape.copy()
                 shape_data['type'] = shape_type
-                shape_renderer.render(shape_data, self._stroke_width)
+                shape_renderer.render(shape_data, self.stroke_width)
             
     def render_flags(self) -> None:
         """Render all flags and IO pins in the schematic."""
@@ -416,21 +450,4 @@ class SVGRenderer(BaseRenderer):
         # Find coordinates that appear 3 or more times
         junctions = [(coord['x'], coord['y']) for coord in endpoint_coords if coord['occurrence'] >= 3]
         
-        return junctions
-        
-
-    def set_text_rendering_option(self, option: str, value: bool) -> None:
-        """Set a text rendering option and log the change.
-        
-        Args:
-            option: The option name (e.g., 'no_schematic_comment')
-            value: The new value
-            
-        Raises:
-            ValueError: If the option name is invalid
-        """
-        if hasattr(self, option):
-            setattr(self, option, value)
-            self.logger.debug(f"Text rendering option '{option}' set to {value}")
-        else:
-            raise ValueError(f"Unknown text rendering option: {option}") 
+        return junctions 

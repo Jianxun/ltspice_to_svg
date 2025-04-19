@@ -129,3 +129,42 @@ This project is a Python-based tool for converting LTspice schematics to SVG for
 - Improve documentation
 - Performance optimization
 - Add new features like netlist export and interactive SVG
+
+# Project State
+
+We're building a Python library that converts LTspice schematics and symbols to SVG format for documentation and web display.
+
+## Current Features
+
+- Parse LTspice schematic (.asc) files and extract components, wires, symbols, and texts
+- Parse LTspice symbol (.asy) files
+- Render schematics as SVG with proper sizing and styling
+- Support for symbols with nested components and text
+- Handle text rendering with proper font sizing and alignment
+- Support schematic elements like: wires, components, ground flags, IO pins, net labels
+- Fix encoding of LTspice files (UTF-16LE without BOM)
+
+## Text Rendering Capabilities
+
+The SVG renderer provides flexible text rendering with the following features:
+
+- Separate rendering control for SPICE directives and schematic comments
+- Text sizing through configurable base font size and size multipliers (8 levels)
+- Support for different text justification modes (Left, Right, Center, Top, Bottom)
+- Vertical text support with rotation
+- Special handling for mirrored text in symbols with automatic counter-mirroring
+- Multiline text support with proper line spacing
+- Text in window definitions for symbols
+
+The text rendering architecture consists of:
+1. `SVGRenderer` - High-level control of which texts to render
+2. `TextRenderer` - Detailed positioning and styling of text elements
+3. `SymbolRenderer` - Specialized handling for text in symbols
+
+## Architecture
+
+- `src/parsers/` - Contains parsers for LTspice files
+- `src/renderers/` - Contains SVG rendering classes
+- `tests/` - Test cases organized by functionality
+
+The renderer architecture follows a modular design with specialized renderers for different schematic elements, and a configuration system for controlling rendering options.

@@ -9,6 +9,7 @@ from typing import Dict, Optional
 from enum import Enum
 from .base_renderer import BaseRenderer
 from .text_renderer import TextRenderer
+from .rendering_config import RenderingConfig
 import logging
 
 class FlagType(Enum):
@@ -25,10 +26,10 @@ class FlagOrientation(Enum):
 class FlagRenderer(BaseRenderer):
     """Renderer for flags in the schematic."""
     
-    def __init__(self, dwg: svgwrite.Drawing):
-        super().__init__(dwg)
+    def __init__(self, dwg: svgwrite.Drawing, config: Optional[RenderingConfig] = None):
+        super().__init__(dwg, config)
         self._flag_definitions: Dict = {}
-        self._text_renderer = TextRenderer(dwg)
+        self._text_renderer = TextRenderer(dwg, config)
         self._text_renderer.base_font_size = self.base_font_size  # Initialize with parent's base font size
         self._load_flag_definitions()
         

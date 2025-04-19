@@ -6,17 +6,19 @@ import svgwrite
 from typing import Dict, Optional
 import logging
 from .base_renderer import BaseRenderer
+from .rendering_config import RenderingConfig
 
 class TextRenderer(BaseRenderer):
     """Renderer for text elements."""
     
-    def __init__(self, dwg: svgwrite.Drawing):
+    def __init__(self, dwg: svgwrite.Drawing, config: Optional[RenderingConfig] = None):
         """Initialize the text renderer.
         
         Args:
             dwg: The SVG drawing to render into
+            config: Optional configuration object. If None, a default one will be created.
         """
-        super().__init__(dwg)
+        super().__init__(dwg, config)
         self.logger = logging.getLogger(self.__class__.__name__)
     
     # Font size multiplier mapping

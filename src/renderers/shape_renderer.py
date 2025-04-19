@@ -6,6 +6,7 @@ import svgwrite
 from typing import Dict, List, Tuple, Optional, Union
 import math
 from .base_renderer import BaseRenderer
+from .rendering_config import RenderingConfig
 
 class ShapeRenderer(BaseRenderer):
     """Renderer for various shape types in the schematic."""
@@ -17,8 +18,8 @@ class ShapeRenderer(BaseRenderer):
     LINE_STYLE_DASH_DOT = "4,2,0.001,2"  # Dash, gap, dot, gap
     LINE_STYLE_DASH_DOT_DOT = "4,2,0.001,2,0.001,2"  # Dash, gap, dot, gap, dot, gap
     
-    def __init__(self, dwg: svgwrite.Drawing):
-        super().__init__(dwg)
+    def __init__(self, dwg: svgwrite.Drawing, config: Optional[RenderingConfig] = None):
+        super().__init__(dwg, config)
         
     def _scale_dash_array(self, pattern: str, stroke_width: float) -> str:
         """Scale a dash array pattern by the stroke width.

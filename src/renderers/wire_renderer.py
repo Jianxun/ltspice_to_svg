@@ -5,12 +5,13 @@ Handles rendering of wires with proper scaling and styling.
 import svgwrite
 from typing import Dict, List, Tuple, Optional, Union
 from .base_renderer import BaseRenderer
+from .rendering_config import RenderingConfig
 
 class WireRenderer(BaseRenderer):
     """Renderer for wire connections in the schematic."""
     
-    def __init__(self, dwg: svgwrite.Drawing):
-        super().__init__(dwg)
+    def __init__(self, dwg: svgwrite.Drawing, config: Optional[RenderingConfig] = None):
+        super().__init__(dwg, config)
         
     def render(self, wire: Dict, stroke_width: float = None, target_group: Optional[svgwrite.container.Group] = None) -> None:
         """Render a single wire based on its properties.
@@ -63,4 +64,26 @@ class WireRenderer(BaseRenderer):
         )
         
         # Add the circle to the drawing
-        self.dwg.add(circle) 
+        self.dwg.add(circle)
+        
+    def _scale_dash_array(self, style: str, stroke_width: float) -> str:
+        """Scale dash array based on stroke width.
+        
+        Args:
+            style: Dash style string (e.g., '1 1')
+            stroke_width: Width of the stroke
+            
+        Returns:
+            Scaled dash array string
+        """
+        # If no style specified, return empty string
+        if not style:
+            return ''
+            
+        # Scale each number in the dash array by the stroke width
+        try:
+            values = [float(x) * stroke_width for x in style.split()]
+            return ' '.join(str(v) for v in values)
+        except ValueError:
+            self.logger.warning(f"Invalid dash array format: '{style}'")
+            return '' 

@@ -8,6 +8,7 @@ import logging
 from .base_renderer import BaseRenderer
 from .shape_renderer import ShapeRenderer
 from .text_renderer import TextRenderer
+from .rendering_config import RenderingConfig
 import os
 
 class SymbolRenderer(BaseRenderer):
@@ -17,16 +18,17 @@ class SymbolRenderer(BaseRenderer):
     of individual elements (shapes and text) to specialized renderers.
     """
     
-    def __init__(self, dwg: svgwrite.Drawing):
+    def __init__(self, dwg: svgwrite.Drawing, config: Optional[RenderingConfig] = None):
         """Initialize the symbol renderer.
         
         Args:
             dwg: The SVG drawing to render into
+            config: Optional configuration object. If None, a default one will be created.
         """
-        super().__init__(dwg)
+        super().__init__(dwg, config)
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.shape_renderer = ShapeRenderer(dwg)
-        self.text_renderer = TextRenderer(dwg)
+        self.shape_renderer = ShapeRenderer(dwg, config)
+        self.text_renderer = TextRenderer(dwg, config)
         self._current_group = None
         self._is_mirrored = False
         

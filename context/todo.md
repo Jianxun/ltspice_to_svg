@@ -1,4 +1,32 @@
-# Todo List
+# To-Do List
+
+## Current Tasks
+
+[X] Examine the SVG renderer class to understand how it manages text rendering options
+  - [X] Review `SVGRenderer.render_texts()` method to see text rendering controls
+  - [X] Analyze `TextRenderer` class to understand text styling and positioning
+  - [X] Examine how text rendering options are applied
+  - [X] Understand the text rendering hierarchy (SVGRenderer -> TextRenderer)
+  - [X] Document findings in memory.md
+
+## Upcoming Tasks
+
+[ ] Debug and fix the failing test related to text rendering
+  - [ ] Run the failing test to reproduce the issue
+  - [ ] Identify the specific text rendering option causing the test failure
+  - [ ] Investigate any discrepancy between configuration settings and rendering behavior
+  - [ ] Fix the issue in the renderer code
+  - [ ] Verify the fix with the test
+  - [ ] Update documentation to reflect the fix
+
+## Completed Tasks
+
+[ ] Set up the project structure
+  - [X] Create the virtual environment
+  - [X] Set up the directory structure
+  - [X] Initialize git repository
+  - [X] Create initial README.md
+  - [X] Create .gitignore file
 
 ## Current Tasks
 
