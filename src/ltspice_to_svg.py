@@ -2,42 +2,86 @@
 Main script to convert LTspice schematics to SVG format.
 """
 import os
+import platform
+import warnings
 from pathlib import Path
 from .parsers.schematic_parser import SchematicParser
 from .renderers.svg_renderer import SVGRenderer
 
-def convert_schematic(asc_file: str, 
-                     stroke_width: float = 3.0, dot_size_multiplier: float = 1.5,
-                     scale: float = 1.0, font_size: float = 16.0, export_json: bool = False,
-                     no_text: bool = False):
+def get_ltspice_lib_path() -> str:
     """
-    Convert an LTspice schematic to SVG format.
+    Find the LTspice library path based on the operating system.
     
-    Args:
-        asc_file: Path to the .asc schematic file
-        stroke_width: Width of lines in the SVG (default: 3.0)
-        dot_size_multiplier: Size of junction dots relative to stroke width (default: 1.5)
-        scale: Scale factor for coordinates (default: 1.0)
-        font_size: Font size in pixels (default: 16.0)
-        export_json: Whether to export intermediate JSON files for debugging (default: False)
-        no_text: Whether to skip rendering text elements (default: False)
+    Returns:
+        str: Path to the LTspice symbol library
     """
+    system = platform.system()
+    username = os.getenv('USERNAME') or os.getenv('USER')
+    
+    if system == 'Darwin':  # macOS
+        return f"/Users/{username}/Library/Application Support/LTspice/lib/sym"
+    elif system == 'Windows':
+        return f"C:\\Users\\{username}\\AppData\\Local\\LTspice\\lib\\sym"
+    else:
+        raise OSError(f"Unsupported operating system: {system}")
+
+def main():
+    """
+    Main function to handle command-line arguments and convert LTspice schematics to SVG.
+    """
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="Convert LTspice schematic to SVG")
+    parser.add_argument("asc_file", help="Path to the .asc schematic file")
+    parser.add_argument("--stroke-width", type=float, default=3.0,
+                      help="Width of lines in the SVG (default: 3.0)")
+    parser.add_argument("--dot-size", type=float, default=1.5,
+                      help="Size of junction dots relative to stroke width (default: 1.5)")
+    parser.add_argument("--scale", type=float, default=1.0,
+                      help="Scale factor for coordinates (default: 1.0) - DEPRECATED")
+    parser.add_argument("--base-font-size", type=float, default=16.0,
+                      help="Base font size in pixels (default: 16.0)")
+    parser.add_argument("--export-json", action="store_true",
+                      help="Export intermediate JSON files for debugging")
+    parser.add_argument("--ltspice-lib", type=str,
+                      help="Path to LTspice symbol library (overrides system default)")
+    parser.add_argument("--no-text", action="store_true",
+                      help="Skip rendering all text elements")
+    parser.add_argument("--no-schematic-comment", action="store_true",
+                      help="Skip rendering schematic comments")
+    parser.add_argument("--no-spice-directive", action="store_true",
+                      help="Skip rendering SPICE directives")
+    parser.add_argument("--no-nested-symbol-text", action="store_true",
+                      help="Skip rendering nested symbol text")
+    parser.add_argument("--no-component-name", action="store_true",
+                      help="Skip rendering component names")
+    parser.add_argument("--no-component-value", action="store_true",
+                      help="Skip rendering component values")
+    
+    args = parser.parse_args()
+    
     # Get the directory and base name of the schematic file
-    asc_path = Path(asc_file)
+    asc_path = Path(args.asc_file)
     schematic_dir = asc_path.parent
     base_name = asc_path.stem
     
     # Create output directory if exporting JSON
-    if export_json:
+    if args.export_json:
         output_dir = schematic_dir / 'output'
         output_dir.mkdir(exist_ok=True)
+    
+    # Set LTspice library path
+    if args.ltspice_lib:
+        os.environ['LTSPICE_LIB_PATH'] = args.ltspice_lib
+    elif 'LTSPICE_LIB_PATH' not in os.environ:
+        os.environ['LTSPICE_LIB_PATH'] = get_ltspice_lib_path()
     
     # Parse the schematic and symbols
     parser = SchematicParser(str(asc_path))
     data = parser.parse()
     
     # Export schematic data to JSON if requested
-    if export_json:
+    if args.export_json:
         json_output = output_dir / f"{base_name}_schematic.json"
         parser.export_json(str(json_output))
         print(f"Exported schematic data to {json_output}")
@@ -53,13 +97,22 @@ def convert_schematic(asc_file: str,
     
     # Create drawing and set parameters
     renderer.create_drawing(str(svg_file))
-    renderer.set_stroke_width(stroke_width)
-    renderer.set_base_font_size(font_size)
+    renderer.set_stroke_width(args.stroke_width)
+    renderer.set_base_font_size(args.base_font_size)
+    
+    # Set text rendering options
+    renderer.set_text_rendering_options(
+        no_schematic_comment=args.no_schematic_comment,
+        no_spice_directive=args.no_spice_directive,
+        no_nested_symbol_text=args.no_nested_symbol_text,
+        no_component_name=args.no_component_name,
+        no_component_value=args.no_component_value
+    )
     
     # Render components
-    renderer.render_wires(dot_size_multiplier)
+    renderer.render_wires(args.dot_size)
     renderer.render_symbols()
-    if not no_text:
+    if not args.no_text:
         renderer.render_texts()
     renderer.render_shapes()
     renderer.render_flags()
@@ -67,35 +120,13 @@ def convert_schematic(asc_file: str,
     # Save the SVG
     renderer.save()
     
-    if no_text:
-        print("Text rendering disabled")
+    # Print warnings for deprecated parameters
+    if args.scale != 1.0:
+        warnings.warn(
+            "The 'scale' parameter is deprecated and will be removed in a future version. "
+            "Use SVG viewBox or CSS transforms for scaling instead.",
+            DeprecationWarning
+        )
 
 if __name__ == "__main__":
-    import argparse
-    
-    parser = argparse.ArgumentParser(description="Convert LTspice schematic to SVG")
-    parser.add_argument("asc_file", help="Path to the .asc schematic file")
-    parser.add_argument("--stroke-width", type=float, default=3.0,
-                      help="Width of lines in the SVG (default: 3.0)")
-    parser.add_argument("--dot-size", type=float, default=1.5,
-                      help="Size of junction dots relative to stroke width (default: 1.5)")
-    parser.add_argument("--scale", type=float, default=1,
-                      help="Scale factor for coordinates (default: 1.0)")
-    parser.add_argument("--font-size", type=float, default=16.0,
-                      help="Font size in pixels (default: 16.0)")
-    parser.add_argument("--export-json", action="store_true",
-                      help="Export intermediate JSON files for debugging")
-    parser.add_argument("--ltspice-lib", type=str,
-                      help="Path to LTspice symbol library (overrides LTSPICE_LIB_PATH)")
-    parser.add_argument("--no-text", action="store_true",
-                      help="Skip rendering text elements")
-    
-    args = parser.parse_args()
-    
-    # Set LTspice library path from argument or environment variable
-    if args.ltspice_lib:
-        os.environ['LTSPICE_LIB_PATH'] = args.ltspice_lib
-        
-    convert_schematic(args.asc_file, args.stroke_width, args.dot_size, 
-                     args.scale, args.font_size, args.export_json,
-                     args.no_text) 
+    main() 

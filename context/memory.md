@@ -56,25 +56,28 @@ The project is organized into several key directories:
 - Test results saved in `tests/integration/test_ltspice_to_svg/results/`
 
 ## Recent Changes
-- Updated script execution method to use module syntax (`python -m src.ltspice_to_svg`)
-- Updated README.md with correct script execution instructions
-- Successfully converted miller_ota.asc to SVG format with expected warnings for built-in LTspice symbols
-- Reorganized unit tests into a dedicated `unit_tests` directory
-- Updated test result locations to match the new directory structure
-- Fixed import paths in test files
-- Cleaned up duplicate test files
-- Simplified flag rendering by removing intermediate classes
-- Consolidated flag definitions into a single JSON file
-- Improved code maintainability by using direct JSON structure
-- Fixed text positioning for ground flags and net labels
+- Updated command line interface in `ltspice_to_svg.py`:
+  - Deprecated `scale` parameter
+  - Renamed `font-size` to `base-font-size`
+  - Added fine-grained text rendering controls:
+    - `--no-schematic-comment`
+    - `--no-spice-directive`
+    - `--no-nested-symbol-text`
+    - `--no-component-name`
+    - `--no-component-value`
+  - Moved command line handling into explicit `main()` function
+  - Added helper function `get_ltspice_lib_path()` for OS-specific library path detection
+- Added comprehensive test suite for command line switches:
+  - Created `test_command_line.py` in `tests/integration/test_ltspice_to_svg/`
+  - Added 10 test cases covering all command line options
+  - All tests passing successfully
+  - Tests use proper mocking strategy for isolation
 
 ## Next Steps
-- Continue cleaning up test cases
-- Fix remaining integration test failures
-- Implement missing features (net labels, flags)
-- Improve text rendering calibration
-- Troubleshoot `test_ltspice_to_svg.py` in a new chat
-- Focus on the main conversion test and the no-text test
+- Update `SVGRenderer` class to handle new text rendering options
+- Implement `set_text_rendering_options()` method
+- Add support for individual text type control
+- Update text rendering logic to respect the new options
 
 ## Key Features
 - Text rendering capabilities:
@@ -98,9 +101,6 @@ The project is organized into several key directories:
   - base_font_size: Default font size for text rendering
   - stroke_width: Default stroke width for shapes and wires
 - Flag definitions are now stored in `src/renderers/flag_definitions/flags.json`
-- Text rendering uses `TextRenderer` with proper justification and size multipliers
-- Ground flags and net labels are working correctly
-- IO pin text orientation needs improvement
 
 ## Lessons Learned
 - Manual inspection is valuable for visual elements like text and flags
@@ -275,6 +275,16 @@ The project is focused on converting LTspice schematic files (.asc) to SVG forma
 
 Current focus is on Test2 (Text), which involves creating a test schematic for standalone text elements with various attributes.
 
+### Window Text Property Filtering
+- Added ability to filter window text rendering by property ID
+- Modified `SVGRenderer.render_symbols()` to accept optional `property_id` parameter
+- Modified `SymbolRenderer.render_window_texts()` to accept optional `symbol_property_id` parameter
+- When property ID is provided, only window texts for that property are rendered
+- When no property ID is provided, all window texts are rendered (default behavior)
+- Added test cases to verify property-specific rendering:
+  - `test_symbol_window_texts_property_0`: Tests rendering only property 0 (instance names)
+  - `test_symbol_window_texts_property_3`: Tests rendering only property 3 (values)
+
 ## Technical Details
 
 - Python version: 3.12.9
@@ -402,6 +412,16 @@ The project is focused on converting LTspice schematic files (.asc) to SVG forma
 - Integration tests should verify both structure and visual appearance
 
 Current focus is on Test2 (Text), which involves creating a test schematic for standalone text elements with various attributes.
+
+### Window Text Property Filtering
+- Added ability to filter window text rendering by property ID
+- Modified `SVGRenderer.render_symbols()` to accept optional `property_id` parameter
+- Modified `SymbolRenderer.render_window_texts()` to accept optional `symbol_property_id` parameter
+- When property ID is provided, only window texts for that property are rendered
+- When no property ID is provided, all window texts are rendered (default behavior)
+- Added test cases to verify property-specific rendering:
+  - `test_symbol_window_texts_property_0`: Tests rendering only property 0 (instance names)
+  - `test_symbol_window_texts_property_3`: Tests rendering only property 3 (values)
 
 ## Technical Details
 

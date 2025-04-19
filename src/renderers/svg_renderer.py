@@ -119,8 +119,13 @@ class SVGRenderer(BaseRenderer):
         for x, y in t_junctions:
             wire_renderer.render_t_junction(x, y, self._stroke_width * dot_size_multiplier)
             
-    def render_symbols(self) -> None:
-        """Render all symbols in the schematic."""
+    def render_symbols(self, property_id: Optional[str] = None) -> None:
+        """Render all symbols in the schematic.
+        
+        Args:
+            property_id: Optional property ID to render. If provided, only renders window text for this property.
+                        If None, renders all defined window texts.
+        """
         if not self.schematic_data or not self.dwg:
             raise ValueError("Schematic not loaded or drawing not created")
             
@@ -167,7 +172,8 @@ class SVGRenderer(BaseRenderer):
                 'symbol_def': symbol_def,  # Add symbol definition for window text rendering
                 'window_overrides': symbol.get('window_overrides', {}),  # Add window overrides
                 'property_0': symbol.get('instance_name', ''),  # Add instance name as property_0
-                'property_3': symbol.get('value', '')  # Add value as property_3
+                'property_3': symbol.get('value', ''),  # Add value as property_3
+                'property_id': property_id  # Add property_id for window text rendering
             }
             
             # Debug log: Check if window_overrides is correctly added to render_data

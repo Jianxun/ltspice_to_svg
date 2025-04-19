@@ -99,4 +99,84 @@ def test_symbol_window_texts(test_schematic, output_dir):
     
     # 5. Verify the 12mV text is positioned and formatted correctly
     assert 'transform="rotate(-90, 32, 56)"' in svg_content, "12mV text should have counter-rotation transform"
-    assert 'text-anchor="middle"' in svg_content, "12mV text should have 'middle' anchor for VTop justification" 
+    assert 'text-anchor="middle"' in svg_content, "12mV text should have 'middle' anchor for VTop justification"
+
+def test_symbol_window_texts_property_0(test_schematic, output_dir):
+    """Test rendering only property 0 window texts."""
+    # Create output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Parse the schematic and symbols
+    parser = SchematicParser(test_schematic)
+    data = parser.parse()
+    
+    # Create SVG renderer with custom parameters
+    renderer = SVGRenderer()
+    
+    # Load schematic data with symbol definitions
+    renderer.load_schematic(data['schematic'], data['symbols'])
+    
+    # Create SVG with custom parameters
+    svg_output = os.path.join(output_dir, "test6_symbol_window_texts_property_0.svg")
+    renderer.create_drawing(svg_output)
+    renderer.set_stroke_width(2.0)
+    renderer.set_base_font_size(20.0)
+    renderer.render_wires()
+    renderer.render_symbols(property_id="0")
+    renderer.render_texts()
+    renderer.render_shapes()
+    renderer.save()
+    
+    # Verify the output file exists
+    assert os.path.exists(svg_output)
+    
+    # Read the SVG output to verify only property 0 texts are rendered
+    with open(svg_output, 'r') as f:
+        svg_content = f.read()
+    
+    # Verify property 0 texts are present
+    assert 'V1' in svg_content, "Property 0 text 'V1' should be present"
+    assert 'V2' in svg_content, "Property 0 text 'V2' should be present"
+    
+    # Verify property 3 texts are not present
+    assert '12mV' not in svg_content, "Property 3 text '12mV' should not be present"
+
+def test_symbol_window_texts_property_3(test_schematic, output_dir):
+    """Test rendering only property 3 window texts."""
+    # Create output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Parse the schematic and symbols
+    parser = SchematicParser(test_schematic)
+    data = parser.parse()
+    
+    # Create SVG renderer with custom parameters
+    renderer = SVGRenderer()
+    
+    # Load schematic data with symbol definitions
+    renderer.load_schematic(data['schematic'], data['symbols'])
+    
+    # Create SVG with custom parameters
+    svg_output = os.path.join(output_dir, "test6_symbol_window_texts_property_3.svg")
+    renderer.create_drawing(svg_output)
+    renderer.set_stroke_width(2.0)
+    renderer.set_base_font_size(20.0)
+    renderer.render_wires()
+    renderer.render_symbols(property_id="3")
+    renderer.render_texts()
+    renderer.render_shapes()
+    renderer.save()
+    
+    # Verify the output file exists
+    assert os.path.exists(svg_output)
+    
+    # Read the SVG output to verify only property 3 texts are rendered
+    with open(svg_output, 'r') as f:
+        svg_content = f.read()
+    
+    # Verify property 3 texts are present
+    assert '12mV' in svg_content, "Property 3 text '12mV' should be present"
+    
+    # Verify property 0 texts are not present
+    assert 'V1' not in svg_content, "Property 0 text 'V1' should not be present"
+    assert 'V2' not in svg_content, "Property 0 text 'V2' should not be present" 

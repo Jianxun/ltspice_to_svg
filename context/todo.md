@@ -2,14 +2,28 @@
 
 ## Current Tasks
 
-### 1. Documentation
+### 1. Text Rendering Options
+[ ] Implement text rendering options in SVGRenderer
+  [ ] Add text rendering options to SVGRenderer class
+  [ ] Implement set_text_rendering_options() method
+  [ ] Add support for individual text type control:
+    - Schematic comments
+    - SPICE directives
+    - Nested symbol text
+    - Component names (window text property id=0)
+    - Component values (window text property id=3)
+  [ ] Update text rendering logic to respect the new options
+  [ ] Add tests for text rendering options
+  [ ] Verify all text types can be individually controlled
+
+### 2. Documentation
 [X] Update README.md with correct script execution instructions
 [ ] Add docstrings to all methods
 [ ] Create API documentation
 [ ] Add usage examples
 [ ] Document configuration options
 
-### 2. Flag Rendering
+### 3. Flag Rendering
 [X] Create FlagRenderer class
   [X] Implement net label rendering
   [ ] Implement ground symbol rendering
@@ -17,7 +31,7 @@
   [X] Add support for flag text properties
   [X] Add support for flag orientation
 
-### 3. Text Rendering
+### 4. Text Rendering
 [X] Fine-tune text justifications
   [X] Adjust vertical positioning
   [X] Fine-tune horizontal offsets
@@ -29,7 +43,7 @@
   [ ] Add proper rotation handling
   [ ] Test various configurations
 
-### 4. Integration Testing
+### 5. Integration Testing
 [X] Test all renderers together
   [X] Create test schematics
   [X] Verify element types
@@ -39,7 +53,7 @@
   [ ] Optimize calculations
   [ ] Implement caching
 
-### 5. Code Quality
+### 6. Code Quality
 [ ] Add type hints to all Python files
 [ ] Add unit tests for individual components
 [ ] Implement continuous integration
@@ -488,3 +502,18 @@
 [ ] Improve text orientation handling in `render_io_pin` method
 [ ] Implement missing features (net labels, flags)
 [ ] Improve text rendering calibration
+
+[X] Implement window text property filtering
+  - [X] Add property_id parameter to SVGRenderer.render_symbols()
+  - [X] Add symbol_property_id parameter to SymbolRenderer.render_window_texts()
+  - [X] Implement filtering logic in render_window_texts()
+  - [X] Add test cases for property-specific rendering
+  - [X] Test and verify functionality
+
+## Current Tasks
+[ ] Implement rendering control switches in ltspice_to_svg.py
+  - [ ] Add command line arguments for property-specific rendering
+  - [ ] Add command line arguments for selective component rendering
+  - [ ] Update convert_schematic() function to handle new arguments
+  - [ ] Add test cases for new rendering control options
+  - [ ] Update documentation with new command line options

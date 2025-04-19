@@ -158,12 +158,14 @@ class SymbolRenderer(BaseRenderer):
             self.logger.error(f"Failed to render texts: {str(e)}")
             raise
 
-    def render_window_texts(self, symbol: Dict, symbol_def: Dict) -> None:
+    def render_window_texts(self, symbol: Dict, symbol_def: Dict, symbol_property_id: Optional[str] = None) -> None:
         """Render window texts for the current symbol.
         
         Args:
             symbol: Dictionary containing symbol instance data
             symbol_def: Dictionary containing symbol definition
+            symbol_property_id: Optional property ID to render. If provided, only renders window text for this property.
+                              If None, renders all defined window texts.
         """
         if not self._current_group:
             raise ValueError("No group created. Call create_group() first.")
@@ -186,6 +188,10 @@ class SymbolRenderer(BaseRenderer):
 
             # Process each window
             for property_id, window_def in windows.items():
+                # Skip if a specific property ID was requested and this isn't it
+                if symbol_property_id is not None and property_id != symbol_property_id:
+                    continue
+
                 self.logger.debug(f"Processing window {property_id} with default definition: {window_def}")
                 
                 # Convert property_id from string to integer for comparison (if possible)
@@ -300,7 +306,7 @@ class SymbolRenderer(BaseRenderer):
             
             # Render window texts if present
             if 'symbol_def' in symbol:
-                self.render_window_texts(symbol, symbol['symbol_def'])
+                self.render_window_texts(symbol, symbol['symbol_def'], symbol.get('property_id'))
             
             # Add the group to the drawing
             self.add_to_drawing()
