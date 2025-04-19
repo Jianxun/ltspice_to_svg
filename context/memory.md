@@ -118,14 +118,18 @@ This project is a Python-based tool for converting LTspice schematics to SVG for
 - Updated Flag Rendering
 - Improved Text Rendering
 - Fixed text rendering options in SVGRenderer
+- Refactored configuration interface to use direct config access
 
 ### Recent Fixes
 - Added property getters and setters to SVGRenderer to handle direct property access for text rendering options
 - Fixed failing test in `test_text_rendering_switches.py` by properly connecting direct property access to the configuration system
 - Ensured consistent handling of text rendering options across the renderer
+- Improved configuration interface by removing property getters/setters and using `config.set_option()` directly
+- Updated tests to use the configuration interface directly
 
 ### Current Task
 - Implementing text rendering options:
+  - Need to document API changes for users
   - Need to connect command line options to rendering logic
   - Update BaseRenderer to accept config parameter
   - Add unit tests for configuration class

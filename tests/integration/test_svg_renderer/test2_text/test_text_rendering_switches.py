@@ -40,7 +40,7 @@ def test_text_rendering_switches():
     renderer = SVGRenderer()
     renderer.load_schematic(data['schematic'], data['symbols'])
     renderer.create_drawing(output_path)
-    renderer.no_spice_directive = True
+    renderer.config.set_option('no_spice_directive', True)
     renderer.render_texts()
     renderer.save()
     
@@ -55,7 +55,7 @@ def test_text_rendering_switches():
     renderer = SVGRenderer()
     renderer.load_schematic(data['schematic'], data['symbols'])
     renderer.create_drawing(output_path)
-    renderer.no_schematic_comment = True
+    renderer.config.set_option('no_schematic_comment', True)
     renderer.render_texts()
     renderer.save()
     
@@ -70,8 +70,8 @@ def test_text_rendering_switches():
     renderer = SVGRenderer()
     renderer.load_schematic(data['schematic'], data['symbols'])
     renderer.create_drawing(output_path)
-    renderer.no_schematic_comment = True
-    renderer.no_spice_directive = True
+    renderer.config.set_option('no_schematic_comment', True)
+    renderer.config.set_option('no_spice_directive', True)
     renderer.render_texts()
     renderer.save()
     

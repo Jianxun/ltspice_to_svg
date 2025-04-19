@@ -28,6 +28,19 @@
 
 ## Current Tasks
 
+### [ ] Replace direct property access with config.get_option() calls
+- [X] Update test_text_rendering_switches.py to use config interface
+  - [X] Replace direct property assignment with config.set_option() calls
+  - [X] Run tests to verify functionality
+- [X] Update other test files that use text rendering options
+  - [X] Identify all test files using direct property access
+  - [X] Modify to use config interface
+  - [X] Run tests after each modification
+- [X] Remove property getters/setters from SVGRenderer
+  - [X] Ensure all internal references use self.config.get_option()
+  - [X] Run tests to verify functionality
+- [ ] Document API changes
+
 ### [ ] Implement Rendering Configuration
 - [ ] Create RenderingConfig class
   - [X] Implement initialization with defaults
@@ -35,7 +48,6 @@
   - [X] Add validation for option types
 - [X] Update SVGRenderer to use configuration
   - [X] Implement `set_text_rendering_options()` method
-  - [X] Add property getters and setters for all text rendering options
   - [X] Update render methods to use config
   - [X] Ensure backward compatibility
 - [ ] Update BaseRenderer to accept config parameter
