@@ -23,6 +23,13 @@ class SVGRenderer(BaseRenderer):
         # Initialize BaseRenderer with None for dwg, it will be set later in initialize_drawing
         super().__init__(None)
         
+        # Initialize text rendering options
+        self.no_schematic_comment = False
+        self.no_spice_directive = False
+        self.no_nested_symbol_text = False
+        self.no_component_name = False
+        self.no_component_value = False
+        
     def set_stroke_width(self, stroke_width: float) -> None:
         """Set the stroke width for all renderers.
         
@@ -191,13 +198,32 @@ class SVGRenderer(BaseRenderer):
         text_renderer = self._renderers['text']
         texts = self.schematic_data.get('texts', [])
         self.logger.info(f"Found {len(texts)} text elements to render")
+        
         for i, text in enumerate(texts):
+            # Skip rendering based on text type and options
+            text_type = text.get('type', 'comment')
+            if text_type == 'comment' and self.no_schematic_comment:
+                self.logger.debug(f"Skipping schematic comment: {text.get('text', '')}")
+                continue
+            elif text_type == 'spice' and self.no_spice_directive:
+                self.logger.debug(f"Skipping SPICE directive: {text.get('text', '')}")
+                continue
+            elif text_type == 'nested' and self.no_nested_symbol_text:
+                self.logger.debug(f"Skipping nested symbol text: {text.get('text', '')}")
+                continue
+            elif text_type == 'window' and text.get('property_id') == '0' and self.no_component_name:
+                self.logger.debug(f"Skipping component name: {text.get('text', '')}")
+                continue
+            elif text_type == 'window' and text.get('property_id') == '3' and self.no_component_value:
+                self.logger.debug(f"Skipping component value: {text.get('text', '')}")
+                continue
+                
             self.logger.info(f"Rendering text {i+1}/{len(texts)}:")
             self.logger.debug(f"  Content: {text.get('text', '')}")
             self.logger.debug(f"  Position: ({text.get('x', 0)}, {text.get('y', 0)})")
             self.logger.debug(f"  Justification: {text.get('justification', 'Left')}")
             self.logger.debug(f"  Size multiplier: {text.get('size_multiplier', 2)}")
-            self.logger.debug(f"  Type: {text.get('type', 'comment')}")
+            self.logger.debug(f"  Type: {text_type}")
             text_renderer.render(text)
             
     def render_shapes(self) -> None:
@@ -208,29 +234,19 @@ class SVGRenderer(BaseRenderer):
         shape_renderer = self._renderers['shape']
         shapes = self.schematic_data.get('shapes', {})
         
-        # Render lines
-        for line in shapes.get('lines', []):
-            shape_data = line.copy()
-            shape_data['type'] = 'line'
-            shape_renderer.render(shape_data, self._stroke_width)
+        # Define shape types to process in singular form
+        shape_types = ['line', 'rectangle', 'circle', 'arc']
+        
+        # Process each shape type
+        for shape_type in shape_types:
+            # Get the collection name by appending 's'
+            collection_name = f"{shape_type}s"
             
-        # Render rectangles
-        for rect in shapes.get('rectangles', []):
-            shape_data = rect.copy()
-            shape_data['type'] = 'rectangle'
-            shape_renderer.render(shape_data, self._stroke_width)
-            
-        # Render circles
-        for circle in shapes.get('circles', []):
-            shape_data = circle.copy()
-            shape_data['type'] = 'circle'
-            shape_renderer.render(shape_data, self._stroke_width)
-            
-        # Render arcs
-        for arc in shapes.get('arcs', []):
-            shape_data = arc.copy()
-            shape_data['type'] = 'arc'
-            shape_renderer.render(shape_data, self._stroke_width)
+            # Render all shapes of this type
+            for shape in shapes.get(collection_name, []):
+                shape_data = shape.copy()
+                shape_data['type'] = shape_type
+                shape_renderer.render(shape_data, self._stroke_width)
             
     def render_flags(self) -> None:
         """Render all flags and IO pins in the schematic."""
@@ -479,4 +495,20 @@ class SVGRenderer(BaseRenderer):
                     min(y3, y4) <= y <= max(y3, y4)):
                     return (x, y)
                     
-        return None 
+        return None
+
+    def set_text_rendering_option(self, option: str, value: bool) -> None:
+        """Set a text rendering option and log the change.
+        
+        Args:
+            option: The option name (e.g., 'no_schematic_comment')
+            value: The new value
+            
+        Raises:
+            ValueError: If the option name is invalid
+        """
+        if hasattr(self, option):
+            setattr(self, option, value)
+            self.logger.debug(f"Text rendering option '{option}' set to {value}")
+        else:
+            raise ValueError(f"Unknown text rendering option: {option}") 

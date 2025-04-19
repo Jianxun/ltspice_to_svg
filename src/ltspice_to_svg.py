@@ -101,13 +101,11 @@ def main():
     renderer.set_base_font_size(args.base_font_size)
     
     # Set text rendering options
-    renderer.set_text_rendering_options(
-        no_schematic_comment=args.no_schematic_comment,
-        no_spice_directive=args.no_spice_directive,
-        no_nested_symbol_text=args.no_nested_symbol_text,
-        no_component_name=args.no_component_name,
-        no_component_value=args.no_component_value
-    )
+    renderer.no_schematic_comment = args.no_schematic_comment
+    renderer.no_spice_directive = args.no_spice_directive
+    renderer.no_nested_symbol_text = args.no_nested_symbol_text
+    renderer.no_component_name = args.no_component_name
+    renderer.no_component_value = args.no_component_value
     
     # Render components
     renderer.render_wires(args.dot_size)
