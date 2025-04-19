@@ -14,7 +14,6 @@ class ASCParser:
         self.symbols: List[Dict[str, any]] = []
         self.texts: List[Dict[str, any]] = []
         self.flags: List[Dict[str, any]] = []
-        self.io_pins: List[Dict[str, any]] = []
         # Shape lists for internal use
         self._lines: List[Dict[str, any]] = []
         self._circles: List[Dict[str, any]] = []
@@ -23,6 +22,7 @@ class ASCParser:
         self._flag_positions: Set[Tuple[int, int]] = set()  # Track unique flag positions
         self._parsed_data: Dict[str, any] = None  # Cache for parsed data
         self._current_symbol = None  # Track current symbol being parsed
+        self._io_pin_count = 0  # Track number of IO pins for reporting
         
     def parse(self) -> Dict[str, any]:
         """Parse the ASC file and return a dictionary containing wires and symbols."""
@@ -103,7 +103,7 @@ class ASCParser:
                 i += 1  # Make sure we still increment for empty lines
                 
         print(f"Found {len(self.wires)} wires, {len(self.symbols)} symbols, {len(self.texts)} text elements, "
-              f"{len(self.flags)} flags, {len(self.io_pins)} IO pins")
+              f"{len(self.flags)} flags (including {self._io_pin_count} IO pins)")
         if any([self._lines, self._circles, self._rectangles, self._arcs]):
             print(f"Found shapes: {len(self._lines)} lines, {len(self._circles)} circles, "
                   f"{len(self._rectangles)} rectangles, {len(self._arcs)} arcs")
@@ -114,7 +114,6 @@ class ASCParser:
             'symbols': self.symbols,
             'texts': self.texts,
             'flags': self.flags,
-            'io_pins': self.io_pins,
             'shapes': {
                 'lines': self._lines,
                 'circles': self._circles,
@@ -248,16 +247,18 @@ class ASCParser:
                 connected_wires = self._get_connected_wires(flag_x, flag_y)
                 attached_to_wire_end = len(connected_wires) == 1
                 
-                # Add IO pin with orientation
+                # Add IO pin as a flag with special type
                 io_pin = {
                     'x': flag_x,
                     'y': flag_y,
                     'net_name': net_name,
                     'direction': direction,
                     'orientation': orientation,
-                    'attached_to_wire_end': attached_to_wire_end
+                    'attached_to_wire_end': attached_to_wire_end,
+                    'type': 'io_pin'  # Set type to io_pin instead of using separate collection
                 }
-                self.io_pins.append(io_pin)
+                self.flags.append(io_pin)  # Add to flags instead of io_pins
+                self._io_pin_count += 1  # Track count for reporting
                 self._flag_positions.add((flag_x, flag_y))
             except ValueError as e:
                 print(f"Warning: Invalid flag/iopin data in lines: {flag_line} / {iopin_line} - {e}")
@@ -389,9 +390,6 @@ class ASCParser:
         import json
         # Make sure we have parsed data
         parsed_data = self.parse()
-        # Ensure io_pins are included
-        if 'io_pins' not in parsed_data:
-            parsed_data['io_pins'] = self.io_pins
         with open(output_path, 'w') as f:
             json.dump(parsed_data, f, indent=2) 
 

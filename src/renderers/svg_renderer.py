@@ -7,6 +7,7 @@ from src.renderers.symbol_renderer import SymbolRenderer
 from src.renderers.text_renderer import TextRenderer
 from src.renderers.shape_renderer import ShapeRenderer
 from src.renderers.flag_renderer import FlagRenderer
+from src.renderers.viewbox_calculator import ViewboxCalculator
 
 class SVGRenderer(BaseRenderer):
     def __init__(self):
@@ -14,14 +15,13 @@ class SVGRenderer(BaseRenderer):
         self.schematic_data = None
         self.view_box = None
         self._renderers = {}
-        self._min_x = float('inf')
-        self._min_y = float('inf')
-        self._max_x = float('-inf')
-        self._max_y = float('-inf')
         self.symbol_data = None  # Add symbol data storage
         self.logger = logging.getLogger(self.__class__.__name__)
         # Initialize BaseRenderer with None for dwg, it will be set later in initialize_drawing
         super().__init__(None)
+        
+        # Initialize viewbox calculator
+        self._viewbox_calculator = ViewboxCalculator()
         
         # Initialize text rendering options
         self.no_schematic_comment = False
@@ -42,18 +42,18 @@ class SVGRenderer(BaseRenderer):
             if hasattr(renderer, 'stroke_width'):
                 renderer.stroke_width = stroke_width
         
-    def set_base_font_size(self, font_size: float) -> None:
+    def set_base_font_size(self, base_font_size: float) -> None:
         """Set the base font size for all text elements.
         
         Args:
-            font_size (float): The base font size in pixels.
+            base_font_size (float): The base font size in pixels.
             
         Raises:
-            ValueError: If font_size is not positive.
+            ValueError: If base_font_size is not positive.
         """
         # Update base font size for all renderers
         for renderer in self._renderers.values():
-            renderer.base_font_size = font_size
+            renderer.base_font_size = base_font_size
         
     def _initialize_renderers(self):
         """Initialize all renderers."""
@@ -75,27 +75,66 @@ class SVGRenderer(BaseRenderer):
         Raises:
             ValueError: If the schematic data is invalid.
         """
+        # Validate inputs
+        self._validate_schematic_data(schematic_data)
+        
+        # Apply defaults for missing elements
+        schematic_data_with_defaults = self._apply_schematic_defaults(schematic_data)
+                
+        # Store the validated and defaulted data
+        self.schematic_data = schematic_data_with_defaults
+        self.symbol_data = symbol_data or {}
+        
+        # Calculate viewbox using the dedicated calculator
+        self.view_box = self._viewbox_calculator.calculate(self.schematic_data)
+        self.logger.debug(f"Calculated viewbox: {self.view_box}")
+        
+    def _validate_schematic_data(self, schematic_data: Dict) -> None:
+        """Validate the schematic data structure.
+        
+        Args:
+            schematic_data: The schematic data to validate.
+            
+        Raises:
+            ValueError: If the schematic data is invalid.
+        """
         if schematic_data is None:
             raise ValueError("Schematic data cannot be None")
             
         if not isinstance(schematic_data, dict):
-            raise ValueError("Schematic data must be a dictionary")
+            raise ValueError(f"Schematic data must be a dictionary, got {type(schematic_data).__name__}")
+        
+        # Validate wires if present
+        if 'wires' in schematic_data and not isinstance(schematic_data['wires'], list):
+            raise ValueError(f"Wires must be a list, got {type(schematic_data['wires']).__name__}")
             
-        # Ensure wires exist and is a list
-        if 'wires' not in schematic_data:
-            schematic_data['wires'] = []
-        elif not isinstance(schematic_data['wires'], list):
-            raise ValueError("wires must be a list")
+    def _apply_schematic_defaults(self, schematic_data: Dict) -> Dict:
+        """Apply default values for missing elements in schematic data.
+        
+        Args:
+            schematic_data: The original schematic data.
             
-        # Initialize optional elements as empty lists
-        optional_keys = ['symbols', 'texts', 'shapes']
-        for key in optional_keys:
-            if key not in schematic_data:
-                schematic_data[key] = {}
+        Returns:
+            A copy of the schematic data with defaults applied.
+        """
+        # Create a copy to avoid modifying the original
+        result = schematic_data.copy()
+        
+        # Default element collections
+        default_collections = {
+            'wires': [],
+            'symbols': {},
+            'texts': {},
+            'shapes': {},
+            'flags': []
+        }
+        
+        # Apply defaults for any missing collections
+        for key, default_value in default_collections.items():
+            if key not in result:
+                result[key] = default_value
                 
-        self.schematic_data = schematic_data
-        self.symbol_data = symbol_data or {}  # Store symbol data
-        self.view_box = self._calculate_viewbox()
+        return result
         
     def create_drawing(self, output_path: str) -> None:
         """Create a new SVG drawing.
@@ -191,7 +230,13 @@ class SVGRenderer(BaseRenderer):
             symbol_renderer.render(render_data, self._stroke_width)
             
     def render_texts(self) -> None:
-        """Render all text elements in the schematic."""
+        """Render all text elements in the schematic.
+        
+        This method renders standalone text elements that are part of the schematic.
+        There are only two types of schematic texts:
+        - 'comment': Regular comments and annotations
+        - 'spice': SPICE directives that begin with '.'
+        """
         if not self.schematic_data or not self.dwg:
             raise ValueError("Schematic not loaded or drawing not created")
             
@@ -199,32 +244,53 @@ class SVGRenderer(BaseRenderer):
         texts = self.schematic_data.get('texts', [])
         self.logger.info(f"Found {len(texts)} text elements to render")
         
+        # Track counts for logging
+        rendered_counts = {
+            'comment': 0,
+            'spice': 0
+        }
+        skipped_counts = {
+            'comment': 0,
+            'spice': 0
+        }
+        
         for i, text in enumerate(texts):
-            # Skip rendering based on text type and options
+            # Default to 'comment' if type not specified
             text_type = text.get('type', 'comment')
+            
+            # Skip if not a schematic text type (should be either 'comment' or 'spice')
+            if text_type not in ['comment', 'spice']:
+                self.logger.warning(f"Skipping unknown text type: {text_type}")
+                continue
+                
+            # Skip rendering based on text type and options
             if text_type == 'comment' and self.no_schematic_comment:
                 self.logger.debug(f"Skipping schematic comment: {text.get('text', '')}")
+                skipped_counts['comment'] += 1
                 continue
             elif text_type == 'spice' and self.no_spice_directive:
                 self.logger.debug(f"Skipping SPICE directive: {text.get('text', '')}")
-                continue
-            elif text_type == 'nested' and self.no_nested_symbol_text:
-                self.logger.debug(f"Skipping nested symbol text: {text.get('text', '')}")
-                continue
-            elif text_type == 'window' and text.get('property_id') == '0' and self.no_component_name:
-                self.logger.debug(f"Skipping component name: {text.get('text', '')}")
-                continue
-            elif text_type == 'window' and text.get('property_id') == '3' and self.no_component_value:
-                self.logger.debug(f"Skipping component value: {text.get('text', '')}")
+                skipped_counts['spice'] += 1
                 continue
                 
-            self.logger.info(f"Rendering text {i+1}/{len(texts)}:")
-            self.logger.debug(f"  Content: {text.get('text', '')}")
-            self.logger.debug(f"  Position: ({text.get('x', 0)}, {text.get('y', 0)})")
-            self.logger.debug(f"  Justification: {text.get('justification', 'Left')}")
-            self.logger.debug(f"  Size multiplier: {text.get('size_multiplier', 2)}")
-            self.logger.debug(f"  Type: {text_type}")
+            # self.logger.debug(f"Rendering text {i+1}/{len(texts)}:")
+            # self.logger.debug(f"  Content: {text.get('text', '')}")
+            # self.logger.debug(f"  Position: ({text.get('x', 0)}, {text.get('y', 0)})")
+            # self.logger.debug(f"  Justification: {text.get('justification', 'Left')}")
+            # self.logger.debug(f"  Size multiplier: {text.get('size_multiplier', 2)}")
+            # self.logger.debug(f"  Type: {text_type}")
+            
+            # Render the text
             text_renderer.render(text)
+            rendered_counts[text_type] += 1
+            
+        # Log rendering statistics
+        for text_type, count in rendered_counts.items():
+            if count > 0:
+                self.logger.info(f"  Rendered {count} {text_type} texts")
+        for text_type, count in skipped_counts.items():
+            if count > 0:
+                self.logger.info(f"  Skipped {count} {text_type} texts")
             
     def render_shapes(self) -> None:
         """Render all shapes in the schematic."""
@@ -253,168 +319,60 @@ class SVGRenderer(BaseRenderer):
         if not self.schematic_data or not self.dwg:
             raise ValueError("Schematic not loaded or drawing not created")
         
-        # Render flags
+        flag_renderer = self._renderers['flag']
+        
+        # Get all flags
         flags = self.schematic_data.get('flags', [])
         self.logger.info(f"Found {len(flags)} flags to render")
         
+        # Count flag types for logging
+        flag_counts = {
+            'gnd': 0,
+            'net_label': 0,
+            'io_pin': 0
+        }
+        
+        # Process each flag
         for i, flag in enumerate(flags):
+            flag_type = flag.get('type', 'net_label')
+            flag_counts[flag_type] = flag_counts.get(flag_type, 0) + 1
+            
             self.logger.debug(f"Rendering flag {i+1}/{len(flags)}:")
-            self.logger.debug(f"  Type: {flag['type']}")
+            self.logger.debug(f"  Type: {flag_type}")
             self.logger.debug(f"  Position: ({flag.get('x', 0)}, {flag.get('y', 0)})")
             self.logger.debug(f"  Orientation: {flag.get('orientation', 0)}")
             
-            if flag['type'] == 'gnd':  # Note: ASCParser uses 'gnd' for ground flags
-                # Create a group for the ground flag
-                g = self.dwg.g()
-                g.attribs['class'] = 'ground-flag'
-                self.logger.debug("  Created ground flag group")
-                
-                # Add the ground flag to the group
-                self._renderers['flag'].render_ground_flag(flag, g)
-                
-                # Add the group to the drawing
-                self.dwg.add(g)
-                self.logger.debug("  Added ground flag group to drawing")
-            elif flag['type'] == 'net_label':
-                # Create a group for the net label
-                g = self.dwg.g()
-                g.attribs['class'] = 'net-label'
-                self.logger.debug("  Created net label group")
-                
-                # Add the net label to the group
-                self._renderers['flag'].render_net_label(flag, g)
-                
-                # Add the group to the drawing
-                self.dwg.add(g)
-                self.logger.debug("  Added net label group to drawing")
-                
-        # Render IO pins
-        io_pins = self.schematic_data.get('io_pins', [])
-        self.logger.info(f"Found {len(io_pins)} IO pins to render")
-        
-        for i, pin in enumerate(io_pins):
-            self.logger.debug(f"Rendering IO pin {i+1}/{len(io_pins)}:")
-            self.logger.debug(f"  Net name: {pin.get('net_name', '')}")
-            self.logger.debug(f"  Position: ({pin.get('x', 0)}, {pin.get('y', 0)})")
-            self.logger.debug(f"  Direction: {pin.get('direction', 'BiDir')}")
-            self.logger.debug(f"  Orientation: {pin.get('orientation', 0)}")
-            
-            # Create a group for the IO pin
+            # Create a group for the flag
             g = self.dwg.g()
-            g.attribs['class'] = 'io-pin'
-            self.logger.debug("  Created IO pin group")
             
-            # Add the IO pin to the group
-            self._renderers['flag'].render_io_pin(pin, g)
+            # Determine CSS class and rendering method based on flag type
+            if flag_type == 'gnd':
+                g.attribs['class'] = 'ground-flag'
+                flag_renderer.render_ground_flag(flag, g)
+            elif flag_type == 'net_label':
+                g.attribs['class'] = 'net-label'
+                flag_renderer.render_net_label(flag, g)
+            elif flag_type == 'io_pin':
+                g.attribs['class'] = 'io-pin'
+                flag_renderer.render_io_pin(flag, g)
+            else:
+                self.logger.warning(f"Unknown flag type: {flag_type}")
+                continue
             
             # Add the group to the drawing
             self.dwg.add(g)
-            self.logger.debug("  Added IO pin group to drawing")
+            self.logger.debug(f"  Added {flag_type} flag to drawing")
+            
+        # Log flag counts by type
+        for flag_type, count in flag_counts.items():
+            if count > 0:
+                self.logger.info(f"  Rendered {count} {flag_type} flags")
         
     def save(self) -> None:
         """Save the SVG drawing to file."""
         if not self.dwg:
             raise ValueError("Drawing not created")
         self.dwg.save()
-        
-    def _reset_bounds(self) -> None:
-        """Reset the bounds to their initial values."""
-        self._min_x = float('inf')
-        self._min_y = float('inf')
-        self._max_x = float('-inf')
-        self._max_y = float('-inf')
-        
-    def _update_bounds(self, x1: float, y1: float, x2: float = None, y2: float = None) -> None:
-        """Update the viewbox bounds with new coordinates.
-        
-        Args:
-            x1, y1: First coordinate point
-            x2, y2: Optional second coordinate point
-        """
-        self._min_x = min(self._min_x, x1)
-        self._min_y = min(self._min_y, y1)
-        self._max_x = max(self._max_x, x1)
-        self._max_y = max(self._max_y, y1)
-        
-        if x2 is not None and y2 is not None:
-            self._min_x = min(self._min_x, x2)
-            self._min_y = min(self._min_y, y2)
-            self._max_x = max(self._max_x, x2)
-            self._max_y = max(self._max_y, y2)
-        
-    def _calculate_viewbox(self) -> tuple:
-        """Calculate the viewBox for the SVG based on schematic bounds.
-        
-        The viewBox is calculated by finding the minimum and maximum coordinates
-        of all elements in the schematic, then adding padding around the bounds.
-        
-        Returns:
-            tuple: (min_x, min_y, width, height)
-        """
-        if not self.schematic_data:
-            return (0, 0, 100, 100)  # Default size for empty schematic
-            
-        # Reset bounds
-        self._reset_bounds()
-        
-        # Calculate bounds from wires
-        for wire in self.schematic_data.get('wires', []):
-            self._update_bounds(wire['x1'], wire['y1'], wire['x2'], wire['y2'])
-            
-        # Calculate bounds from shapes
-        shapes = self.schematic_data.get('shapes', {})
-        
-        # Handle shapes based on format (list or dictionary)
-        if isinstance(shapes, list):
-            # Handle shapes as a list of shape objects with 'type' field
-            for shape in shapes:
-                shape_type = shape.get('type', '')
-                if shape_type == 'line':
-                    self._update_bounds(shape['x1'], shape['y1'], shape['x2'], shape['y2'])
-                elif shape_type == 'rectangle':
-                    self._update_bounds(shape['x'], shape['y'], shape['x'] + shape['width'], shape['y'] + shape['height'])
-                elif shape_type == 'circle':
-                    center_x, center_y = shape.get('x', 0), shape.get('y', 0)
-                    radius = shape.get('radius', 0)
-                    self._update_bounds(center_x - radius, center_y - radius, center_x + radius, center_y + radius)
-        else:
-            # Original approach: shapes as a dictionary of lists by shape type
-            # Lines
-            for line in shapes.get('lines', []):
-                self._update_bounds(line['x1'], line['y1'], line['x2'], line['y2'])
-                
-            # Rectangles
-            for rect in shapes.get('rectangles', []):
-                self._update_bounds(rect['x1'], rect['y1'], rect['x2'], rect['y2'])
-                
-            # Circles
-            for circle in shapes.get('circles', []):
-                self._update_bounds(circle['x1'], circle['y1'], circle['x2'], circle['y2'])
-                
-            # Arcs
-            for arc in shapes.get('arcs', []):
-                self._update_bounds(arc['x1'], arc['y1'], arc['x2'], arc['y2'])
-            
-        # Calculate dimensions
-        width = self._max_x - self._min_x
-        height = self._max_y - self._min_y
-        
-        # Add padding (10% of the larger dimension)
-        padding = max(width, height) * 0.1
-        
-        # Update bounds with padding
-        min_x = self._min_x - padding
-        min_y = self._min_y - padding
-        width = width + 2 * padding
-        height = height + 2 * padding
-        
-        # Ensure minimum size
-        if width == 0:
-            width = 100
-        if height == 0:
-            height = 100
-            
-        return (min_x, min_y, width, height)
         
     def _find_t_junctions(self, wires: list) -> list:
         """Find all T-junctions in the wire list.
@@ -460,42 +418,6 @@ class SVGRenderer(BaseRenderer):
         
         return junctions
         
-    def _find_wire_intersection(self, wire1: dict, wire2: dict) -> tuple:
-        """Find the intersection point of two wires if they intersect.
-        
-        Args:
-            wire1, wire2: Wire dictionaries with x1, y1, x2, y2 coordinates.
-            
-        Returns:
-            tuple: (x, y) coordinates of intersection point, or None if no intersection.
-        """
-        # Extract coordinates
-        x1, y1 = wire1['x1'], wire1['y1']
-        x2, y2 = wire1['x2'], wire1['y2']
-        x3, y3 = wire2['x1'], wire2['y1']
-        x4, y4 = wire2['x2'], wire2['y2']
-        
-        # Check if wires are parallel
-        if (x2 - x1 == 0 and x4 - x3 == 0) or (y2 - y1 == 0 and y4 - y3 == 0):
-            return None
-            
-        # Handle vertical wires
-        if x2 - x1 == 0:  # First wire is vertical
-            if y4 - y3 == 0:  # Second wire is horizontal
-                x = x1
-                y = y3
-                if (min(x3, x4) <= x <= max(x3, x4) and
-                    min(y1, y2) <= y <= max(y1, y2)):
-                    return (x, y)
-        elif x4 - x3 == 0:  # Second wire is vertical
-            if y2 - y1 == 0:  # First wire is horizontal
-                x = x3
-                y = y1
-                if (min(x1, x2) <= x <= max(x1, x2) and
-                    min(y3, y4) <= y <= max(y3, y4)):
-                    return (x, y)
-                    
-        return None
 
     def set_text_rendering_option(self, option: str, value: bool) -> None:
         """Set a text rendering option and log the change.
