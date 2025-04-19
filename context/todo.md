@@ -9,19 +9,17 @@
   - [X] Understand the text rendering hierarchy (SVGRenderer -> TextRenderer)
   - [X] Document findings in memory.md
 
-## Upcoming Tasks
-
-[ ] Debug and fix the failing test related to text rendering
-  - [ ] Run the failing test to reproduce the issue
-  - [ ] Identify the specific text rendering option causing the test failure
-  - [ ] Investigate any discrepancy between configuration settings and rendering behavior
-  - [ ] Fix the issue in the renderer code
-  - [ ] Verify the fix with the test
-  - [ ] Update documentation to reflect the fix
-
 ## Completed Tasks
 
-[ ] Set up the project structure
+[X] Debug and fix the failing test related to text rendering
+  - [X] Run the failing test to reproduce the issue
+  - [X] Identify the specific text rendering option causing the test failure
+  - [X] Investigate any discrepancy between configuration settings and rendering behavior
+  - [X] Fix the issue in the renderer code
+  - [X] Verify the fix with the test
+  - [X] Update documentation to reflect the fix
+
+[X] Set up the project structure
   - [X] Create the virtual environment
   - [X] Set up the directory structure
   - [X] Initialize git repository
@@ -32,17 +30,18 @@
 
 ### [ ] Implement Rendering Configuration
 - [ ] Create RenderingConfig class
-  - [ ] Implement initialization with defaults
-  - [ ] Add methods for getting/setting options
-  - [ ] Add validation for option types
-- [ ] Update SVGRenderer to use configuration
-  - [ ] Implement `set_text_rendering_options()` method
-  - [ ] Update render methods to use config
-  - [ ] Ensure backward compatibility
+  - [X] Implement initialization with defaults
+  - [X] Add methods for getting/setting options
+  - [X] Add validation for option types
+- [X] Update SVGRenderer to use configuration
+  - [X] Implement `set_text_rendering_options()` method
+  - [X] Add property getters and setters for all text rendering options
+  - [X] Update render methods to use config
+  - [X] Ensure backward compatibility
 - [ ] Update BaseRenderer to accept config parameter
 - [ ] Connect command line options to config in main module
 - [ ] Add unit tests for configuration class
-- [ ] Fix failing test in `test_text_rendering_options`
+- [X] Fix failing test in `test_text_rendering_options`
 
 ### [X] Refactor SVG Renderer
 - [X] Extract viewbox calculation to separate class

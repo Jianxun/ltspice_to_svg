@@ -26,6 +26,57 @@ class SVGRenderer(BaseRenderer):
         # Initialize viewbox calculator
         self._viewbox_calculator = ViewboxCalculator()
         
+    # Property getters and setters for text rendering options
+    @property
+    def no_schematic_comment(self) -> bool:
+        """Gets the no_schematic_comment option."""
+        return self.config.get_option('no_schematic_comment')
+        
+    @no_schematic_comment.setter
+    def no_schematic_comment(self, value: bool) -> None:
+        """Sets the no_schematic_comment option."""
+        self.config.set_option('no_schematic_comment', value)
+        
+    @property
+    def no_spice_directive(self) -> bool:
+        """Gets the no_spice_directive option."""
+        return self.config.get_option('no_spice_directive')
+        
+    @no_spice_directive.setter
+    def no_spice_directive(self, value: bool) -> None:
+        """Sets the no_spice_directive option."""
+        self.config.set_option('no_spice_directive', value)
+        
+    @property
+    def no_nested_symbol_text(self) -> bool:
+        """Gets the no_nested_symbol_text option."""
+        return self.config.get_option('no_nested_symbol_text')
+        
+    @no_nested_symbol_text.setter
+    def no_nested_symbol_text(self, value: bool) -> None:
+        """Sets the no_nested_symbol_text option."""
+        self.config.set_option('no_nested_symbol_text', value)
+        
+    @property
+    def no_component_name(self) -> bool:
+        """Gets the no_component_name option."""
+        return self.config.get_option('no_component_name')
+        
+    @no_component_name.setter
+    def no_component_name(self, value: bool) -> None:
+        """Sets the no_component_name option."""
+        self.config.set_option('no_component_name', value)
+        
+    @property
+    def no_component_value(self) -> bool:
+        """Gets the no_component_value option."""
+        return self.config.get_option('no_component_value')
+        
+    @no_component_value.setter
+    def no_component_value(self, value: bool) -> None:
+        """Sets the no_component_value option."""
+        self.config.set_option('no_component_value', value)
+        
     def set_text_rendering_options(self, **kwargs) -> None:
         """Set multiple text rendering options at once.
         
