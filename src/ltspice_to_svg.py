@@ -74,7 +74,7 @@ def main():
     parser.add_argument("--ltspice-lib", type=str,
                       help="Path to LTspice symbol library (overrides system default)")
     parser.add_argument("--no-text", action="store_true",
-                      help="Skip rendering all text elements")
+                      help="Master switch to disable ALL text rendering (component names, values, comments, etc.)")
     parser.add_argument("--no-schematic-comment", action="store_true",
                       help="Skip rendering schematic comments")
     parser.add_argument("--no-spice-directive", action="store_true",
@@ -138,8 +138,14 @@ def main():
         "no_net_label": args.no_net_label,
         "no_pin_name": args.no_pin_name
     }
+    
+    # If --no-text is specified, set all text rendering options to True
+    if args.no_text:
+        for key in text_options:
+            text_options[key] = True
+    
     # Only call if at least one option is True to avoid unnecessary calls
-    if any(text_options.values()):
+    if any(text_options.values()) or args.no_text:
         renderer.set_text_rendering_options(**text_options)
     
     # Load schematic and symbol data

@@ -158,7 +158,7 @@ These tests verify that:
   - `--dot-size`: Size of junction dots relative to stroke width (default: 1.5)
   - `--base-font-size`: Base size for all text elements (default: 16.0)
 - **Text Rendering Control**
-  - `--no-text`: Disables rendering of ALL text elements
+  - `--no-text`: Master switch to disable ALL text rendering (equivalent to enabling all other --no-* text options)
   - `--no-schematic-comment`: Skips rendering comment texts in schematic
   - `--no-spice-directive`: Skips rendering SPICE directive texts (starting with '.')
   - `--no-nested-symbol-text`: Skips rendering text elements inside symbols

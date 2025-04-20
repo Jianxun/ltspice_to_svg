@@ -219,6 +219,22 @@ def test_no_text(mock_svg_renderer, mock_parser, mock_path, mock_config, mock_op
     # Verify render_texts is not called
     _, mock_renderer_instance = mock_svg_renderer
     mock_renderer_instance.render_texts.assert_not_called()
+    
+    # Verify that all text-related options are set to True
+    mock_renderer_instance.set_text_rendering_options.assert_called_once()
+    _, kwargs = mock_renderer_instance.set_text_rendering_options.call_args
+    
+    # Check all text-related options are True
+    expected_options = {
+        "no_schematic_comment": True,
+        "no_spice_directive": True,
+        "no_nested_symbol_text": True,
+        "no_component_name": True,
+        "no_component_value": True,
+        "no_net_label": True,
+        "no_pin_name": True
+    }
+    assert kwargs == expected_options
 
 def test_text_rendering_options(mock_svg_renderer, mock_parser, mock_path, mock_config, mock_open_file):
     """Test individual text rendering options"""

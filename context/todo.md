@@ -126,6 +126,12 @@
 - [X] Update CLI documentation in memory.md
 - [X] Run all tests to ensure no regressions
 
+### [X] Fix --no-text option behavior
+- [X] Update the main script to make --no-text set all other text-related options
+- [X] Fix the test to verify this behavior
+- [X] Update the help text and documentation to clarify this option is a master switch
+- [X] Run tests to ensure no regressions
+
 ## Next Steps
 
 ### [ ] Extend Configuration Refactoring
