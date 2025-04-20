@@ -45,7 +45,8 @@ def create_config_from_args(args):
         "no_spice_directive": args.no_spice_directive,
         "no_nested_symbol_text": args.no_nested_symbol_text,
         "no_component_name": args.no_component_name,
-        "no_component_value": args.no_component_value
+        "no_component_value": args.no_component_value,
+        "no_net_label": args.no_net_label
     }
     
     # Create the config object
@@ -83,6 +84,8 @@ def main():
                       help="Skip rendering component names")
     parser.add_argument("--no-component-value", action="store_true",
                       help="Skip rendering component values")
+    parser.add_argument("--no-net-label", action="store_true",
+                      help="Skip rendering net label flags")
     
     args = parser.parse_args()
     
@@ -128,7 +131,8 @@ def main():
         "no_spice_directive": args.no_spice_directive,
         "no_nested_symbol_text": args.no_nested_symbol_text,
         "no_component_name": args.no_component_name,
-        "no_component_value": args.no_component_value
+        "no_component_value": args.no_component_value,
+        "no_net_label": args.no_net_label
     }
     # Only call if at least one option is True to avoid unnecessary calls
     if any(text_options.values()):

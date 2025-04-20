@@ -208,6 +208,7 @@ The SVG renderer provides flexible text rendering with the following features:
 - Special handling for mirrored text in symbols with automatic counter-mirroring
 - Multiline text support with proper line spacing
 - Text in window definitions for symbols
+- Selective rendering of net label flags with the --no-net-label option
 
 The text rendering architecture consists of:
 1. `SVGRenderer` - High-level control of which texts to render

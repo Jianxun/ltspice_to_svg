@@ -228,7 +228,8 @@ def test_text_rendering_options(mock_svg_renderer, mock_parser, mock_path, mock_
         '--no-spice-directive',
         '--no-nested-symbol-text',
         '--no-component-name',
-        '--no-component-value'
+        '--no-component-value',
+        '--no-net-label'
     ]
     
     with patch('sys.argv', test_args):
@@ -241,7 +242,8 @@ def test_text_rendering_options(mock_svg_renderer, mock_parser, mock_path, mock_
         no_spice_directive=True,
         no_nested_symbol_text=True,
         no_component_name=True,
-        no_component_value=True
+        no_component_value=True,
+        no_net_label=True
     )
 
 def test_export_json(mock_svg_renderer, mock_parser, mock_path, mock_config, mock_open_file):
@@ -291,4 +293,16 @@ def test_get_ltspice_lib_path():
     
     with patch('platform.system', return_value='Linux'):
         with pytest.raises(OSError, match="Unsupported operating system: Linux"):
-            get_ltspice_lib_path() 
+            get_ltspice_lib_path()
+
+def test_no_net_label(mock_svg_renderer, mock_parser, mock_path, mock_config, mock_open_file):
+    """Test --no-net-label option to skip rendering net label flags"""
+    test_args = ['ltspice_to_svg.py', 'test.asc', '--no-net-label']
+    
+    with patch('sys.argv', test_args):
+        main()
+    
+    # Verify configuration was created with the no_net_label option
+    mock_config.assert_called_once()
+    _, kwargs = mock_config.call_args
+    assert kwargs['no_net_label'] == True 

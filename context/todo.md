@@ -104,6 +104,13 @@
 - [X] Update the test to mock the JSON loading process instead of the file open operation
 - [X] Ensure all other tests continue to pass after the fix
 
+### [X] Add --no-net-label option
+- [X] Add command line flag to disable rendering of net label flags
+- [X] Update RenderingConfig to support the new option
+- [X] Modify SVGRenderer.render_flags to check for the option
+- [X] Add tests to verify the functionality
+- [X] Run all tests to ensure no regressions
+
 ## Next Steps
 
 ### [ ] Extend Configuration Refactoring

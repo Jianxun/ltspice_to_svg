@@ -382,9 +382,23 @@ class SVGRenderer(BaseRenderer):
             'io_pin': 0
         }
         
+        # Count skipped flags
+        skipped_counts = {
+            'net_label': 0
+        }
+        
+        # Check if we should skip net labels
+        skip_net_labels = self.config.get_option('no_net_label', False)
+        
         # Process each flag
         for i, flag in enumerate(flags):
             flag_type = flag.get('type', 'net_label')
+            
+            # Skip net labels if requested
+            if flag_type == 'net_label' and skip_net_labels:
+                skipped_counts['net_label'] += 1
+                continue
+                
             flag_counts[flag_type] = flag_counts.get(flag_type, 0) + 1
             
             self.logger.debug(f"Rendering flag {i+1}/{len(flags)}:")
@@ -417,6 +431,11 @@ class SVGRenderer(BaseRenderer):
         for flag_type, count in flag_counts.items():
             if count > 0:
                 self.logger.info(f"  Rendered {count} {flag_type} flags")
+        
+        # Log skipped flags
+        for flag_type, count in skipped_counts.items():
+            if count > 0:
+                self.logger.info(f"  Skipped {count} {flag_type} flags")
         
     def save(self) -> None:
         """Save the SVG drawing to file."""
