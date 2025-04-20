@@ -1,0 +1,11 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ltspice_to_svg"
+description = "Convert LTspice schematics to SVG format"
+readme = "README.md"
+requires-python = ">=3.6"
+license = {text = "MIT"}
+dynamic = ["version"] 

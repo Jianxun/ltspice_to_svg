@@ -1,9 +1,18 @@
 from setuptools import setup, find_packages
+import os
+
+# Read the contents of your README file
+with open("README.md", encoding="utf-8") as f:
+    long_description = f.read()
 
 setup(
     name="ltspice_to_svg",
     version="0.1.0",
     packages=find_packages(),
+    package_data={
+        "src": ["renderers/flags.json"],
+    },
+    include_package_data=True,
     entry_points={
         "console_scripts": [
             "ltspice_to_svg=src.ltspice_to_svg:main",
@@ -14,6 +23,8 @@ setup(
     ],
     python_requires=">=3.6",
     description="Convert LTspice schematics to SVG format",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     author="Jianxun Zhu",
     author_email="user@example.com",  # Replace with actual email
     url="https://github.com/jianxunzhu/ltspice_to_svg",
@@ -23,5 +34,13 @@ setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
     ],
+    keywords="ltspice, svg, schematic, circuit, eda, electronics",
 ) 

@@ -142,7 +142,7 @@ def main():
             text_options[key] = True
     
     # Only call if at least one option is True to avoid unnecessary calls
-    if any(text_options.values()) or args.no_text:
+    if any(text_options.values()):
         renderer.set_text_rendering_options(**text_options)
     
     # Load schematic and symbol data
@@ -154,8 +154,7 @@ def main():
     # Render components
     renderer.render_wires(args.dot_size)
     renderer.render_symbols()
-    if not args.no_text:
-        renderer.render_texts()
+    renderer.render_texts()
     renderer.render_shapes()
     renderer.render_flags()
     

@@ -283,3 +283,34 @@ To fix the issue with MagicMock and JSON loading in the tests:
    - This ensured that our mocks were actually being used in the test
 
 This approach allows the tests to run without accessing the file system while still providing valid JSON data for the functionality being tested.
+
+## PyPI Publishing
+
+The project is set up for distribution on PyPI, with the following features:
+
+- Package name: `ltspice_to_svg`
+- Entry point: `ltspice_to_svg` command-line tool
+- Requirements: `svgwrite`
+- Documentation: README.md serves as the long description
+
+### Publishing Tools
+
+- `pyproject.toml`: Modern Python packaging configuration
+- `MANIFEST.in`: Defines non-Python files to include
+- `setup.py`: Package metadata and configuration
+- `tools/publish_to_pypi.py`: Helper script for publishing
+
+### Publishing Process
+
+1. Update version in `setup.py`
+2. Build the package: `python -m build`
+3. Upload to TestPyPI: `python -m twine upload --repository testpypi dist/*`
+4. Test installation: `pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ ltspice_to_svg`
+5. Upload to production PyPI if tests pass: `python -m twine upload dist/*`
+
+The helper script can automate this process:
+```bash
+python tools/publish_to_pypi.py --test
+```
+
+Detailed documentation is available in `docs/publishing.md`.

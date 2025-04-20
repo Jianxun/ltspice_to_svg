@@ -140,6 +140,25 @@
 - [X] Update documentation to remove references to the scale option
 - [X] Run tests to verify no regressions
 
+### [X] Update README.md with latest command line options
+- [X] Remove references to deprecated --scale option
+- [X] Add new --no-net-label and --no-pin-name options
+- [X] Update the description of --no-text to mention it's a master switch
+- [X] Fix stroke-width default value to match the code
+- [X] Update examples with relevant use cases
+- [X] Organize examples by common usage patterns
+
+### [ ] Publish package to PyPI Test
+- [ ] Update package metadata in setup.py
+- [ ] Create pyproject.toml for modern Python packaging
+- [ ] Create MANIFEST.in for non-Python files
+- [ ] Build distribution packages
+- [ ] Register on PyPI Test website
+- [ ] Configure PyPI credentials
+- [ ] Upload to PyPI Test
+- [ ] Test installation from PyPI Test
+- [ ] Document the publishing process
+
 ## Next Steps
 
 ### [ ] Extend Configuration Refactoring

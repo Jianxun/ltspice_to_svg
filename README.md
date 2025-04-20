@@ -110,28 +110,6 @@ Example with options:
 
   Note: You can also use the `--ltspice-lib` command line option to override this setting.
 
-## Examples
-
-### Basic Schematic
-```bash
-python src/ltspice_to_svg.py examples/basic_rc.asc
-```
-
-### Circuit Without Text
-```bash
-python src/ltspice_to_svg.py examples/opamp_circuit.asc --no-text
-```
-
-### Circuit With Custom Styling
-```bash
-python src/ltspice_to_svg.py examples/opamp_circuit.asc --stroke-width 1.5 --base-font-size 14.0
-```
-
-### Circuit Without Net Labels
-```bash
-python src/ltspice_to_svg.py examples/opamp_circuit.asc --no-net-label --no-pin-name
-```
-
 ## Output
 
 The tool generates an SVG file that:
