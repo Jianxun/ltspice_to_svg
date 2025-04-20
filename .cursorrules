@@ -101,3 +101,13 @@ Example on how to invoke the tool
   4. Use detailed logging to track values through the processing pipeline
 - This approach allows for flexible dictionary key handling while maintaining backward compatibility
 
+### Mocking JSON File I/O in Tests
+- When testing code that reads JSON files, simple MagicMock objects won't work for json.load() operations
+- The TypeError "JSON object must be str, bytes or bytearray, not MagicMock" occurs when passing a mock to json.load()
+- Effective approach for mocking JSON files includes:
+  1. Create a simplified version of the expected JSON data in the test
+  2. Configure the mock file object to return this JSON data as a string when read() is called
+  3. Use a side_effect function with builtins.open mock to return the JSON mock only for specific filenames
+  4. Ensure mocks are targeting the correct import paths used by the code under test
+- This pattern allows tests to run without file system access while providing valid data to json.load()
+

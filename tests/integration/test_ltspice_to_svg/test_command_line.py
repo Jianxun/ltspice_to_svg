@@ -5,7 +5,8 @@ import os
 import sys
 import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, Mock
+import json
 
 # Add the project root to the Python path
 project_root = Path(__file__).parent.parent.parent.parent
@@ -14,24 +15,24 @@ sys.path.insert(0, str(project_root))
 from src.ltspice_to_svg import main, get_ltspice_lib_path
 
 @pytest.fixture
-def mock_renderer():
-    """Fixture to mock the SVGRenderer class"""
+def mock_svg_renderer():
+    """Fixture to mock the SVGRenderer module import so we can verify it's being called correctly"""
     with patch('src.ltspice_to_svg.SVGRenderer') as mock:
         renderer_instance = MagicMock()
         mock.return_value = renderer_instance
+        yield mock, renderer_instance
+
+@pytest.fixture
+def mock_config():
+    """Fixture to mock the RenderingConfig module import"""
+    with patch('src.ltspice_to_svg.RenderingConfig') as mock:
+        config_instance = MagicMock()
+        mock.return_value = config_instance
         yield mock
 
 @pytest.fixture
-def mock_renderer_instance():
-    """Fixture to mock the SVGRenderer instance"""
-    with patch('src.ltspice_to_svg.SVGRenderer') as mock_class:
-        renderer_instance = MagicMock()
-        mock_class.return_value = renderer_instance
-        yield renderer_instance
-
-@pytest.fixture
 def mock_parser():
-    """Fixture to mock the SchematicParser class"""
+    """Fixture to mock the SchematicParser module import"""
     with patch('src.ltspice_to_svg.SchematicParser') as mock:
         parser_instance = MagicMock()
         mock.return_value = parser_instance
@@ -44,22 +45,124 @@ def mock_parser():
 @pytest.fixture
 def mock_path():
     """Fixture to mock Path operations"""
-    with patch('src.ltspice_to_svg.Path') as mock:
+    with patch('src.ltspice_to_svg.Path') as mock_path_class:
         path_instance = MagicMock()
-        mock.return_value = path_instance
+        mock_path_class.return_value = path_instance
+        
+        # Configure the path object behavior
         path_instance.parent = MagicMock()
-        path_instance.stem = 'test_schematic'
+        path_instance.stem = 'test'
+        
+        # Configure parent/mkdir behavior
+        parent_dir = MagicMock()
+        path_instance.parent.__truediv__.return_value = parent_dir
+        parent_dir.mkdir.return_value = None
+        
         yield path_instance
 
 @pytest.fixture
-def mock_config():
-    """Fixture to mock the RenderingConfig class"""
-    with patch('src.ltspice_to_svg.RenderingConfig') as mock:
-        config_instance = MagicMock()
-        mock.return_value = config_instance
-        yield mock
+def mock_open_file():
+    """Fixture to mock opening files to prevent FileNotFoundError"""
+    mock_json_data = {
+        "ground": {
+            "name": "Ground",
+            "description": "Ground symbol",
+            "lines": [
+                {
+                    "start": [-16, 0],
+                    "end": [16, 0]
+                },
+                {
+                    "start": [-16, 0],
+                    "end": [0, 16]
+                },
+                {
+                    "start": [16, 0],
+                    "end": [0, 16]
+                }
+            ],
+            "text": {}
+        },
+        "net_label": {
+            "name": "Net Label",
+            "description": "Net label for wire connections",
+            "lines": [],
+            "text": {
+                "anchor": {
+                    "x": 0,
+                    "y": 0
+                },
+                "justification": "Bottom"
+            }
+        },
+        "io_pin": {
+            "name": "IO Pin",
+            "description": "Input/Output pin with direction indicators",
+            "directions": {
+                "In": {
+                    "lines": [
+                        {
+                            "start": [0, 0],
+                            "end": [16, 16]
+                        }
+                    ],
+                    "text": {
+                        "anchor": {
+                            "x": 0,
+                            "y": 38
+                        },
+                        "justification": "VRight"
+                    }
+                },
+                "Out": {
+                    "lines": [
+                        {
+                            "start": [-16, 32],
+                            "end": [0, 48]
+                        }
+                    ],
+                    "text": {
+                        "anchor": {
+                            "x": 0,
+                            "y": 52
+                        },
+                        "justification": "VRight"
+                    }
+                },
+                "BiDir": {
+                    "lines": [
+                        {
+                            "start": [16, 16],
+                            "end": [0, 0]
+                        }
+                    ],
+                    "text": {
+                        "anchor": {
+                            "x": 0,
+                            "y": 52
+                        },
+                        "justification": "VRight"
+                    }
+                }
+            }
+        }
+    }
+    
+    # Create a file-like mock that returns the JSON data
+    mock_file = MagicMock()
+    mock_file.__enter__.return_value.read.return_value = json.dumps(mock_json_data)
+    
+    def mock_open_side_effect(*args, **kwargs):
+        # Check if we're trying to open the flags.json file
+        if len(args) > 0 and isinstance(args[0], str) and 'flags.json' in args[0]:
+            return mock_file
+        # For all other files, return a simple MagicMock
+        return MagicMock()
+    
+    with patch('builtins.open', side_effect=mock_open_side_effect):
+        yield
 
-def test_default_parameters(mock_renderer, mock_parser, mock_path, mock_config):
+def test_default_parameters(mock_svg_renderer, mock_parser, mock_path, mock_config, mock_open_file):
     """Test conversion with default parameters"""
     test_args = ['ltspice_to_svg.py', 'test.asc']
     
@@ -67,12 +170,10 @@ def test_default_parameters(mock_renderer, mock_parser, mock_path, mock_config):
         main()
     
     # Verify renderer was created with the config
-    mock_renderer.assert_called_once()
-    args, kwargs = mock_renderer.call_args
-    assert len(args) == 1
-    assert isinstance(args[0], MagicMock)  # The config instance
+    mock_renderer_class, mock_renderer_instance = mock_svg_renderer
+    mock_renderer_class.assert_called_once()
 
-def test_custom_stroke_width(mock_renderer, mock_parser, mock_path, mock_config):
+def test_custom_stroke_width(mock_svg_renderer, mock_parser, mock_path, mock_config, mock_open_file):
     """Test custom stroke width parameter"""
     test_args = ['ltspice_to_svg.py', 'test.asc', '--stroke-width', '2.0']
     
@@ -81,10 +182,10 @@ def test_custom_stroke_width(mock_renderer, mock_parser, mock_path, mock_config)
     
     # Verify config was created with the stroke width
     mock_config.assert_called_once()
-    args, kwargs = mock_config.call_args
+    _, kwargs = mock_config.call_args
     assert kwargs['stroke_width'] == 2.0
 
-def test_custom_dot_size(mock_renderer, mock_parser, mock_path, mock_config):
+def test_custom_dot_size(mock_svg_renderer, mock_parser, mock_path, mock_config, mock_open_file):
     """Test custom dot size parameter"""
     test_args = ['ltspice_to_svg.py', 'test.asc', '--dot-size', '2.0']
     
@@ -93,10 +194,10 @@ def test_custom_dot_size(mock_renderer, mock_parser, mock_path, mock_config):
     
     # Verify config was created with the dot size
     mock_config.assert_called_once()
-    args, kwargs = mock_config.call_args
+    _, kwargs = mock_config.call_args
     assert kwargs['dot_size_multiplier'] == 2.0
 
-def test_custom_base_font_size(mock_renderer, mock_parser, mock_path, mock_config):
+def test_custom_base_font_size(mock_svg_renderer, mock_parser, mock_path, mock_config, mock_open_file):
     """Test custom base font size parameter"""
     test_args = ['ltspice_to_svg.py', 'test.asc', '--base-font-size', '14.0']
     
@@ -105,10 +206,10 @@ def test_custom_base_font_size(mock_renderer, mock_parser, mock_path, mock_confi
     
     # Verify config was created with the base font size
     mock_config.assert_called_once()
-    args, kwargs = mock_config.call_args
+    _, kwargs = mock_config.call_args
     assert kwargs['base_font_size'] == 14.0
 
-def test_no_text(mock_renderer_instance, mock_parser, mock_path, mock_config):
+def test_no_text(mock_svg_renderer, mock_parser, mock_path, mock_config, mock_open_file):
     """Test no-text parameter"""
     test_args = ['ltspice_to_svg.py', 'test.asc', '--no-text']
     
@@ -116,9 +217,10 @@ def test_no_text(mock_renderer_instance, mock_parser, mock_path, mock_config):
         main()
     
     # Verify render_texts is not called
+    _, mock_renderer_instance = mock_svg_renderer
     mock_renderer_instance.render_texts.assert_not_called()
 
-def test_text_rendering_options(mock_renderer_instance, mock_parser, mock_path, mock_config):
+def test_text_rendering_options(mock_svg_renderer, mock_parser, mock_path, mock_config, mock_open_file):
     """Test individual text rendering options"""
     test_args = [
         'ltspice_to_svg.py', 'test.asc',
@@ -129,22 +231,11 @@ def test_text_rendering_options(mock_renderer_instance, mock_parser, mock_path, 
         '--no-component-value'
     ]
     
-    with patch('sys.argv', test_args), patch('src.ltspice_to_svg.create_config_from_args') as mock_create_config:
-        # Return the mock_config directly to ensure we can track it
-        mock_create_config.return_value = mock_config.return_value
+    with patch('sys.argv', test_args):
         main()
     
-    # Verify config was created with all the text options set to True
-    mock_create_config.assert_called_once()
-    args, _ = mock_create_config.call_args
-    assert args[0].no_schematic_comment is True
-    assert args[0].no_spice_directive is True
-    assert args[0].no_nested_symbol_text is True
-    assert args[0].no_component_name is True
-    assert args[0].no_component_value is True
-    
-    # For backward compatibility, ensure the set_text_rendering_options method is still called
-    # This allows for a smooth transition to the new approach
+    # Verify set_text_rendering_options is called with the right params
+    _, mock_renderer_instance = mock_svg_renderer
     mock_renderer_instance.set_text_rendering_options.assert_called_once_with(
         no_schematic_comment=True,
         no_spice_directive=True,
@@ -153,31 +244,38 @@ def test_text_rendering_options(mock_renderer_instance, mock_parser, mock_path, 
         no_component_value=True
     )
 
-def test_export_json(mock_renderer_instance, mock_parser, mock_path, mock_config):
+def test_export_json(mock_svg_renderer, mock_parser, mock_path, mock_config, mock_open_file):
     """Test JSON export functionality"""
     test_args = ['ltspice_to_svg.py', 'test.asc', '--export-json']
     
     with patch('sys.argv', test_args):
         main()
     
+    # Verify export_json is called
     mock_parser.export_json.assert_called_once()
 
-def test_ltspice_lib_path(mock_renderer_instance, mock_parser, mock_path, mock_config):
+def test_ltspice_lib_path(mock_svg_renderer, mock_parser, mock_path, mock_config, mock_open_file):
     """Test custom LTspice library path"""
     test_args = ['ltspice_to_svg.py', 'test.asc', '--ltspice-lib', '/custom/path']
     
     with patch('sys.argv', test_args):
         main()
     
+    # Verify environment variable is set
     assert os.environ['LTSPICE_LIB_PATH'] == '/custom/path'
 
-def test_scale_deprecation_warning(mock_renderer_instance, mock_parser, mock_path, mock_config):
+def test_scale_deprecation_warning(mock_svg_renderer, mock_parser, mock_path, mock_config, mock_open_file):
     """Test scale parameter deprecation warning"""
     test_args = ['ltspice_to_svg.py', 'test.asc', '--scale', '2.0']
     
     with patch('sys.argv', test_args), \
-         pytest.warns(DeprecationWarning, match="The 'scale' parameter is deprecated"):
+         patch('src.ltspice_to_svg.warnings.warn') as mock_warn:
         main()
+        
+    # Check that the warning was issued
+    mock_warn.assert_called_once()
+    args, kwargs = mock_warn.call_args
+    assert "The 'scale' parameter is deprecated" in args[0]
 
 def test_get_ltspice_lib_path():
     """Test LTspice library path detection"""

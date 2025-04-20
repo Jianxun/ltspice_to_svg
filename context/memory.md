@@ -221,3 +221,21 @@ The text rendering architecture consists of:
 - `tests/` - Test cases organized by functionality
 
 The renderer architecture follows a modular design with specialized renderers for different schematic elements, and a configuration system for controlling rendering options.
+
+### Recent Issues
+- **Command Line Tests TypeError**: Fixed an issue in command line tests related to `MagicMock` objects being used where string/bytes/bytearray is expected during JSON loading
+- **FlagRenderer Issue**: The `FlagRenderer` class loads flag definitions from a JSON file, but in the test environment, mocks caused issues with this JSON loading process
+- The error was occurring because the `_load_flag_definitions` method was trying to load a JSON file, but the mock for `open()` was returning a `MagicMock` instead of file content
+
+### Mock Handling for JSON Files
+To fix the issue with MagicMock and JSON loading in the tests:
+1. Identified that the error occurred in the `FlagRenderer._load_flag_definitions` method when trying to call `json.load()` on a MagicMock object
+2. Updated the `mock_open_file` fixture to provide a more sophisticated mock that:
+   - Contains a simplified version of the flag definitions JSON data
+   - Returns the JSON string when `read()` is called on the file handle
+   - Uses a side_effect function to only return the JSON data when the flags.json file is opened
+3. Fixed the import paths in the test mocks:
+   - Changed from mocking specific modules (e.g., 'src.renderers.svg_renderer.SVGRenderer') to mocking at the import level (e.g., 'src.ltspice_to_svg.SVGRenderer')
+   - This ensured that our mocks were actually being used in the test
+
+This approach allows the tests to run without accessing the file system while still providing valid JSON data for the functionality being tested.

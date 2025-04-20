@@ -93,6 +93,17 @@
 - [X] Enhance logging with type-specific details
 - [X] Document text element structure and handling
 
+### [X] Replace direct property access with config.get_option() calls
+- [X] Update SVGRenderer properties to use config.get_option()
+- [X] Modify tests to use the new config interface
+- [X] Ensure backward compatibility with existing API
+
+### [X] Fix TypeError in command line tests
+- [X] Debug the issue with MagicMock in FlagRenderer._load_flag_definitions
+- [X] Refine the mock_open_file fixture to handle JSON file reading properly
+- [X] Update the test to mock the JSON loading process instead of the file open operation
+- [X] Ensure all other tests continue to pass after the fix
+
 ## Next Steps
 
 ### [ ] Extend Configuration Refactoring
