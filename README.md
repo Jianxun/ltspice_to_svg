@@ -15,7 +15,6 @@ A tool to convert LTspice schematics to SVG format, preserving the visual layout
 - Customizable output:
   - Adjustable line width
   - Configurable font size
-  - Customizable scale factor
   - Optional text rendering control
 
 ## Installation
@@ -69,21 +68,23 @@ ltspice_to_svg your_schematic.asc
 
 ### Command Line Options
 
-- `--stroke-width`: Width of lines in the SVG (default: 3.0)
+- `--stroke-width`: Width of lines in the SVG (default: 2.0)
 - `--dot-size`: Size of junction dots relative to stroke width (default: 1.5)
 - `--base-font-size`: Base font size in pixels (default: 16.0)
 - `--export-json`: Export intermediate JSON files for debugging
 - `--ltspice-lib`: Path to LTspice symbol library (overrides system default)
-- `--no-text`: Skip rendering all text elements
+- `--no-text`: Master switch to disable ALL text rendering (equivalent to enabling all other text options)
 - `--no-schematic-comment`: Skip rendering schematic comments
 - `--no-spice-directive`: Skip rendering SPICE directives
 - `--no-nested-symbol-text`: Skip rendering nested symbol text
 - `--no-component-name`: Skip rendering component names
 - `--no-component-value`: Skip rendering component values
+- `--no-net-label`: Skip rendering net label flags
+- `--no-pin-name`: Skip rendering I/O pin text while keeping the pin shapes
 
 Example with options:
 ```bash
-./ltspice_to_svg.sh your_schematic.asc --stroke-width 2.0 --base-font-size 14.0
+./ltspice_to_svg.sh ./schematics/miller_ota.asc --stroke-width 3.0 --no-component-value
 ```
 
 ### Environment Variables
@@ -116,9 +117,19 @@ Example with options:
 python src/ltspice_to_svg.py examples/basic_rc.asc
 ```
 
-### Complex Circuit
+### Circuit Without Text
 ```bash
-python src/ltspice_to_svg.py examples/opamp_circuit.asc --stroke-width 2.0 --font-size 12.0
+python src/ltspice_to_svg.py examples/opamp_circuit.asc --no-text
+```
+
+### Circuit With Custom Styling
+```bash
+python src/ltspice_to_svg.py examples/opamp_circuit.asc --stroke-width 1.5 --base-font-size 14.0
+```
+
+### Circuit Without Net Labels
+```bash
+python src/ltspice_to_svg.py examples/opamp_circuit.asc --no-net-label --no-pin-name
 ```
 
 ## Output
