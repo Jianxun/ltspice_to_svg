@@ -147,7 +147,6 @@ These tests verify that:
     - `--no-pin-name`: Skip rendering I/O pin text while keeping pin shapes
   - `--export-json`: Export intermediate JSON files
   - `--ltspice-lib`: Path to LTspice symbol library
-  - `--scale`: Scale factor for coordinates (deprecated)
 
 ### Command Line Option Details
 - **Input/Output**

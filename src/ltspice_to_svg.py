@@ -3,7 +3,6 @@ Main script to convert LTspice schematics to SVG format.
 """
 import os
 import platform
-import warnings
 from pathlib import Path
 from src.parsers.schematic_parser import SchematicParser
 from src.renderers.svg_renderer import SVGRenderer
@@ -61,12 +60,10 @@ def main():
     
     parser = argparse.ArgumentParser(description="Convert LTspice schematic to SVG")
     parser.add_argument("asc_file", help="Path to the .asc schematic file")
-    parser.add_argument("--stroke-width", type=float, default=3.0,
-                      help="Width of lines in the SVG (default: 3.0)")
+    parser.add_argument("--stroke-width", type=float, default=2.0,
+                      help="Width of lines in the SVG (default: 2.0)")
     parser.add_argument("--dot-size", type=float, default=1.5,
                       help="Size of junction dots relative to stroke width (default: 1.5)")
-    parser.add_argument("--scale", type=float, default=1.0,
-                      help="Scale factor for coordinates (default: 1.0) - DEPRECATED")
     parser.add_argument("--base-font-size", type=float, default=16.0,
                       help="Base font size in pixels (default: 16.0)")
     parser.add_argument("--export-json", action="store_true",
@@ -164,14 +161,6 @@ def main():
     
     # Save the SVG
     renderer.save()
-    
-    # Print warnings for deprecated parameters
-    if args.scale != 1.0:
-        warnings.warn(
-            "The 'scale' parameter is deprecated and will be removed in a future version. "
-            "Use SVG viewBox or CSS transforms for scaling instead.",
-            DeprecationWarning
-        )
 
 if __name__ == "__main__":
     main() 

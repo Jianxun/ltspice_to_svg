@@ -132,6 +132,14 @@
 - [X] Update the help text and documentation to clarify this option is a master switch
 - [X] Run tests to ensure no regressions
 
+### [X] Remove deprecated --scale option
+- [X] Remove the --scale argument from the command line parser
+- [X] Remove the deprecation warning code
+- [X] Remove the warnings import since it's no longer needed
+- [X] Delete the test_scale_deprecation_warning test
+- [X] Update documentation to remove references to the scale option
+- [X] Run tests to verify no regressions
+
 ## Next Steps
 
 ### [ ] Extend Configuration Refactoring

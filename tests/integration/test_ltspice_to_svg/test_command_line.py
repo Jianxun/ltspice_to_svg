@@ -284,19 +284,6 @@ def test_ltspice_lib_path(mock_svg_renderer, mock_parser, mock_path, mock_config
     # Verify environment variable is set
     assert os.environ['LTSPICE_LIB_PATH'] == '/custom/path'
 
-def test_scale_deprecation_warning(mock_svg_renderer, mock_parser, mock_path, mock_config, mock_open_file):
-    """Test scale parameter deprecation warning"""
-    test_args = ['ltspice_to_svg.py', 'test.asc', '--scale', '2.0']
-    
-    with patch('sys.argv', test_args), \
-         patch('src.ltspice_to_svg.warnings.warn') as mock_warn:
-        main()
-        
-    # Check that the warning was issued
-    mock_warn.assert_called_once()
-    args, kwargs = mock_warn.call_args
-    assert "The 'scale' parameter is deprecated" in args[0]
-
 def test_get_ltspice_lib_path():
     """Test LTspice library path detection"""
     with patch('platform.system', return_value='Darwin'), \
