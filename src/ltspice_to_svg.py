@@ -46,7 +46,8 @@ def create_config_from_args(args):
         "no_nested_symbol_text": args.no_nested_symbol_text,
         "no_component_name": args.no_component_name,
         "no_component_value": args.no_component_value,
-        "no_net_label": args.no_net_label
+        "no_net_label": args.no_net_label,
+        "no_pin_name": args.no_pin_name
     }
     
     # Create the config object
@@ -86,6 +87,8 @@ def main():
                       help="Skip rendering component values")
     parser.add_argument("--no-net-label", action="store_true",
                       help="Skip rendering net label flags")
+    parser.add_argument("--no-pin-name", action="store_true",
+                      help="Skip rendering I/O pin text while keeping the pin shapes")
     
     args = parser.parse_args()
     
@@ -132,7 +135,8 @@ def main():
         "no_nested_symbol_text": args.no_nested_symbol_text,
         "no_component_name": args.no_component_name,
         "no_component_value": args.no_component_value,
-        "no_net_label": args.no_net_label
+        "no_net_label": args.no_net_label,
+        "no_pin_name": args.no_pin_name
     }
     # Only call if at least one option is True to avoid unnecessary calls
     if any(text_options.values()):

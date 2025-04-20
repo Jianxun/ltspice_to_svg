@@ -143,8 +143,50 @@ These tests verify that:
     - `--no-nested-symbol-text`: Skip nested symbol text
     - `--no-component-name`: Skip component names
     - `--no-component-value`: Skip component values
+    - `--no-net-label`: Skip rendering net label flags
+    - `--no-pin-name`: Skip rendering I/O pin text while keeping pin shapes
   - `--export-json`: Export intermediate JSON files
   - `--ltspice-lib`: Path to LTspice symbol library
+  - `--scale`: Scale factor for coordinates (deprecated)
+
+### Command Line Option Details
+- **Input/Output**
+  - Positional argument 1: Path to input `.asc` schematic file
+  - Output SVG is created in the same directory with the same base name
+- **Styling Options**
+  - `--stroke-width`: Controls the thickness of all lines (default: 3.0)
+  - `--dot-size`: Size of junction dots relative to stroke width (default: 1.5)
+  - `--base-font-size`: Base size for all text elements (default: 16.0)
+- **Text Rendering Control**
+  - `--no-text`: Disables rendering of ALL text elements
+  - `--no-schematic-comment`: Skips rendering comment texts in schematic
+  - `--no-spice-directive`: Skips rendering SPICE directive texts (starting with '.')
+  - `--no-nested-symbol-text`: Skips rendering text elements inside symbols
+  - `--no-component-name`: Skips rendering component names (e.g., "R1", "C3")
+  - `--no-component-value`: Skips rendering component values (e.g., "1k", "10µF")
+  - `--no-net-label`: Skips rendering net label flags while still rendering ground and I/O pins
+  - `--no-pin-name`: Skips rendering I/O pin text while still rendering the pin shapes
+- **Additional Options**
+  - `--export-json`: Creates JSON files of parsed data for debugging
+  - `--ltspice-lib`: Manually specifies LTspice library path (overrides auto-detection)
+
+### Example Usage
+```bash
+# Basic conversion
+python src/ltspice_to_svg.py myschematic.asc
+
+# Control visual style
+python src/ltspice_to_svg.py myschematic.asc --stroke-width 2.0 --base-font-size 14.0
+
+# Disable certain text elements
+python src/ltspice_to_svg.py myschematic.asc --no-schematic-comment --no-net-label
+
+# For documentation with just components and wires
+python src/ltspice_to_svg.py myschematic.asc --no-text
+
+# Disable only pin labels while keeping other text
+python src/ltspice_to_svg.py myschematic.asc --no-pin-name
+```
 
 ## Current Development Status
 
@@ -209,11 +251,13 @@ The SVG renderer provides flexible text rendering with the following features:
 - Multiline text support with proper line spacing
 - Text in window definitions for symbols
 - Selective rendering of net label flags with the --no-net-label option
+- Selective rendering of I/O pin text with the --no-pin-name option
 
 The text rendering architecture consists of:
 1. `SVGRenderer` - High-level control of which texts to render
 2. `TextRenderer` - Detailed positioning and styling of text elements
 3. `SymbolRenderer` - Specialized handling for text in symbols
+4. `FlagRenderer` - Specialized handling for flag text like I/O pin names
 
 ## Architecture
 

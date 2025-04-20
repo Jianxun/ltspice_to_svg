@@ -17,6 +17,7 @@ class RenderingConfig:
         "no_component_name": False,
         "no_component_value": False,
         "no_net_label": False,
+        "no_pin_name": False,
         
         # General rendering options
         "stroke_width": 3.0,
@@ -107,7 +108,8 @@ class RenderingConfig:
             "no_nested_symbol_text",
             "no_component_name",
             "no_component_value",
-            "no_net_label"
+            "no_net_label",
+            "no_pin_name"
         }
         
         # Validate that all provided options are text options
@@ -143,7 +145,8 @@ class RenderingConfig:
             "no_nested_symbol_text",
             "no_component_name",
             "no_component_value",
-            "no_net_label"
+            "no_net_label",
+            "no_pin_name"
         }
         numeric_options = {
             "stroke_width",

@@ -198,51 +198,55 @@ class FlagRenderer(BaseRenderer):
                 stroke_linecap='round'  # Default line cap style
             ))
         
-        # Get text definition for this direction
-        text_def = self._flag_definitions["io_pin"]["directions"][direction]["text"]
-        self.logger.debug(f"  Text definition: {text_def}")
-        
-        # Get anchor point coordinates
-        anchor_x = text_def["anchor"]["x"]
-        anchor_y = text_def["anchor"]["y"]
-        
-        # Calculate text position and justification based on orientation
-        orientation = flag['orientation']
-        if orientation == 0:  # Down
-            text_x = flag['x'] + anchor_x
-            text_y = flag['y'] + anchor_y
-            justification = "VRight"
-        elif orientation == 90:  # Left
-            text_x = flag['x'] - anchor_y
-            text_y = flag['y'] + anchor_x
-            justification = "Right"
-        elif orientation == 180:  # Up
-            text_x = flag['x'] - anchor_x
-            text_y = flag['y'] - anchor_y
-            justification = "VLeft"
-        else:  # 270, Right
-            text_x = flag['x'] + anchor_y
-            text_y = flag['y'] - anchor_x
-            justification = "Left"
+        # Check if we should render the pin name text
+        if self.config.get_option('no_pin_name', False):
+            self.logger.debug("  Skipping I/O pin text due to no_pin_name option")
+        else:
+            # Get text definition for this direction
+            text_def = self._flag_definitions["io_pin"]["directions"][direction]["text"]
+            self.logger.debug(f"  Text definition: {text_def}")
             
-        self.logger.debug(f"  Text position: ({text_x}, {text_y})")
-        self.logger.debug(f"  Text justification: {justification}")
-        
-        # Create text properties for TextRenderer
-        text_properties = {
-            'x': text_x,
-            'y': text_y,
-            'text': flag['net_name'],
-            'justification': justification,
-            'size_multiplier': 2,
-            'type': 'comment',  # IO pin labels are treated as comments
-            'is_mirrored': False  # No mirroring for IO pin labels
-        }
-        self.logger.debug(f"  Text properties: {text_properties}")
-        
-        # Render text directly to the drawing
-        self._text_renderer.render(text_properties, self.dwg)
-        self.logger.debug("  Rendered text using TextRenderer")
+            # Get anchor point coordinates
+            anchor_x = text_def["anchor"]["x"]
+            anchor_y = text_def["anchor"]["y"]
+            
+            # Calculate text position and justification based on orientation
+            orientation = flag['orientation']
+            if orientation == 0:  # Down
+                text_x = flag['x'] + anchor_x
+                text_y = flag['y'] + anchor_y
+                justification = "VRight"
+            elif orientation == 90:  # Left
+                text_x = flag['x'] - anchor_y
+                text_y = flag['y'] + anchor_x
+                justification = "Right"
+            elif orientation == 180:  # Up
+                text_x = flag['x'] - anchor_x
+                text_y = flag['y'] - anchor_y
+                justification = "VLeft"
+            else:  # 270, Right
+                text_x = flag['x'] + anchor_y
+                text_y = flag['y'] - anchor_x
+                justification = "Left"
+                
+            self.logger.debug(f"  Text position: ({text_x}, {text_y})")
+            self.logger.debug(f"  Text justification: {justification}")
+            
+            # Create text properties for TextRenderer
+            text_properties = {
+                'x': text_x,
+                'y': text_y,
+                'text': flag['net_name'],
+                'justification': justification,
+                'size_multiplier': 2,
+                'type': 'comment',  # IO pin labels are treated as comments
+                'is_mirrored': False  # No mirroring for IO pin labels
+            }
+            self.logger.debug(f"  Text properties: {text_properties}")
+            
+            # Render text directly to the drawing
+            self._text_renderer.render(text_properties, self.dwg)
+            self.logger.debug("  Rendered text using TextRenderer")
         
         # Add the shape group to the drawing if no target group was provided
         if target_group is None:

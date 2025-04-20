@@ -111,6 +111,21 @@
 - [X] Add tests to verify the functionality
 - [X] Run all tests to ensure no regressions
 
+### [X] Update CLI definition notes
+- [X] Document the new --no-net-label option in memory.md
+- [X] Ensure all CLI options are properly documented
+- [X] Add clear descriptions for each option category
+- [X] Include usage examples for common scenarios
+
+### [X] Add --no-pin-name option
+- [X] Add command line flag to disable rendering of I/O pin text
+- [X] Update RenderingConfig to support the new option
+- [X] Modify FlagRenderer.render_io_pin to check for the option
+- [X] Update SVGRenderer to track skipped I/O pin text
+- [X] Add tests to verify the functionality
+- [X] Update CLI documentation in memory.md
+- [X] Run all tests to ensure no regressions
+
 ## Next Steps
 
 ### [ ] Extend Configuration Refactoring

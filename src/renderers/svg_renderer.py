@@ -384,11 +384,19 @@ class SVGRenderer(BaseRenderer):
         
         # Count skipped flags
         skipped_counts = {
-            'net_label': 0
+            'net_label': 0,
+            'io_pin_text': 0
         }
         
         # Check if we should skip net labels
         skip_net_labels = self.config.get_option('no_net_label', False)
+        
+        # Check if we should skip I/O pin text
+        skip_pin_names = self.config.get_option('no_pin_name', False)
+        if skip_pin_names:
+            # Pass the config option to the flag renderer
+            flag_renderer.config.set_option('no_pin_name', True)
+            self.logger.debug("I/O pin text rendering disabled")
         
         # Process each flag
         for i, flag in enumerate(flags):
@@ -436,6 +444,10 @@ class SVGRenderer(BaseRenderer):
         for flag_type, count in skipped_counts.items():
             if count > 0:
                 self.logger.info(f"  Skipped {count} {flag_type} flags")
+        
+        # Special handling for pin text since it's not actually skipping the entire flag
+        if skip_pin_names:
+            self.logger.info(f"  Rendered {flag_counts.get('io_pin', 0)} I/O pin flags with text disabled")
         
     def save(self) -> None:
         """Save the SVG drawing to file."""
