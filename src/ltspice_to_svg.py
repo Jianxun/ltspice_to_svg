@@ -154,7 +154,8 @@ def main():
     # Render components
     renderer.render_wires(args.dot_size)
     renderer.render_symbols()
-    renderer.render_texts()
+    if not args.no_text:
+        renderer.render_texts()
     renderer.render_shapes()
     renderer.render_flags()
     
