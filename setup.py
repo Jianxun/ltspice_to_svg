@@ -36,7 +36,7 @@ setup(
     long_description_content_type="text/markdown",
     author="Jianxun Zhu",
     author_email="user@example.com",  # Replace with actual email
-    url="https://github.com/jianxunzhu/ltspice_to_svg",
+    url="https://github.com/Jianxun/ltspice_to_svg",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Science/Research",

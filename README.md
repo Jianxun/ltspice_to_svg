@@ -1,27 +1,46 @@
 # LTspice to SVG Converter
 
-A tool to convert LTspice schematics to SVG format, preserving the visual layout and making it easy to embed in web pages or documentation.
+## Overview
 
-## Features
+This tool translates LTspice (https://www.analog.com/en/resources/design-tools-and-calculators/ltspice-simulator.html) circuit schematics (.asc files) into publication-grade SVG graphics. I created it because I was tired of redrawing circuits in Visio, Illustrator, or PowerPoint for documentation purposes. While these are powerful drawing tools, none of them are as fast or convenient as a dedicated schematic capture tool. This converter was born out of the necessity to generate clean, high-quality schematics that look better than screenshots.
 
-- Converts LTspice schematics (.asc files) to SVG format
-- Preserves all schematic elements:
-  - Wires and connections
-  - Circuit symbols with proper orientation and mirroring
-  - Net labels and flags
-  - IO pins
-  - Text elements
-- Supports both local and LTspice library symbols
-- Customizable output:
-  - Adjustable line width
-  - Configurable font size
-  - Optional text rendering control
+The tool parses all the shapes, components, wires, and texts in an LTspice schematic and renders them into a structured SVG file. It automatically searches for the symbol definition files (.asy) and correctly renders them with proper orientation and mirroring.
+
+This will convert a schematic like this:
+
+![LTspice Miller OTA Schematic](./schematics/miller_ota_schematic.png)
+
+into an SVG file like this:
+
+![Miller OTA SVG Output](./schematics/miller_ota.svg)
+
+The output SVG is perfect for:
+- Publication-quality documentation
+- Web integration with perfect scaling
+- Further editing in vector graphics software
+- Professional presentations and reports
+
+You get full control over the rendering through comprehensive command-line options (see the Usage section below).
 
 ## Installation
 
+### Option 1: Install directly from GitHub (Recommended)
+
+```bash
+pip install git+https://github.com/Jianxun/ltspice_to_svg.git
+```
+
+After installation, you can use the command-line tool from anywhere:
+
+```bash
+ltspice_to_svg your_schematic.asc
+```
+
+### Option 2: Clone the repository and install
+
 1. Clone the repository:
 ```bash
-git clone https://github.com/jianxunzhu/ltspice_to_svg.git
+git clone https://github.com/Jianxun/ltspice_to_svg.git
 cd ltspice_to_svg
 ```
 
@@ -31,122 +50,78 @@ python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-3. Install dependencies:
+3. Install as a development package:
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```
 
-4. Alternatively, install directly from GitHub:
-```bash
-pip install git+https://github.com/jianxunzhu/ltspice_to_svg.git
-```
+## Usage
 
-After installation, you can use the command-line tool:
+### Using the command-line tool (after pip installation)
 
 ```bash
 ltspice_to_svg your_schematic.asc
 ```
 
-See [Installation Guide](docs/installation.md) for more detailed installation options.
+This will generate `your_schematic.svg` in the same directory as your schematic file.
 
-## Usage
+### Alternative methods (if not installed with pip)
 
-There are several ways to run the tool:
-
-### 1. Using the shell script (recommended)
+Using the shell script
 
 ```bash
 ./ltspice_to_svg.sh your_schematic.asc
 ```
 
-This will generate `your_schematic.svg` in the same directory as your schematic file.
-
-### 2. Setting PYTHONPATH manually
-
-```bash
-PYTHONPATH=$PYTHONPATH:$(pwd) python src/ltspice_to_svg.py your_schematic.asc
-```
-
-### 3. Installing as a package
-
-```bash
-pip install -e .
-ltspice_to_svg your_schematic.asc
-```
-
 ### Command Line Options
 
+#### Basic Options
 - `--stroke-width`: Width of lines in the SVG (default: 2.0)
 - `--dot-size`: Size of junction dots relative to stroke width (default: 1.5)
 - `--base-font-size`: Base font size in pixels (default: 16.0)
-- `--export-json`: Export intermediate JSON files for debugging
-- `--ltspice-lib`: Path to LTspice symbol library (overrides system default)
-- `--no-text`: Master switch to disable ALL text rendering (equivalent to enabling all other text options)
+
+#### Text Rendering Options
+- `--no-text`: Master switch to disable ALL text rendering
 - `--no-schematic-comment`: Skip rendering schematic comments
 - `--no-spice-directive`: Skip rendering SPICE directives
-- `--no-nested-symbol-text`: Skip rendering nested symbol text
-- `--no-component-name`: Skip rendering component names
-- `--no-component-value`: Skip rendering component values
+- `--no-nested-symbol-text`: Skip rendering text inside symbols
+- `--no-component-name`: Skip rendering component names (R1, C1, etc.)
+- `--no-component-value`: Skip rendering component values (10k, 1uF, etc.)
 - `--no-net-label`: Skip rendering net label flags
 - `--no-pin-name`: Skip rendering I/O pin text while keeping the pin shapes
 
-Example with options:
+#### File Options
+- `--export-json`: Export intermediate JSON files for debugging
+- `--ltspice-lib`: Path to LTspice symbol library (overrides system default)
+
+#### Example Commands
+
+Basic usage:
 ```bash
-./ltspice_to_svg.sh ./schematics/miller_ota.asc --stroke-width 3.0 --no-component-value
+ltspice_to_svg ./your_circuit.asc
 ```
 
-### Environment Variables
-
-- `LTSPICE_LIB_PATH`: Path to LTspice symbol library
-
-  On macOS:
-  ```bash
-  export LTSPICE_LIB_PATH="/Users/$USER/Library/Application Support/LTspice/lib/sym"
-  ```
-
-  On Windows:
-  
-  CMD:
-  ```cmd
-  set LTSPICE_LIB_PATH="C:\Users\%USERNAME%\AppData\Local\LTspice\lib\sym"
-  ```
-  
-  PowerShell:
-  ```powershell
-  $env:LTSPICE_LIB_PATH="C:\Users\$env:USERNAME\AppData\Local\LTspice\lib\sym"
-  ```
-
-  Note: You can also use the `--ltspice-lib` command line option to override this setting.
-
-## Examples
-
-### Basic Schematic
+Clean schematic without component values or SPICE directives:
 ```bash
-python src/ltspice_to_svg.py examples/basic_rc.asc
+ltspice_to_svg ./schematics/miller_ota.asc --stroke-width 3.0 --no-component-value --no-spice-directive
 ```
 
-### Circuit Without Text
+Documentation-ready schematic with custom styling:
 ```bash
-python src/ltspice_to_svg.py examples/opamp_circuit.asc --no-text
+ltspice_to_svg ./your_circuit.asc --stroke-width 1.5 --base-font-size 14.0 --no-spice-directive
 ```
 
-### Circuit With Custom Styling
+Circuit diagram without any text elements:
 ```bash
-python src/ltspice_to_svg.py examples/opamp_circuit.asc --stroke-width 1.5 --base-font-size 14.0
+ltspice_to_svg ./your_circuit.asc --no-text
 ```
 
-### Circuit Without Net Labels
-```bash
-python src/ltspice_to_svg.py examples/opamp_circuit.asc --no-net-label --no-pin-name
-```
+## Post-Processing in Vector Graphics Editors
 
-## Output
+One of the advantages of generating SVG files is the ability to further refine them in vector graphics editors. The SVGs produced by this tool are structured logically with groups for different element types, making them easy to work with in editors like:
 
-The tool generates an SVG file that:
-- Maintains the original schematic layout
-- Uses standard SVG elements for easy embedding
-- Preserves text readability with proper orientation
-- Supports high-resolution display
+- **Adobe Illustrator**: Professional industry standard
+- **Inkscape**: Powerful free and open-source alternative
 
 ## Contributing
 
