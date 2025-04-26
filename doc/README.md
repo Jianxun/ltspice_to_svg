@@ -1,68 +1,58 @@
-# LTspice to SVG Converter
+# LTspice to SVG Documentation
 
-A tool to convert LTspice schematic files (.asc) and symbol files (.asy) to SVG format.
+This directory contains comprehensive documentation for the LTspice to SVG converter project.
 
-## Overview
+## Documentation Index
 
-This tool converts LTspice schematic and symbol files to SVG format, preserving:
-- Component symbols and their connections
-- Text labels and net names
-- Wire styles (solid, dashed, dotted)
-- Component rotations and mirroring
-- Text orientations and alignments
+### Core Documentation
+- [Architecture Overview](architecture.md) - High-level system design and components
+- [API Documentation](api.md) - Detailed API reference and usage
+- [User Guide](user_guide.md) - How to use the tool
+- [Development Guide](development.md) - How to contribute to the project
 
-## Project Structure
+## Quick Links
 
-```
-src/
-├── generators/           # SVG generation components
-│   ├── svg_generator.py  # Main SVG generation coordinator
-│   ├── shape_renderer.py # Shape rendering (wires, lines, circles, etc.)
-│   ├── text_renderer.py  # Text element rendering
-│   ├── flag_renderer.py  # Flag rendering
-│   ├── io_pin_renderer.py # IO pin rendering
-│   ├── symbol_renderer.py # Symbol rendering
-│   └── net_label_renderer.py # Net label rendering
-├── parsers/             # LTspice file parsing components
-│   ├── asc_parser.py    # Schematic (.asc) file parser
-│   ├── asy_parser.py    # Symbol (.asy) file parser
-│   └── shape_parser.py  # Shape element parser
-└── ltspice_to_svg.py    # Main entry point
-```
+### For Users
+- [Installation](user_guide.md#installation)
+- [Basic Usage](user_guide.md#basic-usage)
+- [Command Line Options](user_guide.md#command-line-options)
+- [Troubleshooting](user_guide.md#troubleshooting)
 
-## Documentation
+### For Developers
+- [Project Structure](development.md#project-structure)
+- [Development Setup](development.md#development-setup)
+- [Coding Standards](development.md#coding-standards)
+- [Adding New Features](development.md#adding-new-features)
 
-- [Development Guide](development.md) - Development guidelines and workflow
-- [Architecture](architecture.md) - Detailed architecture and component design
-- [Implementation](implementation.md) - Implementation details and technical notes
-- [Testing](testing.md) - Test strategies and coverage
-- [Lessons Learned](lessons.md) - Project-specific lessons and best practices
+### For Contributors
+- [Contributing Guidelines](development.md#contributing-guidelines)
+- [Release Process](development.md#release-process)
+- [Maintenance](development.md#maintenance)
 
-## Usage
+## Documentation Updates
 
-Basic usage:
-```bash
-python ./src/ltspice_to_svg.py input.asc --scale 1.0
-```
+The documentation is maintained alongside the codebase. When making changes to the code:
 
-Options:
-- `--scale`: Coordinate scaling factor (default: 0.1)
-- `--output`: Output SVG file path (default: input.svg)
-- `--export-json`: Export debug data to JSON file
-- `--no-text`: Skip rendering all text elements
-- `--no-symbol-text`: Skip rendering symbol text elements only
+1. Update the relevant documentation files
+2. Follow the documentation standards
+3. Include examples where appropriate
+4. Update the index if adding new documentation
 
-## Environment Setup
+## Getting Help
 
-Set the LTspice symbol library path:
-```bash
-export LTSPICE_LIB_PATH="/Users/$USER/Library/Application Support/LTspice/lib/sym"
-```
+If you need help with the project:
 
-## Development
+1. Check the [User Guide](user_guide.md) for common issues
+2. Review the [Troubleshooting](user_guide.md#troubleshooting) section
+3. Open an issue on GitHub
+4. Contact the maintainers
 
-See the [Development Guide](development.md) for setup and contribution guidelines.
+## Contributing to Documentation
 
-## Testing
+We welcome contributions to the documentation. Please:
 
-See the [Testing Guide](testing.md) for test strategies and coverage information. 
+1. Follow the existing documentation style
+2. Use clear and concise language
+3. Include examples where appropriate
+4. Update the index when adding new documentation
+5. Submit a pull request with your changes 

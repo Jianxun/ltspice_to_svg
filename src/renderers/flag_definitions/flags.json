@@ -1,0 +1,140 @@
+{
+    "ground": {
+        "name": "Ground",
+        "description": "Ground symbol",
+        "lines": [
+            {
+                "start": [-16, 0],
+                "end": [16, 0]
+            },
+            {
+                "start": [-16, 0],
+                "end": [0, 16]
+            },
+            {
+                "start": [16, 0],
+                "end": [0, 16]
+            }
+        ],
+        "text": {}
+    },
+    "net_label": {
+        "name": "Net Label",
+        "description": "Net label for wire connections",
+        "lines": [],
+        "text": {
+            "anchor": {
+                "x": 0,
+                "y": 0
+            },
+            "justification": "Bottom"
+        }
+    },
+    "io_pin": {
+        "name": "IO Pin",
+        "description": "Input/Output pin with direction indicators",
+        "directions": {
+            "In": {
+                "lines": [
+                    {
+                        "start": [0, 0],
+                        "end": [16, 16]
+                    },
+                    {
+                        "start": [16, 16],
+                        "end": [16, 32]
+                    },
+                    {
+                        "start": [16, 32],
+                        "end": [-16, 32]
+                    },
+                    {
+                        "start": [-16, 32],
+                        "end": [-16, 16]
+                    },
+                    {
+                        "start": [-16, 16],
+                        "end": [0, 0]
+                    }
+                ],
+                "text": {
+                    "anchor": {
+                        "x": 0,
+                        "y": 38
+                    },
+                    "justification": "VRight"
+                }
+            },
+            "Out": {
+                "lines": [
+                    {
+                        "start": [-16, 32],
+                        "end": [0, 48]
+                    },
+                    {
+                        "start": [16, 16],
+                        "end": [16, 32]
+                    },
+                    {
+                        "start": [16, 16],
+                        "end": [-16, 16]
+                    },
+                    {
+                        "start": [-16, 32],
+                        "end": [-16, 16]
+                    },
+                    {
+                        "start": [0, 48],
+                        "end": [16, 32]
+                    },
+                    {
+                        "start": [0, 16],
+                        "end": [0, 0]
+                    }
+                ],
+                "text": {
+                    "anchor": {
+                        "x": 0,
+                        "y": 52
+                    },
+                    "justification": "VRight"
+                }
+            },
+            "BiDir": {
+                "lines": [
+                    {
+                        "start": [16, 16],
+                        "end": [0, 0]
+                    },
+                    {
+                        "start": [-16, 32],
+                        "end": [-16, 16]
+                    },
+                    {
+                        "start": [16, 16],
+                        "end": [16, 32]
+                    },
+                    {
+                        "start": [0, 0],
+                        "end": [-16, 16]
+                    },
+                    {
+                        "start": [0, 48],
+                        "end": [-16, 32]
+                    },
+                    {
+                        "start": [0, 48],
+                        "end": [16, 32]
+                    }
+                ],
+                "text": {
+                    "anchor": {
+                        "x": 0,
+                        "y": 52
+                    },
+                    "justification": "VRight"
+                }
+            }
+        }
+    }
+} 

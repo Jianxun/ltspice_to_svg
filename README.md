@@ -15,14 +15,13 @@ A tool to convert LTspice schematics to SVG format, preserving the visual layout
 - Customizable output:
   - Adjustable line width
   - Configurable font size
-  - Customizable scale factor
   - Optional text rendering control
 
 ## Installation
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/ltspice_to_svg.git
+git clone https://github.com/jianxunzhu/ltspice_to_svg.git
 cd ltspice_to_svg
 ```
 
@@ -37,28 +36,63 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+4. Alternatively, install directly from GitHub:
+```bash
+pip install git+https://github.com/jianxunzhu/ltspice_to_svg.git
+```
+
+After installation, you can use the command-line tool:
+
+```bash
+ltspice_to_svg your_schematic.asc
+```
+
+See [Installation Guide](docs/installation.md) for more detailed installation options.
+
 ## Usage
 
-Basic usage:
+There are several ways to run the tool:
+
+### 1. Using the shell script (recommended)
+
 ```bash
-python src/ltspice_to_svg.py your_schematic.asc
+./ltspice_to_svg.sh your_schematic.asc
 ```
 
 This will generate `your_schematic.svg` in the same directory as your schematic file.
 
+### 2. Setting PYTHONPATH manually
+
+```bash
+PYTHONPATH=$PYTHONPATH:$(pwd) python src/ltspice_to_svg.py your_schematic.asc
+```
+
+### 3. Installing as a package
+
+```bash
+pip install -e .
+ltspice_to_svg your_schematic.asc
+```
+
 ### Command Line Options
 
-- `--stroke-width`: Width of lines in the SVG (default: 3.0)
+- `--stroke-width`: Width of lines in the SVG (default: 2.0)
 - `--dot-size`: Size of junction dots relative to stroke width (default: 1.5)
-- `--scale`: Scale factor for coordinates (default: 1.0)
-- `--font-size`: Font size in pixels (default: 16.0)
-- `--ltspice-lib`: Path to LTspice symbol library (overrides LTSPICE_LIB_PATH)
-- `--no-text`: Skip rendering text elements
-- `--no-symbol-text`: Skip rendering symbol text elements
+- `--base-font-size`: Base font size in pixels (default: 16.0)
+- `--export-json`: Export intermediate JSON files for debugging
+- `--ltspice-lib`: Path to LTspice symbol library (overrides system default)
+- `--no-text`: Master switch to disable ALL text rendering (equivalent to enabling all other text options)
+- `--no-schematic-comment`: Skip rendering schematic comments
+- `--no-spice-directive`: Skip rendering SPICE directives
+- `--no-nested-symbol-text`: Skip rendering nested symbol text
+- `--no-component-name`: Skip rendering component names
+- `--no-component-value`: Skip rendering component values
+- `--no-net-label`: Skip rendering net label flags
+- `--no-pin-name`: Skip rendering I/O pin text while keeping the pin shapes
 
 Example with options:
 ```bash
-python src/ltspice_to_svg.py your_schematic.asc --stroke-width 2.0 --font-size 14.0 --scale 1.2
+./ltspice_to_svg.sh ./schematics/miller_ota.asc --stroke-width 3.0 --no-component-value
 ```
 
 ### Environment Variables
@@ -91,9 +125,19 @@ python src/ltspice_to_svg.py your_schematic.asc --stroke-width 2.0 --font-size 1
 python src/ltspice_to_svg.py examples/basic_rc.asc
 ```
 
-### Complex Circuit
+### Circuit Without Text
 ```bash
-python src/ltspice_to_svg.py examples/opamp_circuit.asc --stroke-width 2.0 --font-size 12.0
+python src/ltspice_to_svg.py examples/opamp_circuit.asc --no-text
+```
+
+### Circuit With Custom Styling
+```bash
+python src/ltspice_to_svg.py examples/opamp_circuit.asc --stroke-width 1.5 --base-font-size 14.0
+```
+
+### Circuit Without Net Labels
+```bash
+python src/ltspice_to_svg.py examples/opamp_circuit.asc --no-net-label --no-pin-name
 ```
 
 ## Output

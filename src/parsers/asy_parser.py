@@ -12,7 +12,7 @@ class ASYParser:
         self.circles: List[Dict[str, any]] = []
         self.rectangles: List[Dict[str, any]] = []
         self.arcs: List[Dict[str, any]] = []
-        self.windows: List[Dict[str, any]] = []
+        self.windows: Dict[str, Dict[str, any]] = {}  # Changed from List to Dict
         self.texts: List[Dict[str, any]] = []  # Add texts list
         self._parsed_data: Dict[str, any] = None  # Cache for parsed data
 
@@ -65,9 +65,9 @@ class ASYParser:
                     if shape_data:
                         self.arcs.append(shape_data)
                 elif first_word == 'WINDOW':
-                    window_data = self._parse_window(line)
-                    if window_data:
-                        self.windows.append(window_data)
+                    property_id, window_data = self._parse_window(line)
+                    if property_id is not None and window_data is not None:
+                        self.windows[property_id] = window_data
                 elif first_word == 'TEXT':
                     text_data = self._parse_text(line)
                     if text_data:
@@ -79,24 +79,26 @@ class ASYParser:
             'circles': self.circles,
             'rectangles': self.rectangles,
             'arcs': self.arcs,
-            'windows': self.windows,
-            'texts': self.texts  # Add texts to output
+            'windows': self.windows,  # Now a dictionary with property_id keys
+            'texts': self.texts
         }
         return self._parsed_data
 
-    def _parse_window(self, line: str) -> Dict:
+    def _parse_window(self, line: str) -> Tuple[str, Dict]:
         """Parse a WINDOW entry and extract properties.
         Format: WINDOW property_id x y justification [size_multiplier]
+        
+        Returns:
+            Tuple of (property_id as string, window data dict) or (None, None) if parsing fails
         """
         parts = line.split()
         if len(parts) >= 5:  # WINDOW + property_id + x + y + justification
             try:
-                property_id = int(parts[1])
+                property_id = str(int(parts[1]))  # Convert to string for use as dict key
                 x = int(parts[2])
                 y = int(parts[3])
                 justification = parts[4]
                 window_data = {
-                    'property_id': property_id,
                     'x': x,
                     'y': y,
                     'justification': justification
@@ -108,10 +110,10 @@ class ASYParser:
                         window_data['size_multiplier'] = size_multiplier
                     except ValueError:
                         pass
-                return window_data
+                return property_id, window_data
             except ValueError:
                 pass
-        return None
+        return None, None
 
     def _parse_text(self, line: str) -> Dict:
         """Parse a TEXT entry and extract properties.

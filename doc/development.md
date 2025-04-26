@@ -1,16 +1,39 @@
 # Development Guide
 
-This document provides guidelines for contributing to the LTspice to SVG converter project.
+## Project Structure
 
-## Setting Up Development Environment
-
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/ltspice_to_svg.git
-cd ltspice_to_svg
+```
+ltspice_to_svg/
+├── src/
+│   ├── parsers/
+│   │   ├── asc_parser.py
+│   │   ├── asy_parser.py
+│   │   ├── schematic_parser.py
+│   │   └── shape_parser.py
+│   ├── renderers/
+│   │   ├── base_renderer.py
+│   │   ├── flag_renderer.py
+│   │   ├── shape_renderer.py
+│   │   ├── symbol_renderer.py
+│   │   ├── svg_renderer.py
+│   │   ├── text_renderer.py
+│   │   └── wire_renderer.py
+│   └── ltspice_to_svg.py
+├── tests/
+│   └── ...
+├── tools/
+│   └── fix_encoding.py
+└── doc/
+    ├── architecture.md
+    ├── api.md
+    ├── user_guide.md
+    └── development.md
 ```
 
-2. Create and activate a virtual environment:
+## Development Setup
+
+1. Fork and clone the repository
+2. Create a virtual environment:
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
@@ -19,152 +42,156 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 3. Install development dependencies:
 ```bash
 pip install -r requirements.txt
-pip install pytest pytest-cov black mypy
+pip install -r requirements-dev.txt  # For development tools
 ```
 
-## Development Guidelines
+4. Install pre-commit hooks:
+```bash
+pre-commit install
+```
 
-### 1. Modularity
-- Each renderer has a single responsibility
-- Pure functions with explicit parameters
-- Minimal dependencies between components
+## Coding Standards
 
-### 2. Configuration
-- Centralize configuration in SVGGenerator
-- Pass configuration explicitly to renderers
-- Avoid hardcoded values
+### Python Style
 
-### 3. Debug Support
-- Include debug logging where appropriate
-- Export debug data for troubleshooting
-- Maintain clear error messages
-
-### 4. Code Style
 - Follow PEP 8 guidelines
-- Use type hints
-- Document public interfaces
-- Keep functions focused and small
+- Use type hints for all function parameters and return values
+- Document all public functions and classes with docstrings
+- Keep functions focused and single-purpose
+- Use meaningful variable and function names
 
-### 5. File Handling
+### Documentation
 
-#### LTspice File Encoding
+- Update documentation when making changes
+- Include examples in docstrings
+- Document any breaking changes
+- Keep the architecture document up to date
 
-When working with LTspice files (.asc and .asy):
-1. Always use proper encoding handling (UTF-16LE without BOM for special characters)
-2. Never modify files directly unless explicitly requested
-3. If a file becomes corrupted, use the normalization tool:
-   ```bash
-   ./tools/normalize_encoding.py <file_path>
-   ```
+### Testing
 
-The normalization tool will:
-- Create backups before making changes
-- Only modify files that need normalization
-- Provide clear feedback about actions taken
+- Write tests for all new features
+- Maintain test coverage above 90%
+- Use pytest fixtures for test setup
+- Group related tests in classes
+- Use descriptive test names
 
-Common scenarios requiring normalization:
-- Files that can't be opened in LTspice
-- Files with special characters in ASCII format
-- Files corrupted by different text editors
-- Files copied from different systems
+## Adding New Features
 
-## Development Workflow
-
-1. Create a feature branch:
+1. Create a new branch:
 ```bash
 git checkout -b feature/your-feature-name
 ```
 
-2. Make your changes following these guidelines:
-   - Use type hints for all function parameters and return values
-   - Add docstrings for all functions and classes
-   - Follow PEP 8 style guidelines
-   - Keep functions focused and modular
-   - Add appropriate error handling
+2. Implement the feature:
+   - Add new parser/renderer if needed
+   - Update existing code
+   - Add tests
+   - Update documentation
 
 3. Run tests:
 ```bash
-python -m pytest tests/
+pytest
 ```
 
-4. Format your code:
+4. Check code style:
 ```bash
-black src/ tests/
+flake8
+mypy .
 ```
 
-5. Run type checking:
-```bash
-mypy src/
-```
+5. Create a pull request
 
-6. Submit a pull request with:
-   - Clear description of changes
-   - Any new dependencies added
-   - Test coverage for new features
-   - Documentation updates if needed
+## Debugging
 
-## Testing Guidelines
+### Common Debugging Tools
 
-### Test Coverage
-- Write unit tests for all new functionality
-- Use pytest fixtures for common test setup
-- Test edge cases and error conditions
-- Maintain test coverage above 80%
+1. **JSON Export**
+   - Use `--export-json` to inspect intermediate data
+   - Check the generated JSON files in the `output` directory
 
-### Test Cases
-Test with various LTspice files:
-- Different symbol types
-- Various rotations and mirrors
-- Complex wire connections
-- Different text alignments and sizes
+2. **Logging**
+   - Use the built-in logging system
+   - Set log level to DEBUG for detailed information
 
-## Documentation
+3. **Test Cases**
+   - Create minimal test cases to reproduce issues
+   - Use pytest's debugging features
 
-### Required Updates
-- Update README.md for user-facing changes
-- Update architecture.md for implementation changes
-- Document any new command-line options
-- Add comments for complex algorithms
-- Include examples for new features
+### Debugging Tips
 
-### Documentation Structure
-```
-doc/
-├── README.md           # High-level overview
-├── development.md      # Development guidelines
-├── architecture.md     # Detailed architecture
-├── implementation.md   # Implementation details
-└── lessons.md         # Project-specific lessons
-```
+1. **Symbol Issues**
+   - Check symbol file encoding
+   - Verify pin definitions
+   - Inspect symbol rendering order
 
-## Future Improvements
+2. **Text Rendering**
+   - Check text positioning calculations
+   - Verify font settings
+   - Inspect text transformation matrices
 
-### 1. Performance
-- Optimize rendering for large schematics
-- Implement caching where beneficial
-- Profile and optimize critical paths
+3. **Performance**
+   - Profile code with cProfile
+   - Check for unnecessary object creation
+   - Optimize rendering loops
 
-### 2. Features
-- Add support for more LTspice elements
-- Improve text rendering quality
-- Enhance symbol handling
+## Release Process
 
-### 3. Testing
-- Add unit tests for each component
-- Implement integration tests
-- Add visual regression tests
+1. Update version number
+2. Update changelog
+3. Run all tests
+4. Create release tag
+5. Build and upload to PyPI
 
-### 4. Documentation
-- Add API documentation
-- Create usage examples
-- Document common issues and solutions
+## Contributing Guidelines
 
-### 5. Export Options
-- PNG export with configurable DPI
-- Dark mode support
-- Custom color schemes
+1. **Pull Requests**
+   - Create feature branches
+   - Include tests
+   - Update documentation
+   - Follow coding standards
 
-### 6. Integration
-- Web interface
-- Batch processing
-- Integration with other EDA tools 
+2. **Issues**
+   - Use the issue template
+   - Provide reproduction steps
+   - Include relevant files
+
+3. **Code Review**
+   - Review code for style and functionality
+   - Check test coverage
+   - Verify documentation updates
+
+## Maintenance
+
+### Regular Tasks
+
+1. **Dependencies**
+   - Update dependencies regularly
+   - Check for security vulnerabilities
+   - Test with new dependency versions
+
+2. **Documentation**
+   - Review and update documentation
+   - Add new examples
+   - Update troubleshooting guides
+
+3. **Testing**
+   - Run full test suite
+   - Update test cases
+   - Check coverage reports
+
+### Performance Optimization
+
+1. **Profiling**
+   - Profile code regularly
+   - Identify bottlenecks
+   - Optimize critical paths
+
+2. **Memory Usage**
+   - Monitor memory usage
+   - Optimize data structures
+   - Clean up resources
+
+3. **Rendering**
+   - Optimize SVG generation
+   - Reduce unnecessary operations
+   - Cache expensive calculations 

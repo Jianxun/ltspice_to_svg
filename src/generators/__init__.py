@@ -1,3 +1,0 @@
-"""
-Generators for output files.
-""" 

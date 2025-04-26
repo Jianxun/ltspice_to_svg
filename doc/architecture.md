@@ -1,6 +1,68 @@
-# Architecture
+# Architecture Overview
 
-This document provides a detailed overview of the LTspice to SVG converter's architecture.
+## System Design
+
+The LTspice to SVG converter is a Python-based tool that converts LTspice schematic files (.asc) to SVG format. The system follows a modular architecture with clear separation of concerns between parsing and rendering components.
+
+### Core Components
+
+1. **Main Module** (`ltspice_to_svg.py`)
+   - Entry point for the application
+   - Handles command-line arguments and configuration
+   - Coordinates the parsing and rendering process
+
+2. **Parsers** (`src/parsers/`)
+   - `schematic_parser.py`: Main parser that coordinates the parsing process
+   - `asc_parser.py`: Parses LTspice schematic files (.asc)
+   - `asy_parser.py`: Parses LTspice symbol files (.asy)
+   - `shape_parser.py`: Handles parsing of geometric shapes
+
+3. **Renderers** (`src/renderers/`)
+   - `svg_renderer.py`: Main renderer that coordinates the SVG generation
+   - `symbol_renderer.py`: Renders schematic symbols
+   - `text_renderer.py`: Handles text rendering
+   - `wire_renderer.py`: Renders wires and connections
+   - `shape_renderer.py`: Renders geometric shapes
+   - `flag_renderer.py`: Renders schematic flags and annotations
+   - `base_renderer.py`: Base class for all renderers
+
+### Data Flow
+
+1. **Input Processing**
+   - LTspice schematic file (.asc) is read
+   - Symbol files (.asy) are loaded as needed
+   - Text encoding is handled appropriately (UTF-16LE)
+
+2. **Parsing**
+   - Schematic elements are parsed into an intermediate representation
+   - Symbols are parsed and stored in a symbol library
+   - Geometric shapes and text are extracted
+
+3. **Rendering**
+   - SVG document is created
+   - Elements are rendered in appropriate order:
+     1. Wires and connections
+     2. Symbols
+     3. Text
+     4. Shapes
+     5. Flags and annotations
+
+### Configuration Options
+
+The system supports various configuration options:
+- Stroke width for lines
+- Dot size multiplier for junctions
+- Scale factor for coordinates
+- Font size for text
+- JSON export for debugging
+- Text rendering toggle
+
+### Error Handling
+
+- File encoding issues are handled gracefully
+- Missing symbol files are reported
+- Invalid schematic elements are logged
+- SVG rendering errors are caught and reported
 
 ## Core Components
 

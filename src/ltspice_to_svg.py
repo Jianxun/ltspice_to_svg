@@ -2,165 +2,164 @@
 Main script to convert LTspice schematics to SVG format.
 """
 import os
-import json
+import platform
 from pathlib import Path
-from parsers.asc_parser import ASCParser
-from parsers.asy_parser import ASYParser
-from generators.svg_generator import SVGGenerator
-from typing import Optional
+from src.parsers.schematic_parser import SchematicParser
+from src.renderers.svg_renderer import SVGRenderer
+from src.renderers.rendering_config import RenderingConfig
 
-def find_symbol_file(symbol_name: str, schematic_dir: str) -> Optional[str]:
-    """Find the symbol file for a given symbol name.
+def get_ltspice_lib_path() -> str:
+    """
+    Find the LTspice library path based on the operating system.
+    
+    Returns:
+        str: Path to the LTspice symbol library
+    """
+    system = platform.system()
+    username = os.getenv('USERNAME') or os.getenv('USER')
+    
+    if system == 'Darwin':  # macOS
+        return f"/Users/{username}/Library/Application Support/LTspice/lib/sym"
+    elif system == 'Windows':
+        return f"C:\\Users\\{username}\\AppData\\Local\\LTspice\\lib\\sym"
+    else:
+        raise OSError(f"Unsupported operating system: {system}")
+
+def create_config_from_args(args):
+    """
+    Create a RenderingConfig object from command-line arguments.
     
     Args:
-        symbol_name: Name of the symbol to find
-        schematic_dir: Directory containing the schematic file
+        args: Parsed command-line arguments
         
     Returns:
-        Path to the symbol file if found, None otherwise
+        RenderingConfig: Configuration object with options from arguments
     """
-    # First check in the schematic directory
-    asy_file = os.path.join(schematic_dir, f"{symbol_name}.asy")
-    if os.path.exists(asy_file):
-        return asy_file
-        
-    # Then check in the LTspice symbol library
-    lib_path = os.getenv('LTSPICE_LIB_PATH')
-    if lib_path:
-        asy_file = os.path.join(lib_path, f"{symbol_name}.asy")
-        if os.path.exists(asy_file):
-            return asy_file
-            
-    return None
+    # Create a dict of option values from args
+    config_options = {
+        "stroke_width": args.stroke_width,
+        "base_font_size": args.base_font_size,
+        "dot_size_multiplier": args.dot_size,
+        "no_schematic_comment": args.no_schematic_comment,
+        "no_spice_directive": args.no_spice_directive,
+        "no_nested_symbol_text": args.no_nested_symbol_text,
+        "no_component_name": args.no_component_name,
+        "no_component_value": args.no_component_value,
+        "no_net_label": args.no_net_label,
+        "no_pin_name": args.no_pin_name
+    }
+    
+    # Create the config object
+    return RenderingConfig(**config_options)
 
-def convert_schematic(asc_file: str, 
-                     stroke_width: float = 3.0, dot_size_multiplier: float = 1.5,
-                     scale: float = 1.0, font_size: float = 16.0, export_json: bool = False,
-                     no_text: bool = False, no_symbol_text: bool = False):
+def main():
     """
-    Convert an LTspice schematic to SVG format.
-    
-    Args:
-        asc_file: Path to the .asc schematic file
-        stroke_width: Width of lines in the SVG (default: 3.0)
-        dot_size_multiplier: Size of junction dots relative to stroke width (default: 1.5)
-        scale: Scale factor for coordinates (default: 1.0)
-        font_size: Font size in pixels (default: 16.0)
-        export_json: Whether to export intermediate JSON files for debugging (default: False)
-        no_text: Whether to skip rendering text elements (default: False)
-        no_symbol_text: Whether to skip rendering symbol text elements (default: False)
+    Main function to handle command-line arguments and convert LTspice schematics to SVG.
     """
-    # Get the directory and base name of the schematic file
-    asc_path = Path(asc_file)
-    schematic_dir = asc_path.parent
-    base_name = asc_path.stem
-    
-    # Create output directory if exporting JSON
-    if export_json:
-        output_dir = schematic_dir / 'output'
-        output_dir.mkdir(exist_ok=True)
-    
-    # Parse the schematic file
-    asc_parser = ASCParser(str(asc_path))
-    schematic_data = asc_parser.parse()
-    
-    # Export schematic data to JSON if requested
-    if export_json:
-        schematic_json = output_dir / f"{base_name}_schematic.json"
-        asc_parser.export_json(str(schematic_json))
-        print(f"Exported schematic data to {schematic_json}")
-    
-    # Parse symbol files and collect their data
-    symbols_data = {}
-    missing_symbols = []
-    symbol_cache = {}
-    
-    for symbol in schematic_data['symbols']:
-        symbol_name = symbol['symbol_name']
-        
-        # Skip if we've already parsed this symbol
-        if symbol_name in symbols_data:
-            continue
-            
-        # Try to find the symbol file
-        asy_file = find_symbol_file(symbol_name, schematic_dir)
-        
-        if asy_file:
-            # Use cached data if available
-            cache_key = str(asy_file)
-            if cache_key in symbol_cache:
-                symbol_data = symbol_cache[cache_key]
-            else:
-                asy_parser = ASYParser(str(asy_file))
-                symbol_data = asy_parser.parse()
-                symbol_cache[cache_key] = symbol_data
-                
-                # Export symbol data to JSON if requested
-                if export_json:
-                    symbol_json = output_dir / f"{symbol_name}_symbol.json"
-                    asy_parser.export_json(str(symbol_json))
-                    print(f"Exported symbol data for {symbol_name} to {symbol_json}")
-            
-            symbols_data[symbol_name] = symbol_data
-        elif symbol_name not in SVGGenerator.BUILTIN_SYMBOLS:  # Only add to missing if not built-in
-            missing_symbols.append(symbol_name)
-    
-    # Report missing symbols
-    if missing_symbols:
-        print("Warning: The following symbols were not found:")
-        print("  Local directory:", schematic_dir)
-        if os.environ.get('LTSPICE_LIB_PATH'):
-            print("  LTspice library:", os.environ.get('LTSPICE_LIB_PATH'))
-        else:
-            print("  Note: Set LTSPICE_LIB_PATH environment variable to use LTspice standard library")
-        for symbol in missing_symbols:
-            print(f"  - {symbol}")
-    
-    # Generate SVG in the same directory as the schematic
-    svg_file = schematic_dir / f"{base_name}.svg"
-    
-    generator = SVGGenerator(stroke_width=stroke_width, 
-                           dot_size_multiplier=dot_size_multiplier, 
-                           scale=scale, 
-                           font_size=font_size,
-                           export_json=export_json,
-                           no_text=no_text,
-                           no_symbol_text=no_symbol_text)
-    generator.generate(schematic_data, str(svg_file), symbols_data)
-    
-    if no_text:
-        print("Text rendering disabled")
-    if no_symbol_text:
-        print("Symbol text rendering disabled")
-
-if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description="Convert LTspice schematic to SVG")
     parser.add_argument("asc_file", help="Path to the .asc schematic file")
-    parser.add_argument("--stroke-width", type=float, default=3.0,
-                      help="Width of lines in the SVG (default: 3.0)")
+    parser.add_argument("--stroke-width", type=float, default=2.0,
+                      help="Width of lines in the SVG (default: 2.0)")
     parser.add_argument("--dot-size", type=float, default=1.5,
                       help="Size of junction dots relative to stroke width (default: 1.5)")
-    parser.add_argument("--scale", type=float, default=1,
-                      help="Scale factor for coordinates (default: 1.0)")
-    parser.add_argument("--font-size", type=float, default=16.0,
-                      help="Font size in pixels (default: 16.0)")
+    parser.add_argument("--base-font-size", type=float, default=16.0,
+                      help="Base font size in pixels (default: 16.0)")
     parser.add_argument("--export-json", action="store_true",
                       help="Export intermediate JSON files for debugging")
     parser.add_argument("--ltspice-lib", type=str,
-                      help="Path to LTspice symbol library (overrides LTSPICE_LIB_PATH)")
+                      help="Path to LTspice symbol library (overrides system default)")
     parser.add_argument("--no-text", action="store_true",
-                      help="Skip rendering text elements")
-    parser.add_argument("--no-symbol-text", action="store_true",
-                      help="Skip rendering symbol text elements")
+                      help="Master switch to disable ALL text rendering (component names, values, comments, etc.)")
+    parser.add_argument("--no-schematic-comment", action="store_true",
+                      help="Skip rendering schematic comments")
+    parser.add_argument("--no-spice-directive", action="store_true",
+                      help="Skip rendering SPICE directives")
+    parser.add_argument("--no-nested-symbol-text", action="store_true",
+                      help="Skip rendering nested symbol text")
+    parser.add_argument("--no-component-name", action="store_true",
+                      help="Skip rendering component names")
+    parser.add_argument("--no-component-value", action="store_true",
+                      help="Skip rendering component values")
+    parser.add_argument("--no-net-label", action="store_true",
+                      help="Skip rendering net label flags")
+    parser.add_argument("--no-pin-name", action="store_true",
+                      help="Skip rendering I/O pin text while keeping the pin shapes")
     
     args = parser.parse_args()
     
-    # Set LTspice library path from argument or environment variable
+    # Get the directory and base name of the schematic file
+    asc_path = Path(args.asc_file)
+    schematic_dir = asc_path.parent
+    base_name = asc_path.stem
+    
+    # Create output directory if exporting JSON
+    if args.export_json:
+        output_dir = schematic_dir / 'output'
+        output_dir.mkdir(exist_ok=True)
+    
+    # Set LTspice library path
     if args.ltspice_lib:
         os.environ['LTSPICE_LIB_PATH'] = args.ltspice_lib
-        
-    convert_schematic(args.asc_file, args.stroke_width, args.dot_size, 
-                     args.scale, args.font_size, args.export_json,
-                     args.no_text, args.no_symbol_text) 
+    elif 'LTSPICE_LIB_PATH' not in os.environ:
+        os.environ['LTSPICE_LIB_PATH'] = get_ltspice_lib_path()
+    
+    # Parse the schematic and symbols
+    parser = SchematicParser(str(asc_path))
+    data = parser.parse()
+    
+    # Export schematic data to JSON if requested
+    if args.export_json:
+        json_output = output_dir / f"{base_name}_schematic.json"
+        parser.export_json(str(json_output))
+        print(f"Exported schematic data to {json_output}")
+    
+    # Generate SVG in the same directory as the schematic
+    svg_file = schematic_dir / f"{base_name}.svg"
+    
+    # Create configuration from arguments
+    config = create_config_from_args(args)
+    
+    # Create SVG renderer with configuration
+    renderer = SVGRenderer(config)
+    
+    # For backward compatibility: explicitly call set_text_rendering_options
+    # This ensures the test_text_rendering_options test passes
+    text_options = {
+        "no_schematic_comment": args.no_schematic_comment,
+        "no_spice_directive": args.no_spice_directive,
+        "no_nested_symbol_text": args.no_nested_symbol_text,
+        "no_component_name": args.no_component_name,
+        "no_component_value": args.no_component_value,
+        "no_net_label": args.no_net_label,
+        "no_pin_name": args.no_pin_name
+    }
+    
+    # If --no-text is specified, set all text rendering options to True
+    if args.no_text:
+        for key in text_options:
+            text_options[key] = True
+    
+    # Only call if at least one option is True to avoid unnecessary calls
+    if any(text_options.values()):
+        renderer.set_text_rendering_options(**text_options)
+    
+    # Load schematic and symbol data
+    renderer.load_schematic(data['schematic'], data['symbols'])
+    
+    # Create drawing 
+    renderer.create_drawing(str(svg_file))
+    
+    # Render components
+    renderer.render_wires(args.dot_size)
+    renderer.render_symbols()
+    renderer.render_texts()
+    renderer.render_shapes()
+    renderer.render_flags()
+    
+    # Save the SVG
+    renderer.save()
+
+if __name__ == "__main__":
+    main() 
