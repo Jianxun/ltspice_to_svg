@@ -111,3 +111,17 @@ Example on how to invoke the tool
   4. Ensure mocks are targeting the correct import paths used by the code under test
 - This pattern allows tests to run without file system access while providing valid data to json.load()
 
+### Comprehensive Repository Updates
+- When making significant documentation or configuration updates, use `git add .` to include all changes
+- This approach ensures:
+  1. All related changes are committed together (documentation, code, images, etc.)
+  2. Moved files are properly tracked (like images relocated to different directories)
+  3. Configuration changes are applied consistently across the project
+- For improved traceability, still review the full list of changes using `git status` first
+- Use descriptive commit messages that summarize the different categories of changes
+- This approach is particularly useful for:
+  1. Documentation updates that span multiple files
+  2. Project reorganization that moves files between directories
+  3. Configuration changes that affect multiple aspects of the project
+  4. Fixes spanning both code and documentation
+
