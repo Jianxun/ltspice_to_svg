@@ -36,13 +36,23 @@ env/
 .settings/
 
 # Project specific
-.cursorrules
+#.cursorrules
 output/
 .pytest_cache/
 .coverage
 htmlcov/
 commit_msg.txt
 tools/
+*.svg
+
+# Test results
+# Ignore all results folders anywhere in the repository
+**/results/
+# Old specific patterns (keeping for reference but they're now redundant)
+# tests/*/results/*.json
+# tests/*/*/results/*.json
+# tests/*/results/.DS_Store
+# tests/*/*/results/.DS_Store
 
 # OS specific
 .DS_Store

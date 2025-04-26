@@ -1,0 +1,113 @@
+# Instructions
+
+## Project Setup
+
+- Most of our development will be in Python. Use the project-wide virtual environment `venv`. If it doesn't exist, create it.
+- Create a Git repository, create the `.gitignore` and `README.md` files.
+- Setup the context retaining directory and files if they don't exist(see next section)
+
+## Context Retaining
+There are several important files under the `context` folder. 
+Use the files inside it to track the context of our project. We will periodically start a new chat and these files are critical to accurately recover the context.
+
+### Memory 
+There should be a memory file: `context/memory.md`. 
+- The memory file will contain the state of the project, and any notes or relevant details you'd need to remember between chats.
+- Keep the memory up to date based on the project's current state. 
+- Do not annotate task completion in the memory file. It will be tracked in the to-do list (`todo.md`).
+
+
+### To-do list
+Keep track of all your tasks and action items using the `context/todo.md` file.
+
+When you receive a new task, you should:
+- Review the content of the existing tasks.
+- Clear old tasks that are irrelavent or completed. A task is not completed until all its sub-tasks are completed.
+- Add the new task, explain it and plan the steps you need to take to complete the task, add them as sub-tasks. 
+
+You can use todo markers to indicate the progress, e.g.
+[X] Task 1
+[ ] Task 2
+
+## Development Guidelines
+
+You should do task-based and test-driven development. For every task, you should write the tests, implement the code, and run the tests to make sure everything works. Organize all test cases under `/tests/{test name}`, save the test results under `/tests/{test name}/results`
+
+When the tests fail:
+- Troubleshoot and fix all the errors and warnings.
+
+When the tests pass:
+- Update the todo list to reflect the task being completed
+- Update the memory file to reflect the current state of the project
+- Commit the changes to the repository with a descriptive commit message
+- Update the `Lessons` section in the `.cursorrules` file to reflect anything that you've learned while working on the project.
+- Stop and we will open a new chat for the next task
+
+## Tools
+You can create python based tools to aid your operation.
+Save the tools your created under `tools`. Add the instructions on how to invoke the tools in this section
+
+### fix_encoding.py
+A tool to fix the encoding of LTspice files (.asc and .asy) to UTF-16LE without BOM.
+Usage:
+```bash
+python tools/fix_encoding.py <path_to_ltspice_file>
+```
+The tool will:
+1. Try to read the file with UTF-16 encoding first
+2. If that fails, try reading as binary and attempt to decode with various encodings
+3. Write the content back in UTF-16LE without BOM
+
+### Tool1
+Example on how to invoke the tool
+...
+
+
+## Lessons
+
+### Git Workflow
+- Always check repository status (`git status`) before adding files to commit
+- This helps ensure we're only committing the intended changes and nothing else
+- It also helps catch any unexpected changes or files that shouldn't be committed
+
+### Testing with pytest
+- Use pytest fixtures for test setup and teardown
+- Organize test files with clear naming: `test_*.py`
+- Use descriptive test function names: `test_*`
+- Group related tests using classes
+- Use pytest's assert statements for cleaner test code
+- Save test results in dedicated directories under `/tests/{test name}/results`
+- Use pytest's built-in fixtures (e.g., `tmp_path`) for temporary files
+- Leverage pytest's parameterize decorator for testing multiple cases
+- Use pytest's markers for categorizing tests
+- Document test cases clearly with docstrings
+
+### Text Mirroring in SVG
+- When mirroring text in SVG, we need to apply a counter-mirroring transformation to maintain readability
+- The transformation should be applied to a group containing the text element
+- The counter-mirroring transform consists of:
+  1. A scale(-1,1) to flip the text back to normal orientation
+  2. A translate(-2*(x + x_offset),0) to adjust the position after mirroring
+- This approach preserves the text's position while ensuring it remains readable in mirrored symbols
+
+### Key Type Handling in Dictionaries
+- When using dictionary keys that could be represented as either strings or integers, ensure consistent key type handling
+- In our window text overrides bug, window definitions from symbol_def used string keys ('0', '3'), while window overrides in the rendered symbol used integer keys (0, 3)
+- This mismatch caused window overrides to not be applied, even though they were correctly parsed and available
+- The solution includes:
+  1. Convert string keys to integers when possible for comparison
+  2. Always check for both formats when looking up values
+  3. Use a clear indicator (like a boolean flag) to track whether an override was found
+  4. Use detailed logging to track values through the processing pipeline
+- This approach allows for flexible dictionary key handling while maintaining backward compatibility
+
+### Mocking JSON File I/O in Tests
+- When testing code that reads JSON files, simple MagicMock objects won't work for json.load() operations
+- The TypeError "JSON object must be str, bytes or bytearray, not MagicMock" occurs when passing a mock to json.load()
+- Effective approach for mocking JSON files includes:
+  1. Create a simplified version of the expected JSON data in the test
+  2. Configure the mock file object to return this JSON data as a string when read() is called
+  3. Use a side_effect function with builtins.open mock to return the JSON mock only for specific filenames
+  4. Ensure mocks are targeting the correct import paths used by the code under test
+- This pattern allows tests to run without file system access while providing valid data to json.load()
+

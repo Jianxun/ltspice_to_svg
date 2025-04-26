@@ -14,7 +14,6 @@ class ASCParser:
         self.symbols: List[Dict[str, any]] = []
         self.texts: List[Dict[str, any]] = []
         self.flags: List[Dict[str, any]] = []
-        self.io_pins: List[Dict[str, any]] = []
         # Shape lists for internal use
         self._lines: List[Dict[str, any]] = []
         self._circles: List[Dict[str, any]] = []
@@ -23,6 +22,7 @@ class ASCParser:
         self._flag_positions: Set[Tuple[int, int]] = set()  # Track unique flag positions
         self._parsed_data: Dict[str, any] = None  # Cache for parsed data
         self._current_symbol = None  # Track current symbol being parsed
+        self._io_pin_count = 0  # Track number of IO pins for reporting
         
     def parse(self) -> Dict[str, any]:
         """Parse the ASC file and return a dictionary containing wires and symbols."""
@@ -103,7 +103,7 @@ class ASCParser:
                 i += 1  # Make sure we still increment for empty lines
                 
         print(f"Found {len(self.wires)} wires, {len(self.symbols)} symbols, {len(self.texts)} text elements, "
-              f"{len(self.flags)} flags, {len(self.io_pins)} IO pins")
+              f"{len(self.flags)} flags (including {self._io_pin_count} IO pins)")
         if any([self._lines, self._circles, self._rectangles, self._arcs]):
             print(f"Found shapes: {len(self._lines)} lines, {len(self._circles)} circles, "
                   f"{len(self._rectangles)} rectangles, {len(self._arcs)} arcs")
@@ -114,7 +114,6 @@ class ASCParser:
             'symbols': self.symbols,
             'texts': self.texts,
             'flags': self.flags,
-            'io_pins': self.io_pins,
             'shapes': {
                 'lines': self._lines,
                 'circles': self._circles,
@@ -191,13 +190,18 @@ class ASCParser:
                 # Calculate orientation based on connected wires
                 orientation = self._calculate_flag_orientation(x, y)
                 
+                # Check if flag is attached to a single wire end
+                connected_wires = self._get_connected_wires(x, y)
+                attached_to_wire_end = len(connected_wires) == 1
+                
                 # Create flag with type and orientation
                 flag = {
                     'x': x,
                     'y': y,
                     'net_name': net_name,
                     'type': 'gnd' if net_name == '0' else 'net_label',
-                    'orientation': orientation
+                    'orientation': orientation,
+                    'attached_to_wire_end': attached_to_wire_end
                 }
                 self.flags.append(flag)
                 self._flag_positions.add((x, y))
@@ -239,17 +243,23 @@ class ASCParser:
                 # Calculate orientation based on connected wires
                 orientation = self._calculate_flag_orientation(flag_x, flag_y)
                 
-                # Add IO pin with orientation
+                # Check if IO pin is attached to a single wire end
+                connected_wires = self._get_connected_wires(flag_x, flag_y)
+                attached_to_wire_end = len(connected_wires) == 1
+                
+                # Add IO pin as a flag with special type
                 io_pin = {
                     'x': flag_x,
                     'y': flag_y,
                     'net_name': net_name,
                     'direction': direction,
-                    'orientation': orientation
+                    'orientation': orientation,
+                    'attached_to_wire_end': attached_to_wire_end,
+                    'type': 'io_pin'  # Set type to io_pin instead of using separate collection
                 }
-                self.io_pins.append(io_pin)
-                self._flag_positions.add((flag_x, flag_y))  # Track position to avoid duplicates
-                
+                self.flags.append(io_pin)  # Add to flags instead of io_pins
+                self._io_pin_count += 1  # Track count for reporting
+                self._flag_positions.add((flag_x, flag_y))
             except ValueError as e:
                 print(f"Warning: Invalid flag/iopin data in lines: {flag_line} / {iopin_line} - {e}")
     
@@ -309,11 +319,13 @@ class ASCParser:
                     justification = attrs_parts[3]
                     
                     # Extract size index and convert to actual multiplier if available
-                    size_multiplier = size_multipliers[2]  # Default to index 2 (1.5x)
+                    size_index = 2  # Default to index 2 (1.5x)
                     if len(attrs_parts) >= 5:
                         try:
                             size_index = int(attrs_parts[4])
-                            size_multiplier = size_multipliers.get(size_index, size_multipliers[2])
+                            if size_index not in size_multipliers:
+                                print(f"Warning: Invalid size index {size_index} in line: {line}, using default")
+                                size_index = 2
                         except ValueError:
                             print(f"Warning: Invalid size index in line: {line}, using default")
                     
@@ -322,7 +334,7 @@ class ASCParser:
                         'y': y,
                         'justification': justification,
                         'text': content.strip().replace('\\n', '\n'),  # Convert literal \n to newlines
-                        'size_multiplier': size_multiplier,  # Store actual multiplier value
+                        'size_multiplier': size_index,  # Store the size index, not the multiplier value
                         'type': content_type  # Store whether this is a SPICE directive or comment
                     }
                     self.texts.append(text)
@@ -356,7 +368,7 @@ class ASCParser:
                 if len(parts) > 5:
                     try:
                         size_multiplier = int(parts[5])
-                        window_data['size'] = size_multiplier
+                        window_data['size_multiplier'] = size_multiplier
                     except ValueError:
                         pass
                 
@@ -378,9 +390,6 @@ class ASCParser:
         import json
         # Make sure we have parsed data
         parsed_data = self.parse()
-        # Ensure io_pins are included
-        if 'io_pins' not in parsed_data:
-            parsed_data['io_pins'] = self.io_pins
         with open(output_path, 'w') as f:
             json.dump(parsed_data, f, indent=2) 
 
