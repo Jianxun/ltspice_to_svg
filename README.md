@@ -94,28 +94,6 @@ Using the shell script
 - `--export-json`: Export intermediate JSON files for debugging
 - `--ltspice-lib`: Path to LTspice symbol library (overrides system default)
 
-#### Example Commands
-
-Basic usage:
-```bash
-ltspice_to_svg ./your_circuit.asc
-```
-
-Clean schematic without component values or SPICE directives:
-```bash
-ltspice_to_svg ./schematics/miller_ota.asc --stroke-width 3.0 --no-component-value --no-spice-directive
-```
-
-Documentation-ready schematic with custom styling:
-```bash
-ltspice_to_svg ./your_circuit.asc --stroke-width 1.5 --base-font-size 14.0 --no-spice-directive
-```
-
-Circuit diagram without any text elements:
-```bash
-ltspice_to_svg ./your_circuit.asc --no-text
-```
-
 ## Post-Processing in Vector Graphics Editors
 
 One of the advantages of generating SVG files is the ability to further refine them in vector graphics editors. The SVGs produced by this tool are structured logically with groups for different element types, making them easy to work with in editors like:
