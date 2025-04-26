@@ -148,16 +148,22 @@
 - [X] Update examples with relevant use cases
 - [X] Organize examples by common usage patterns
 
-### [ ] Publish package to PyPI Test
-- [ ] Update package metadata in setup.py
-- [ ] Create pyproject.toml for modern Python packaging
-- [ ] Create MANIFEST.in for non-Python files
-- [ ] Build distribution packages
-- [ ] Register on PyPI Test website
-- [ ] Configure PyPI credentials
-- [ ] Upload to PyPI Test
-- [ ] Test installation from PyPI Test
-- [ ] Document the publishing process
+### [X] Publish package to PyPI Test
+- [X] Update package metadata in setup.py
+- [X] Create pyproject.toml for modern Python packaging
+- [X] Create MANIFEST.in for non-Python files
+- [X] Build distribution packages
+- [X] Register on PyPI Test website
+- [X] Configure PyPI credentials
+- [X] Upload to PyPI Test
+- [X] Test installation from PyPI Test
+- [X] Document the publishing process
+
+### [X] Enable GitHub pip installation
+- [X] Update setup.py for proper package discovery
+- [X] Create installation documentation
+- [X] Update README with GitHub installation instructions
+- [X] Test pip installation directly from GitHub
 
 ## Next Steps
 

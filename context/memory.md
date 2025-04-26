@@ -314,3 +314,20 @@ python tools/publish_to_pypi.py --test
 ```
 
 Detailed documentation is available in `docs/publishing.md`.
+
+### GitHub Installation
+
+The package can also be installed directly from GitHub using pip:
+
+```bash
+pip install git+https://github.com/jianxunzhu/ltspice_to_svg.git
+```
+
+The `setup.py` file has been configured to properly discover and include all necessary package files, with the following key settings:
+
+- `packages=find_packages(include=["src", "src.*"])`: Ensures the src directory is correctly identified as a package
+- `package_data={"src": ["renderers/flags.json"]}`: Includes necessary data files
+- `include_package_data=True`: Includes non-Python files from MANIFEST.in
+- `entry_points={"console_scripts": ["ltspice_to_svg=src.ltspice_to_svg:main"]}`: Creates command-line entry point
+
+Detailed installation options are documented in `docs/installation.md`.

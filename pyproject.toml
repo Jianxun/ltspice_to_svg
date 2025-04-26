@@ -7,5 +7,5 @@ name = "ltspice_to_svg"
 description = "Convert LTspice schematics to SVG format"
 readme = "README.md"
 requires-python = ">=3.6"
-license = {text = "MIT"}
-dynamic = ["version"] 
+license = "MIT"
+dynamic = ["version", "dependencies", "classifiers", "keywords", "scripts", "authors"] 

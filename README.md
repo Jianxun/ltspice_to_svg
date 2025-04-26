@@ -21,7 +21,7 @@ A tool to convert LTspice schematics to SVG format, preserving the visual layout
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/ltspice_to_svg.git
+git clone https://github.com/jianxunzhu/ltspice_to_svg.git
 cd ltspice_to_svg
 ```
 
@@ -38,8 +38,16 @@ pip install -r requirements.txt
 
 4. Alternatively, install directly from GitHub:
 ```bash
-pip install git+https://github.com/yourusername/ltspice_to_svg.git
+pip install git+https://github.com/jianxunzhu/ltspice_to_svg.git
 ```
+
+After installation, you can use the command-line tool:
+
+```bash
+ltspice_to_svg your_schematic.asc
+```
+
+See [Installation Guide](docs/installation.md) for more detailed installation options.
 
 ## Usage
 
@@ -109,6 +117,28 @@ Example with options:
   ```
 
   Note: You can also use the `--ltspice-lib` command line option to override this setting.
+
+## Examples
+
+### Basic Schematic
+```bash
+python src/ltspice_to_svg.py examples/basic_rc.asc
+```
+
+### Circuit Without Text
+```bash
+python src/ltspice_to_svg.py examples/opamp_circuit.asc --no-text
+```
+
+### Circuit With Custom Styling
+```bash
+python src/ltspice_to_svg.py examples/opamp_circuit.asc --stroke-width 1.5 --base-font-size 14.0
+```
+
+### Circuit Without Net Labels
+```bash
+python src/ltspice_to_svg.py examples/opamp_circuit.asc --no-net-label --no-pin-name
+```
 
 ## Output
 

@@ -5,12 +5,21 @@ import os
 with open("README.md", encoding="utf-8") as f:
     long_description = f.read()
 
+# All the subpackages
+packages = find_packages(include=["src", "src.*"])
+
+# Ensure 'src.renderers.flag_definitions' is included
+if "src.renderers" not in packages:
+    packages.append("src.renderers")
+if "src.renderers.flag_definitions" not in packages:
+    packages.append("src.renderers.flag_definitions")
+
 setup(
     name="ltspice_to_svg",
     version="0.1.0",
-    packages=find_packages(),
+    packages=packages,
     package_data={
-        "src": ["renderers/flags.json"],
+        "src": ["renderers/flag_definitions/flags.json"],
     },
     include_package_data=True,
     entry_points={
@@ -32,7 +41,6 @@ setup(
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Science/Research",
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
         "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
