@@ -34,6 +34,29 @@ This project is a Python-based tool for converting LTspice schematics to SVG for
   - Base font size for text elements
   - Selective text rendering control
 
+## Current Development
+
+### New Rendering Options
+We're working on adding more rendering control options to enhance the appearance and usability of the generated SVGs:
+
+1. **Viewbox Margin**:
+   - Currently hardcoded to 10% padding in ViewboxCalculator
+   - Will add a configurable margin parameter to control space around schematic elements
+   - Will be accessible via command-line option (--margin)
+   - This allows users to control whitespace around the schematic elements
+
+2. **Font Family**:
+   - Currently using the browser/SVG viewer's default font
+   - Will add option to specify the font family for all text elements
+   - Initially will default to Arial, with plans to support other fonts later
+   - Will be accessible via command-line option (--font-family)
+   - This ensures consistent appearance across different viewing environments
+
+These new options will be integrated into the existing configuration system:
+- Added to RenderingConfig class with appropriate defaults
+- Connected to command-line interface in src/ltspice_to_svg.py
+- Used by relevant renderer components (TextRenderer for fonts, ViewboxCalculator for margins)
+
 ## Recent Improvements
 
 ### Refactoring
@@ -147,15 +170,20 @@ These tests verify that:
     - `--no-pin-name`: Skip rendering I/O pin text while keeping pin shapes
   - `--export-json`: Export intermediate JSON files
   - `--ltspice-lib`: Path to LTspice symbol library
+  - Planned new options:
+    - `--margin`: Control viewbox margin around schematic elements
+    - `--font-family`: Set font family for text elements
 
 ### Command Line Option Details
 - **Input/Output**
   - Positional argument 1: Path to input `.asc` schematic file
   - Output SVG is created in the same directory with the same base name
 - **Styling Options**
-  - `--stroke-width`: Controls the thickness of all lines (default: 3.0)
+  - `--stroke-width`: Controls the thickness of all lines (default: 2.0)
   - `--dot-size`: Size of junction dots relative to stroke width (default: 1.5)
   - `--base-font-size`: Base size for all text elements (default: 16.0)
+  - `--margin`: Margin around schematic elements as percentage of viewbox (default: 10.0)
+  - `--font-family`: Font family for text elements (default: "Arial")
 - **Text Rendering Control**
   - `--no-text`: Master switch to disable ALL text rendering (equivalent to enabling all other --no-* text options)
   - `--no-schematic-comment`: Skips rendering comment texts in schematic
@@ -176,6 +204,9 @@ python src/ltspice_to_svg.py myschematic.asc
 
 # Control visual style
 python src/ltspice_to_svg.py myschematic.asc --stroke-width 2.0 --base-font-size 14.0
+
+# Control margins and font
+python src/ltspice_to_svg.py myschematic.asc --margin 5.0 --font-family "Helvetica"
 
 # Disable certain text elements
 python src/ltspice_to_svg.py myschematic.asc --no-schematic-comment --no-net-label
@@ -220,11 +251,11 @@ python src/ltspice_to_svg.py myschematic.asc --no-pin-name
   - Updated installation instructions with proper GitHub URL
 
 ### Current Task
-- Implementing text rendering options:
-  - Need to document API changes for users
-  - Need to connect command line options to rendering logic
-  - Update BaseRenderer to accept config parameter
-  - Add unit tests for configuration class
+- Implementing new rendering options:
+  - Adding viewbox margin option
+  - Adding font family option
+  - Connecting to command line interface
+  - Adding tests for new options
 
 ### Future Tasks
 - Clean up old code

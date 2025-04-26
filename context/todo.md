@@ -2,6 +2,27 @@
 
 ## Current Tasks
 
+### [ ] Implement New Rendering Options (Margin and Font)
+- [ ] Update RenderingConfig to support new options
+  - [ ] Add viewbox_margin option with default value
+  - [ ] Add font_family option with default value of "Arial"
+  - [ ] Update validation logic to handle new option types
+- [ ] Update ViewboxCalculator to use margin configuration
+  - [ ] Modify the calculate method to accept margin parameter
+  - [ ] Replace hardcoded padding_percent with config value
+  - [ ] Add tests for the new margin functionality
+- [ ] Update TextRenderer to use font family option
+  - [ ] Modify text rendering to include font-family attribute
+  - [ ] Add tests for font family rendering
+- [ ] Connect new options to command line interface
+  - [ ] Add --margin option to command line parser with description
+  - [ ] Add --font-family option to command line parser with description
+  - [ ] Update create_config_from_args to include new options
+  - [ ] Update README.md with new command line options
+- [ ] Add integration test for new options
+  - [ ] Create test case that verifies margin affects viewbox
+  - [ ] Create test case that verifies font-family is correctly applied
+
 [X] Examine the SVG renderer class to understand how it manages text rendering options
   - [X] Review `SVGRenderer.render_texts()` method to see text rendering controls
   - [X] Analyze `TextRenderer` class to understand text styling and positioning
@@ -45,8 +66,6 @@
   - [X] Initialize git repository
   - [X] Create initial README.md
   - [X] Create .gitignore file
-
-## Current Tasks
 
 ### [X] Replace direct property access with config.get_option() calls
 - [X] Update test_text_rendering_switches.py to use config interface
