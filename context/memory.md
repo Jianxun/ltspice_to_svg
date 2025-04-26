@@ -210,6 +210,14 @@ python src/ltspice_to_svg.py myschematic.asc --no-pin-name
   - Updating test assertions to match the expected output
   - Removing the dependency on property_id for rendering specific text types
   - Using `set_text_options` to control which text elements are rendered
+- Fixed the `--no-text` command line option to properly skip the `render_texts()` call in the main script, ensuring text elements are not rendered when this option is enabled
+- Fixed the repository URL in setup.py to use the correct case for GitHub username (Jianxun instead of jianxunzhu)
+- Improved the README.md with:
+  - More personal and direct writing style
+  - Better organization of command-line options
+  - Visual example placeholders for Miller OTA schematic conversion
+  - Enhanced section on post-processing SVG files in graphic editors
+  - Updated installation instructions with proper GitHub URL
 
 ### Current Task
 - Implementing text rendering options:

@@ -132,6 +132,14 @@
 - [X] Update the help text and documentation to clarify this option is a master switch
 - [X] Run tests to ensure no regressions
 
+### [X] Fix bug with --no-text option in main script
+- [X] Debug the failing test_no_text test in command line tests
+- [X] Modify the main script to skip render_texts() call when --no-text is enabled
+- [X] Ensure the text rendering options are still properly set
+- [X] Run tests to verify the fix works
+- [X] Commit the changes with a descriptive message
+- [X] Update memory.md to document the fix
+
 ### [X] Remove deprecated --scale option
 - [X] Remove the --scale argument from the command line parser
 - [X] Remove the deprecation warning code
