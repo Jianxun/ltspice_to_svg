@@ -14,6 +14,8 @@ into an SVG file like this:
 
 ![Miller OTA SVG Output](./schematics/miller_ota.svg)
 
+Note: the IO pins are rendered with text outside of the pin shapes, which is an intentional design decision.
+
 The output SVG is perfect for:
 - Publication-quality documentation
 - Web integration with perfect scaling
