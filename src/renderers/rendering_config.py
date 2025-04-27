@@ -23,6 +23,7 @@ class RenderingConfig:
         "stroke_width": 3.0,
         "base_font_size": 16.0,
         "dot_size_multiplier": 1.5,
+        "viewbox_margin": 10.0,
     }
     
     def __init__(self, **kwargs) -> None:
@@ -151,7 +152,13 @@ class RenderingConfig:
         numeric_options = {
             "stroke_width",
             "base_font_size",
-            "dot_size_multiplier"
+            "dot_size_multiplier",
+            "viewbox_margin"
+        }
+        
+        # Special case options that can be zero
+        can_be_zero = {
+            "viewbox_margin"
         }
         
         # Validate based on option category
@@ -161,5 +168,10 @@ class RenderingConfig:
             raise ValueError(f"Option '{name}' must be a number, got {type(value).__name__}")
         
         # Additional validation for numeric values
-        if name in numeric_options and value <= 0:
-            raise ValueError(f"Option '{name}' must be positive, got {value}") 
+        if name in numeric_options:
+            if name in can_be_zero:
+                if value < 0:
+                    raise ValueError(f"Option '{name}' must be non-negative, got {value}")
+            else:
+                if value <= 0:
+                    raise ValueError(f"Option '{name}' must be positive, got {value}") 

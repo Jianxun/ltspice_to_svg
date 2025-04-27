@@ -9,6 +9,7 @@ from src.renderers.shape_renderer import ShapeRenderer
 from src.renderers.flag_renderer import FlagRenderer
 from src.renderers.viewbox_calculator import ViewboxCalculator
 from src.renderers.rendering_config import RenderingConfig
+import os
 
 class SVGRenderer(BaseRenderer):
     def __init__(self, config: Optional[RenderingConfig] = None):
@@ -166,15 +167,44 @@ class SVGRenderer(BaseRenderer):
         return result
         
     def create_drawing(self, output_path: str) -> None:
-        """Create a new SVG drawing.
+        """Create the SVG drawing with the appropriate dimensions.
         
         Args:
-            output_path (str): Path where the SVG will be saved.
+            output_path: Path to the output SVG file
         """
-        self.dwg = svgwrite.Drawing(output_path)
+        if not self.schematic_data:
+            raise ValueError("No schematic data loaded")
+        
+        # Create a viewbox calculator
+        viewbox_calculator = ViewboxCalculator(config=self.config)
+        
+        # Calculate the viewbox
+        self.view_box = viewbox_calculator.calculate(self.schematic_data)
         min_x, min_y, width, height = self.view_box
-        self.dwg.viewbox(min_x, min_y, width, height)
-        self._initialize_renderers()
+        
+        # Create the SVG drawing
+        self.dwg = svgwrite.Drawing(
+            output_path,
+            viewBox=f"{min_x} {min_y} {width} {height}",
+            profile='tiny'
+        )
+        
+        # Set the document title from the basename of the output path
+        self.dwg.set_desc(title=os.path.basename(output_path))
+        
+        # Create renderer instances with this drawing
+        self._renderers = {
+            'wire': WireRenderer(self.dwg, config=self.config),
+            'symbol': SymbolRenderer(self.dwg, config=self.config),
+            'text': TextRenderer(self.dwg, config=self.config),
+            'shape': ShapeRenderer(self.dwg, config=self.config),
+            'flag': FlagRenderer(self.dwg, config=self.config)
+        }
+        
+        # Create a container for all schematic elements
+        self._schematic_group = self.dwg.g(id="schematic")
+        
+        self.logger.info(f"Created SVG drawing with viewBox={min_x} {min_y} {width} {height}")
         
     def render_wires(self, dot_size_multiplier: float = 1.5) -> None:
         """Render all wires in the schematic.

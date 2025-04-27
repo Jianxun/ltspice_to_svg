@@ -2,26 +2,45 @@
 
 ## Current Tasks
 
-### [ ] Implement New Rendering Options (Margin and Font)
-- [ ] Update RenderingConfig to support new options
-  - [ ] Add viewbox_margin option with default value
-  - [ ] Add font_family option with default value of "Arial"
-  - [ ] Update validation logic to handle new option types
-- [ ] Update ViewboxCalculator to use margin configuration
-  - [ ] Modify the calculate method to accept margin parameter
-  - [ ] Replace hardcoded padding_percent with config value
-  - [ ] Add tests for the new margin functionality
-- [ ] Update TextRenderer to use font family option
-  - [ ] Modify text rendering to include font-family attribute
-  - [ ] Add tests for font family rendering
-- [ ] Connect new options to command line interface
-  - [ ] Add --margin option to command line parser with description
-  - [ ] Add --font-family option to command line parser with description
-  - [ ] Update create_config_from_args to include new options
-  - [ ] Update README.md with new command line options
-- [ ] Add integration test for new options
-  - [ ] Create test case that verifies margin affects viewbox
-  - [ ] Create test case that verifies font-family is correctly applied
+### [X] Add viewbox margin and font option to rendering options
+- [X] Create a feature branch for rendering control options
+- [X] Add margin option to `RenderingConfig`
+- [X] Update `ViewboxCalculator` to utilize the margin
+- [X] Add margin parameter to command-line interface
+- [X] Write tests for the new margin feature
+- [X] Fix validation logic in `RenderingConfig` to allow zero margin
+- [X] Fix `ViewboxCalculator` to handle cases where bounds are invalid
+- [X] Update tests to account for minimum height adjustment
+
+### [ ] Add font option to rendering options
+- [ ] Research font handling in SVG
+- [ ] Add font option to `RenderingConfig`
+- [ ] Update text rendering to use the configured font
+- [ ] Add font parameter to command-line interface
+- [ ] Write tests for the new font feature
+
+## Completed Tasks
+
+### [X] Implement improved text rendering for symbols
+- [X] Fix text mirroring in symbols
+- [X] Implement proper text alignment for symbol pins
+- [X] Add support for component name and value text rendering
+
+### [X] Create robust SVG output
+- [X] Add proper SVG header and namespace declarations
+- [X] Implement CSS styling for consistent appearance
+- [X] Add metadata to SVG file
+
+### [X] Fix encoding handling for LTspice files
+- [X] Create utility to detect and fix file encoding
+- [X] Update parser to handle different encodings
+- [X] Add documentation for encoding issues
+
+### [X] Enhance CLI with more rendering options
+- [X] Add stroke width option for wires
+- [X] Add dot size for junctions
+- [X] Add base font size control
+- [X] Implement text rendering control switches
 
 [X] Examine the SVG renderer class to understand how it manages text rendering options
   - [X] Review `SVGRenderer.render_texts()` method to see text rendering controls
