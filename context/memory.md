@@ -58,9 +58,15 @@ The project is functional and can convert both LTspice schematics (.asc) and sym
   - Updated ViewboxCalculator to utilize the margin
   - Added margin parameter to command-line interface
   - Fixed edge cases with invalid bounds and zero margin
+- Added font family option for text elements
+  - Added font_family option to RenderingConfig
+  - Updated TextRenderer to use the configured font
+  - Added font-family parameter to command-line interface
+  - Added tests to verify font rendering
+  - Updated README with documentation and examples
 
 ### In Progress Features
-- Font family option for text elements
+- None at this time
 
 ### Known Issues
 - None at this time
@@ -70,4 +76,4 @@ The project is functional and can convert both LTspice schematics (.asc) and sym
 - Test files organized under `/tests/`
 - Test results stored in `/tests/{test_name}/results`
 - Current test coverage is good
-- All tests now passing (74 tests)
+- All tests now passing (76 tests)

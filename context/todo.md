@@ -12,12 +12,12 @@
 - [X] Fix `ViewboxCalculator` to handle cases where bounds are invalid
 - [X] Update tests to account for minimum height adjustment
 
-### [ ] Add font option to rendering options
-- [ ] Research font handling in SVG
-- [ ] Add font option to `RenderingConfig`
-- [ ] Update text rendering to use the configured font
-- [ ] Add font parameter to command-line interface
-- [ ] Write tests for the new font feature
+### [X] Add font option to rendering options
+- [X] Research font handling in SVG
+- [X] Add font option to `RenderingConfig`
+- [X] Update text rendering to use the configured font
+- [X] Add font parameter to command-line interface
+- [X] Write tests for the new font feature
 
 ## Completed Tasks
 
