@@ -1,5 +1,14 @@
 """
 Main script to convert LTspice schematics to SVG format.
+
+This module serves as the entry point for the LTspice to SVG converter. It handles:
+1. Command-line argument parsing
+2. Configuration setup
+3. File path resolution
+4. Orchestration of the conversion process
+
+The converter can be used directly from the command line or imported and used
+programmatically in other Python scripts.
 """
 import os
 import platform
@@ -12,8 +21,14 @@ def get_ltspice_lib_path() -> str:
     """
     Find the LTspice library path based on the operating system.
     
+    Attempts to locate the default LTspice symbol library directory based on
+    the current operating system and user. Currently supports Windows and macOS.
+    
     Returns:
-        str: Path to the LTspice symbol library
+        str: Path to the LTspice symbol library directory
+    
+    Raises:
+        OSError: If the operating system is not supported
     """
     system = platform.system()
     username = os.getenv('USERNAME') or os.getenv('USER')
@@ -29,11 +44,15 @@ def create_config_from_args(args):
     """
     Create a RenderingConfig object from command-line arguments.
     
+    This function maps command-line arguments to the appropriate configuration
+    options in the RenderingConfig class. It handles all visual styling and 
+    text rendering options.
+    
     Args:
-        args: Parsed command-line arguments
+        args: Parsed command-line arguments from argparse
         
     Returns:
-        RenderingConfig: Configuration object with options from arguments
+        RenderingConfig: Configuration object initialized with options from arguments
     """
     # Create a dict of option values from args
     config_options = {
@@ -57,11 +76,23 @@ def create_config_from_args(args):
 def main():
     """
     Main function to handle command-line arguments and convert LTspice schematics to SVG.
+    
+    This function:
+    1. Parses command-line arguments
+    2. Sets up the environment (library paths, output directories)
+    3. Creates a configuration object
+    4. Orchestrates the parsing and rendering process
+    5. Generates the final SVG file
+    
+    The function can be called directly or when the script is run from the command line.
     """
     import argparse
     
     parser = argparse.ArgumentParser(description="Convert LTspice schematic to SVG")
+    # Input file argument
     parser.add_argument("asc_file", help="Path to the .asc schematic file")
+    
+    # Visual styling options
     parser.add_argument("--stroke-width", type=float, default=2.0,
                       help="Width of lines in the SVG (default: 2.0)")
     parser.add_argument("--dot-size", type=float, default=1.5,
@@ -72,10 +103,14 @@ def main():
                       help="Margin around schematic elements as percentage of viewbox (default: 10.0)")
     parser.add_argument("--font-family", type=str, default="Arial",
                       help="Font family for text elements (default: Arial)")
+    
+    # Debug and path options
     parser.add_argument("--export-json", action="store_true",
                       help="Export intermediate JSON files for debugging")
     parser.add_argument("--ltspice-lib", type=str,
                       help="Path to LTspice symbol library (overrides system default)")
+    
+    # Text rendering options
     parser.add_argument("--no-text", action="store_true",
                       help="Master switch to disable ALL text rendering (component names, values, comments, etc.)")
     parser.add_argument("--no-schematic-comment", action="store_true",
@@ -157,7 +192,7 @@ def main():
     # Create drawing 
     renderer.create_drawing(str(svg_file))
     
-    # Render components
+    # Render components in the correct order
     renderer.render_wires(args.dot_size)
     renderer.render_symbols()
     if not args.no_text:
@@ -165,8 +200,9 @@ def main():
     renderer.render_shapes()
     renderer.render_flags()
     
-    # Save the SVG
+    # Save the SVG file
     renderer.save()
+    print(f"SVG saved to {svg_file}")
 
 if __name__ == "__main__":
     main() 
