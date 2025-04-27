@@ -2,13 +2,26 @@
 Viewbox calculation module for SVG rendering.
 Calculates the appropriate viewbox dimensions based on schematic elements.
 """
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, Optional
+from src.renderers.rendering_config import RenderingConfig
+import logging
 
 class ViewboxCalculator:
     """Calculator for SVG viewbox dimensions based on schematic elements."""
     
-    def __init__(self):
+    # Default viewbox for empty schematics or when bounds are invalid
+    DEFAULT_VIEWBOX = (0, 0, 100, 100)
+    
+    def __init__(self, config: Optional[RenderingConfig] = None):
+        """Initialize the ViewboxCalculator with optional configuration.
+        
+        Args:
+            config: Configuration object with rendering options. If None, 
+                   default margin will be used.
+        """
         self._reset_bounds()
+        self._config = config or RenderingConfig()
+        self.logger = logging.getLogger(self.__class__.__name__)
         
     def _reset_bounds(self) -> None:
         """Reset the bounds to their initial values."""
@@ -35,21 +48,21 @@ class ViewboxCalculator:
             self._max_x = max(self._max_x, x2)
             self._max_y = max(self._max_y, y2)
             
-    def calculate(self, schematic_data: Dict, padding_percent: float = 10.0) -> Tuple[float, float, float, float]:
+    def calculate(self, schematic_data: Dict) -> Tuple[float, float, float, float]:
         """Calculate the viewBox for the SVG based on schematic bounds.
         
         The viewBox is calculated by finding the minimum and maximum coordinates
-        of all elements in the schematic, then adding padding around the bounds.
+        of all elements in the schematic, then adding margin around the bounds.
         
         Args:
             schematic_data: Dictionary containing schematic elements
-            padding_percent: Percentage of padding to add around the bounds
             
         Returns:
             tuple: (min_x, min_y, width, height)
         """
         if not schematic_data:
-            return (0, 0, 100, 100)  # Default size for empty schematic
+            self.logger.debug("Empty schematic, using default viewbox")
+            return self.DEFAULT_VIEWBOX
             
         # Reset bounds
         self._reset_bounds()
@@ -62,13 +75,28 @@ class ViewboxCalculator:
         
         # Calculate bounds from flags
         self._include_flags(schematic_data.get('flags', []))
+        
+        # Check if any elements were included in the bounds calculation
+        if (self._min_x == float('inf') or self._min_y == float('inf') or 
+                self._max_x == float('-inf') or self._max_y == float('-inf')):
+            self.logger.debug("No elements with coordinates found, using default viewbox")
+            return self.DEFAULT_VIEWBOX
             
         # Calculate dimensions
         width = self._max_x - self._min_x
         height = self._max_y - self._min_y
         
-        # Add padding (percentage of the larger dimension)
-        padding = max(width, height) * (padding_percent / 100.0)
+        # Ensure there's at least some content (avoid division by zero)
+        if width <= 0:
+            width = 1.0
+        if height <= 0:
+            height = 1.0
+        
+        # Get margin percentage from configuration
+        margin_percent = self._config.get_option("viewbox_margin", 10.0)
+        
+        # Add margin (percentage of the larger dimension)
+        padding = max(width, height) * (margin_percent / 100.0)
         
         # Update bounds with padding
         min_x = self._min_x - padding
@@ -77,11 +105,12 @@ class ViewboxCalculator:
         height = height + 2 * padding
         
         # Ensure minimum size
-        if width == 0:
-            width = 100
-        if height == 0:
-            height = 100
+        if width < 10:
+            width = 10
+        if height < 10:
+            height = 10
             
+        self.logger.debug(f"Calculated viewbox: {min_x},{min_y},{width},{height}")
         return (min_x, min_y, width, height)
         
     def _include_wires(self, wires: List[Dict]) -> None:

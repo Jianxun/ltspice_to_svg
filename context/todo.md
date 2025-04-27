@@ -2,6 +2,46 @@
 
 ## Current Tasks
 
+### [X] Add viewbox margin and font option to rendering options
+- [X] Create a feature branch for rendering control options
+- [X] Add margin option to `RenderingConfig`
+- [X] Update `ViewboxCalculator` to utilize the margin
+- [X] Add margin parameter to command-line interface
+- [X] Write tests for the new margin feature
+- [X] Fix validation logic in `RenderingConfig` to allow zero margin
+- [X] Fix `ViewboxCalculator` to handle cases where bounds are invalid
+- [X] Update tests to account for minimum height adjustment
+
+### [X] Add font option to rendering options
+- [X] Research font handling in SVG
+- [X] Add font option to `RenderingConfig`
+- [X] Update text rendering to use the configured font
+- [X] Add font parameter to command-line interface
+- [X] Write tests for the new font feature
+
+## Completed Tasks
+
+### [X] Implement improved text rendering for symbols
+- [X] Fix text mirroring in symbols
+- [X] Implement proper text alignment for symbol pins
+- [X] Add support for component name and value text rendering
+
+### [X] Create robust SVG output
+- [X] Add proper SVG header and namespace declarations
+- [X] Implement CSS styling for consistent appearance
+- [X] Add metadata to SVG file
+
+### [X] Fix encoding handling for LTspice files
+- [X] Create utility to detect and fix file encoding
+- [X] Update parser to handle different encodings
+- [X] Add documentation for encoding issues
+
+### [X] Enhance CLI with more rendering options
+- [X] Add stroke width option for wires
+- [X] Add dot size for junctions
+- [X] Add base font size control
+- [X] Implement text rendering control switches
+
 [X] Examine the SVG renderer class to understand how it manages text rendering options
   - [X] Review `SVGRenderer.render_texts()` method to see text rendering controls
   - [X] Analyze `TextRenderer` class to understand text styling and positioning
@@ -45,8 +85,6 @@
   - [X] Initialize git repository
   - [X] Create initial README.md
   - [X] Create .gitignore file
-
-## Current Tasks
 
 ### [X] Replace direct property access with config.get_option() calls
 - [X] Update test_text_rendering_switches.py to use config interface

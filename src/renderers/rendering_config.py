@@ -23,6 +23,8 @@ class RenderingConfig:
         "stroke_width": 3.0,
         "base_font_size": 16.0,
         "dot_size_multiplier": 1.5,
+        "viewbox_margin": 10.0,
+        "font_family": "Arial",
     }
     
     def __init__(self, **kwargs) -> None:
@@ -151,7 +153,16 @@ class RenderingConfig:
         numeric_options = {
             "stroke_width",
             "base_font_size",
-            "dot_size_multiplier"
+            "dot_size_multiplier",
+            "viewbox_margin"
+        }
+        string_options = {
+            "font_family"
+        }
+        
+        # Special case options that can be zero
+        can_be_zero = {
+            "viewbox_margin"
         }
         
         # Validate based on option category
@@ -159,7 +170,18 @@ class RenderingConfig:
             raise ValueError(f"Option '{name}' must be a boolean, got {type(value).__name__}")
         elif name in numeric_options and not isinstance(value, (int, float)):
             raise ValueError(f"Option '{name}' must be a number, got {type(value).__name__}")
+        elif name in string_options and not isinstance(value, str):
+            raise ValueError(f"Option '{name}' must be a string, got {type(value).__name__}")
         
         # Additional validation for numeric values
-        if name in numeric_options and value <= 0:
-            raise ValueError(f"Option '{name}' must be positive, got {value}") 
+        if name in numeric_options:
+            if name in can_be_zero:
+                if value < 0:
+                    raise ValueError(f"Option '{name}' must be non-negative, got {value}")
+            else:
+                if value <= 0:
+                    raise ValueError(f"Option '{name}' must be positive, got {value}")
+                    
+        # Additional validation for string values
+        if name in string_options and name == "font_family" and not value:
+            raise ValueError(f"Option '{name}' cannot be empty") 
