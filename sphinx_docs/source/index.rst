@@ -21,41 +21,12 @@ Features
 
 .. toctree::
    :maxdepth: 2
-   :caption: User Guide:
-
-   user_guide/installation
-   user_guide/basic_usage
-   user_guide/command_line_options
-   user_guide/tutorials
-   user_guide/troubleshooting
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Architecture:
-
-   architecture/overview
-   architecture/component_relationships
-   architecture/parsers
-   architecture/renderers
-   architecture/configuration
-
-.. toctree::
-   :maxdepth: 2
    :caption: API Reference:
 
    api/main
    api/parsers
    api/renderers
    api/utils
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Development:
-
-   development/setup
-   development/contributing
-   development/testing
-   development/releasing
 
 Indices and tables
 ==================
