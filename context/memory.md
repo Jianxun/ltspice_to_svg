@@ -64,9 +64,34 @@ The project is functional and can convert both LTspice schematics (.asc) and sym
   - Added font-family parameter to command-line interface
   - Added tests to verify font rendering
   - Updated README with documentation and examples
+- Configured project for PyPI and GitHub pip installation
+  - Updated package metadata and created necessary files
+  - Enabled direct installation via pip from GitHub
+  - Added installation documentation in README
 
 ### In Progress Features
-- None at this time
+- Documentation Improvement
+  - Currently auditing and enhancing all documentation files
+  - Planning to add better architecture diagrams and code examples
+  - Will improve inline code documentation with better docstrings
+  - Creating more comprehensive user guides with examples
+
+### Documentation Status
+The project has a dedicated `/doc` directory with several markdown files:
+- architecture.md: High-level system design
+- api.md: API documentation
+- user_guide.md: Usage instructions
+- development.md: Development guidelines
+- renderers.md: Renderer component documentation
+- testing.md: Testing procedures
+- window_text_rendering_logic.md: Special case documentation
+
+The documentation needs improvement in several areas:
+- More diagrams to visualize component relationships
+- Better examples of common use cases
+- More detailed explanation of configuration options
+- Clearer contributor guidelines
+- Better inline code documentation
 
 ### Known Issues
 - None at this time
