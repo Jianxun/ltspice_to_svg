@@ -178,6 +178,9 @@ class TextRenderer(BaseRenderer):
         group = self.dwg.g()
         group.attribs['class'] = 'text-group'  # Add class for testing
         
+        # Get the font family from configuration
+        font_family = self.config.get_option('font_family', 'Arial')
+        
         # Split text into lines
         lines = text_content.split('\n')
         
@@ -185,6 +188,7 @@ class TextRenderer(BaseRenderer):
         line_height = font_size * line_spacing
         
         self.logger.debug(f"Creating multiline text at ({x},{y}) with {len(lines)} lines")
+        self.logger.debug(f"Using font family: {font_family}")
         
         # Add each line as a separate text element
         for i, line in enumerate(lines):
@@ -194,7 +198,7 @@ class TextRenderer(BaseRenderer):
             # Create text element
             text_element = self.dwg.text(line,
                                       insert=(x, line_y),
-                                      font_family='Arial',
+                                      font_family=font_family,
                                       font_size=f'{font_size}px',
                                       text_anchor=text_anchor,
                                       fill='black')

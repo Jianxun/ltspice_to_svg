@@ -80,6 +80,7 @@ Using the shell script
 - `--dot-size`: Size of junction dots relative to stroke width (default: 1.5)
 - `--base-font-size`: Base font size in pixels (default: 16.0)
 - `--margin`: Margin around schematic elements as percentage of viewbox (default: 10.0, can be set to 0 for tight fit)
+- `--font-family`: Font family for text elements (default: Arial)
 
 #### Text Rendering Options
 - `--no-text`: Master switch to disable ALL text rendering
@@ -114,6 +115,10 @@ ltspice_to_svg myschematic.asc --stroke-width 2.5 --base-font-size 14.0
 # Adjust margins around schematic
 ltspice_to_svg myschematic.asc --margin 5.0  # 5% margin for tighter fit
 ltspice_to_svg myschematic.asc --margin 0.0  # No margin for exact bounds
+
+# Change font family
+ltspice_to_svg myschematic.asc --font-family "Helvetica"
+ltspice_to_svg myschematic.asc --font-family "Courier New"  # For monospace text
 
 # Disable certain text elements
 ltspice_to_svg myschematic.asc --no-schematic-comment --no-net-label

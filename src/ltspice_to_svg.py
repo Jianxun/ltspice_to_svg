@@ -41,6 +41,7 @@ def create_config_from_args(args):
         "base_font_size": args.base_font_size,
         "dot_size_multiplier": args.dot_size,
         "viewbox_margin": args.margin,
+        "font_family": args.font_family,
         "no_schematic_comment": args.no_schematic_comment,
         "no_spice_directive": args.no_spice_directive,
         "no_nested_symbol_text": args.no_nested_symbol_text,
@@ -69,6 +70,8 @@ def main():
                       help="Base font size in pixels (default: 16.0)")
     parser.add_argument("--margin", type=float, default=10.0,
                       help="Margin around schematic elements as percentage of viewbox (default: 10.0)")
+    parser.add_argument("--font-family", type=str, default="Arial",
+                      help="Font family for text elements (default: Arial)")
     parser.add_argument("--export-json", action="store_true",
                       help="Export intermediate JSON files for debugging")
     parser.add_argument("--ltspice-lib", type=str,

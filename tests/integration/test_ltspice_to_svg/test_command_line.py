@@ -322,4 +322,19 @@ def test_no_pin_name(mock_svg_renderer, mock_parser, mock_path, mock_config, moc
     # Verify configuration was created with the no_pin_name option
     mock_config.assert_called_once()
     _, kwargs = mock_config.call_args
-    assert kwargs['no_pin_name'] == True 
+    assert kwargs['no_pin_name'] == True
+
+def test_font_family(mock_svg_renderer, mock_parser, mock_path, mock_config, mock_open_file):
+    """Test setting custom font family."""
+    test_args = ['ltspice_to_svg.py', 'test.asc', '--font-family', 'Helvetica']
+    
+    with patch('sys.argv', test_args):
+        main()
+    
+    # Verify renderer was created with correct config
+    config_call = mock_config.call_args[1]
+    assert config_call['font_family'] == 'Helvetica'
+    
+    # Verify the configuration was passed to the renderer
+    mock_renderer_class, mock_renderer_instance = mock_svg_renderer
+    mock_renderer_class.assert_called_once() 

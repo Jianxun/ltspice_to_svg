@@ -11,6 +11,7 @@ import pytest
 import svgwrite
 from pathlib import Path
 from src.renderers.text_renderer import TextRenderer
+from src.renderers.rendering_config import RenderingConfig
 
 # Default values
 DEFAULT_FONT_SIZE = 22.0
@@ -232,3 +233,38 @@ def test_default_values(text_renderer, drawing):
     # Check that default values are used
     assert 'text-anchor="start"' in content  # Default justification is Left
     assert 'font-size="33.0px"' in content  # Default size is 2 (1.5x * 22.0) 
+
+def test_font_family():
+    """Test font family configuration."""
+    # Create a test SVG
+    dwg = svgwrite.Drawing(size=(100, 100))
+    
+    # Create a renderer with a custom font family
+    config = RenderingConfig(font_family="Helvetica")
+    renderer = TextRenderer(dwg, config)
+    
+    # Render a simple text
+    text_data = {
+        'x': 10,
+        'y': 10,
+        'text': 'Test Text',
+        'justification': 'Left'
+    }
+    
+    # Render to the drawing
+    renderer.render(text_data)
+    
+    # Export the SVG to string
+    svg_string = dwg.tostring()
+    
+    # Verify the font family is set correctly
+    assert 'font-family="Helvetica"' in svg_string
+    
+    # Test default font family
+    dwg = svgwrite.Drawing(size=(100, 100))
+    config = RenderingConfig()  # Should use default 'Arial'
+    renderer = TextRenderer(dwg, config)
+    renderer.render(text_data)
+    
+    svg_string = dwg.tostring()
+    assert 'font-family="Arial"' in svg_string 
