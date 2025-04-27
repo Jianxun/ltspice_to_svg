@@ -28,6 +28,16 @@ Features
    api/renderers
    api/utils
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Architecture:
+
+   architecture/overview
+   architecture/component_relationships
+   architecture/parsers
+   architecture/renderers
+   architecture/testing
+
 Indices and tables
 ==================
 
