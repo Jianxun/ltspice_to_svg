@@ -26,10 +26,10 @@ You get full control over the rendering through comprehensive command-line optio
 
 ## Installation
 
-### Option 1: Install directly from GitHub (Recommended)
+### Option 1: Install from PyPI (Recommended for stable releases)
 
 ```bash
-pip install git+https://github.com/Jianxun/ltspice_to_svg.git
+pip install ltspice-to-svg
 ```
 
 After installation, you can use the command-line tool from anywhere:
@@ -38,7 +38,15 @@ After installation, you can use the command-line tool from anywhere:
 ltspice_to_svg your_schematic.asc
 ```
 
-### Option 2: Clone the repository and install
+### Option 2: Install from GitHub (For latest development version)
+
+If you want the latest features and changes that haven't been released to PyPI yet:
+
+```bash
+pip install git+https://github.com/Jianxun/ltspice_to_svg.git
+```
+
+### Option 3: Clone the repository and install
 
 1. Clone the repository:
 ```bash
@@ -67,13 +75,6 @@ ltspice_to_svg your_schematic.asc
 
 This will generate `your_schematic.svg` in the same directory as your schematic file.
 
-### Alternative methods (if not installed with pip)
-
-Using the shell script
-
-```bash
-./ltspice_to_svg.sh your_schematic.asc
-```
 
 ### Command Line Options
 
@@ -112,7 +113,7 @@ One of the advantages of generating SVG files is the ability to further refine t
 ltspice_to_svg myschematic.asc
 
 # Control visual style
-ltspice_to_svg myschematic.asc --stroke-width 2.5 --base-font-size 14.0
+ltspice_to_svg myschematic.asc --stroke-width 3.0 --dot-size 2.0
 
 # Adjust margins around schematic
 ltspice_to_svg myschematic.asc --margin 5.0  # 5% margin for tighter fit
@@ -131,7 +132,17 @@ ltspice_to_svg myschematic.asc --no-text
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on contributing to this project.
+Contributions are welcome! Here's how you can help:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run the tests to ensure everything works (`python -m pytest`)
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
+
+Please make sure your code follows the existing style and includes appropriate tests for new features.
 
 ## License
 
