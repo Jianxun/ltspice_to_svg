@@ -8,11 +8,11 @@ The tool parses all the shapes, components, wires, and texts in an LTspice schem
 
 This will convert a schematic like this:
 
-![LTspice Miller OTA Schematic](./schematics/miller_ota_schematic.png)
+![LTspice Miller OTA Schematic](https://raw.githubusercontent.com/Jianxun/ltspice_to_svg/main/schematics/miller_ota_schematic.png)
 
 into an SVG file like this:
 
-![Miller OTA SVG Output](./schematics/miller_ota.svg)
+![Miller OTA SVG Output](https://raw.githubusercontent.com/Jianxun/ltspice_to_svg/main/schematics/miller_ota.svg)
 
 Note: the IO pins are rendered with text outside of the pin shapes, which is an intentional design decision.
 
