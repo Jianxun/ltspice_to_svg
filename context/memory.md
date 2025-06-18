@@ -68,6 +68,14 @@ The project is functional and can convert both LTspice schematics (.asc) and sym
   - Updated package metadata and created necessary files
   - Enabled direct installation via pip from GitHub
   - Added installation documentation in README
+- **Enhanced SVG Output with Symbol Metadata (Current Session)**
+  - Added pretty formatting to SVG output using svgwrite's `pretty=True` parameter
+  - Implemented custom namespace support: `xmlns:s="https://github.com/nturley/netlistsvg"`
+  - Added `s:type` attribute to symbol groups with actual symbol names
+  - Added `s:width` and `s:height` attributes with calculated symbol dimensions
+  - Fixed viewbox calculation to properly include symbols (was missing symbols before)
+  - Disabled svgwrite validation for custom attributes to avoid conflicts
+  - Enhanced symbol dimension calculation from actual shape bounds
 
 ### In Progress Features
 - Documentation Improvement
@@ -95,6 +103,33 @@ The documentation needs improvement in several areas:
 
 ### Known Issues
 - None at this time
+
+### SVG Output Features
+The project now generates SVG files with advanced metadata and proper formatting:
+
+#### Pretty Formatted Output
+- SVG files are now formatted with proper indentation for readability
+- Implemented using svgwrite's `save(pretty=True)` parameter
+- Makes SVG files easy to inspect and debug
+
+#### Custom Symbol Metadata
+- Custom namespace: `xmlns:s="https://github.com/nturley/netlistsvg"`
+- Symbol groups include semantic attributes:
+  - `s:type="symbol_name"` - Identifies the type of component (e.g., "nmos", "pmos", "cap", "res")
+  - `s:width="64"` - Calculated width of the symbol in pixels
+  - `s:height="128"` - Calculated height of the symbol in pixels
+- Symbol dimensions are calculated from actual shape bounds (lines, rectangles, circles, arcs)
+- Enables advanced SVG processing by external tools
+
+#### Example SVG Output Structure
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" 
+     xmlns:s="https://github.com/nturley/netlistsvg">
+  <g s:type="nmos" s:width="64" s:height="128" transform="translate(704,336)">
+    <!-- symbol shapes and text -->
+  </g>
+</svg>
+```
 
 ## Testing
 - Comprehensive test suite with pytest

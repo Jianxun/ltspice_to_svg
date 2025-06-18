@@ -59,11 +59,67 @@ class SymbolRenderer(BaseRenderer):
         BaseRenderer.stroke_width.fset(self, value)  # Call parent's setter
         self.shape_renderer.stroke_width = value  # Update ShapeRenderer's stroke width
         
-    def begin_symbol(self, symbol_name: Optional[str] = None) -> svgwrite.container.Group:
+    def _calculate_symbol_dimensions(self, symbol_def: Dict) -> Tuple[float, float]:
+        """Calculate the width and height of a symbol from its shapes.
+        
+        Args:
+            symbol_def: Dictionary containing symbol definition with shapes
+            
+        Returns:
+            Tuple of (width, height)
+        """
+        if not symbol_def:
+            return (64.0, 64.0)  # Default size
+            
+        min_x = float('inf')
+        min_y = float('inf')
+        max_x = float('-inf')
+        max_y = float('-inf')
+        
+        # Process all shape types
+        for shape_type in ['lines', 'circles', 'rectangles', 'arcs']:
+            shapes = symbol_def.get(shape_type, [])
+            for shape in shapes:
+                if shape_type == 'lines':
+                    min_x = min(min_x, shape.get('x1', 0), shape.get('x2', 0))
+                    min_y = min(min_y, shape.get('y1', 0), shape.get('y2', 0))
+                    max_x = max(max_x, shape.get('x1', 0), shape.get('x2', 0))
+                    max_y = max(max_y, shape.get('y1', 0), shape.get('y2', 0))
+                elif shape_type == 'rectangles':
+                    min_x = min(min_x, shape.get('x1', 0), shape.get('x2', 0))
+                    min_y = min(min_y, shape.get('y1', 0), shape.get('y2', 0))
+                    max_x = max(max_x, shape.get('x1', 0), shape.get('x2', 0))
+                    max_y = max(max_y, shape.get('y1', 0), shape.get('y2', 0))
+                elif shape_type == 'circles':
+                    min_x = min(min_x, shape.get('x1', 0), shape.get('x2', 0))
+                    min_y = min(min_y, shape.get('y1', 0), shape.get('y2', 0))
+                    max_x = max(max_x, shape.get('x1', 0), shape.get('x2', 0))
+                    max_y = max(max_y, shape.get('y1', 0), shape.get('y2', 0))
+                elif shape_type == 'arcs':
+                    min_x = min(min_x, shape.get('x1', 0), shape.get('x2', 0))
+                    min_y = min(min_y, shape.get('y1', 0), shape.get('y2', 0))
+                    max_x = max(max_x, shape.get('x1', 0), shape.get('x2', 0))
+                    max_y = max(max_y, shape.get('y1', 0), shape.get('y2', 0))
+        
+        # If no shapes found, return default size
+        if min_x == float('inf') or min_y == float('inf'):
+            return (64.0, 64.0)
+            
+        width = max_x - min_x
+        height = max_y - min_y
+        
+        # Ensure minimum size
+        width = max(width, 1.0)
+        height = max(height, 1.0)
+        
+        return (width, height)
+
+    def begin_symbol(self, symbol_name: Optional[str] = None, symbol_def: Optional[Dict] = None) -> svgwrite.container.Group:
         """Begin rendering a new symbol by creating a group.
         
         Args:
             symbol_name: Optional name of the symbol to add as metadata
+            symbol_def: Optional symbol definition to calculate dimensions
         
         Returns:
             An SVG group element
@@ -77,6 +133,13 @@ class SymbolRenderer(BaseRenderer):
         if symbol_name:
             self._current_group.attribs['s:type'] = symbol_name
             self.logger.debug(f"Added symbol type attribute: s:type={symbol_name}")
+        
+        # Add symbol dimensions as custom attributes if symbol definition is provided
+        if symbol_def:
+            width, height = self._calculate_symbol_dimensions(symbol_def)
+            self._current_group.attribs['s:width'] = str(int(width))
+            self._current_group.attribs['s:height'] = str(int(height))
+            self.logger.debug(f"Added symbol dimensions: s:width={int(width)}, s:height={int(height)}")
         
         return self._current_group
         
@@ -416,7 +479,8 @@ class SymbolRenderer(BaseRenderer):
         try:
             # Begin symbol
             symbol_name = symbol.get('symbol_name')
-            self.begin_symbol(symbol_name)
+            symbol_def = symbol.get('symbol_def')
+            self.begin_symbol(symbol_name, symbol_def)
             
             # Set transformation if provided
             if 'rotation' in symbol and 'translation' in symbol:

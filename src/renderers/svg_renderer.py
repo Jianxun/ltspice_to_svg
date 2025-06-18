@@ -266,7 +266,7 @@ class SVGRenderer(BaseRenderer):
             symbol_def = self.symbol_data[symbol_name]
             
             # Begin a new symbol
-            symbol_renderer.begin_symbol(symbol_name)
+            symbol_renderer.begin_symbol(symbol_name, symbol_def)
             
             # Set the symbol transformation
             symbol_renderer.set_transformation(
