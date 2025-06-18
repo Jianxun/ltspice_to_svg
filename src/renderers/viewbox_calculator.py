@@ -73,6 +73,9 @@ class ViewboxCalculator:
         # Calculate bounds from shapes
         self._include_shapes(schematic_data.get('shapes', {}))
         
+        # Calculate bounds from symbols
+        self._include_symbols(schematic_data.get('symbols', []))
+        
         # Calculate bounds from flags
         self._include_flags(schematic_data.get('flags', []))
         
@@ -159,6 +162,25 @@ class ViewboxCalculator:
             for arc in shapes.get('arcs', []):
                 self._update_bounds(arc['x1'], arc['y1'], arc['x2'], arc['y2'])
                 
+    def _include_symbols(self, symbols: List[Dict]) -> None:
+        """Include symbols in the bounds calculation.
+        
+        Args:
+            symbols: List of symbol dictionaries
+        """
+        for symbol in symbols:
+            # Get symbol position
+            x = symbol.get('x', 0)
+            y = symbol.get('y', 0)
+            
+            # For now, we'll use a reasonable default symbol size
+            # In the future, this could be improved to use actual symbol dimensions
+            symbol_size = 64  # Approximate symbol bounding box size
+            
+            # Update bounds with symbol position and estimated size
+            self._update_bounds(x - symbol_size/2, y - symbol_size/2, 
+                              x + symbol_size/2, y + symbol_size/2)
+            
     def _include_flags(self, flags: List[Dict]) -> None:
         """Include flags in the bounds calculation.
         

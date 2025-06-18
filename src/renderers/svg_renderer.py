@@ -182,12 +182,16 @@ class SVGRenderer(BaseRenderer):
         self.view_box = viewbox_calculator.calculate(self.schematic_data)
         min_x, min_y, width, height = self.view_box
         
-        # Create the SVG drawing
+        # Create the SVG drawing with debug disabled to avoid validation issues
         self.dwg = svgwrite.Drawing(
             output_path,
             viewBox=f"{min_x} {min_y} {width} {height}",
-            profile='tiny'
+            profile='full',
+            debug=False
         )
+        
+        # Add custom namespace for symbol metadata
+        self.dwg.attribs['xmlns:s'] = 'https://github.com/nturley/netlistsvg'
         
         # Set the document title from the basename of the output path
         self.dwg.set_desc(title=os.path.basename(output_path))
@@ -262,7 +266,7 @@ class SVGRenderer(BaseRenderer):
             symbol_def = self.symbol_data[symbol_name]
             
             # Begin a new symbol
-            symbol_renderer.begin_symbol()
+            symbol_renderer.begin_symbol(symbol_name)
             
             # Set the symbol transformation
             symbol_renderer.set_transformation(
@@ -480,10 +484,10 @@ class SVGRenderer(BaseRenderer):
             self.logger.info(f"  Rendered {flag_counts.get('io_pin', 0)} I/O pin flags with text disabled")
         
     def save(self) -> None:
-        """Save the SVG drawing to file."""
+        """Save the SVG drawing to file with pretty formatting."""
         if not self.dwg:
             raise ValueError("Drawing not created")
-        self.dwg.save()
+        self.dwg.save(pretty=True)
         
     def _find_t_junctions(self, wires: list) -> list:
         """Find all T-junctions in the wire list.

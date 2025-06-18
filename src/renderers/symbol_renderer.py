@@ -59,8 +59,11 @@ class SymbolRenderer(BaseRenderer):
         BaseRenderer.stroke_width.fset(self, value)  # Call parent's setter
         self.shape_renderer.stroke_width = value  # Update ShapeRenderer's stroke width
         
-    def begin_symbol(self) -> svgwrite.container.Group:
+    def begin_symbol(self, symbol_name: Optional[str] = None) -> svgwrite.container.Group:
         """Begin rendering a new symbol by creating a group.
+        
+        Args:
+            symbol_name: Optional name of the symbol to add as metadata
         
         Returns:
             An SVG group element
@@ -69,6 +72,12 @@ class SymbolRenderer(BaseRenderer):
         self._is_mirrored = False
         self._symbol_def = None
         self._window_overrides = {}
+        
+        # Add symbol name as custom attribute if provided
+        if symbol_name:
+            self._current_group.attribs['s:type'] = symbol_name
+            self.logger.debug(f"Added symbol type attribute: s:type={symbol_name}")
+        
         return self._current_group
         
     def set_transformation(self, rotation: str, translation: Tuple[float, float]) -> None:
@@ -406,7 +415,8 @@ class SymbolRenderer(BaseRenderer):
         
         try:
             # Begin symbol
-            self.begin_symbol()
+            symbol_name = symbol.get('symbol_name')
+            self.begin_symbol(symbol_name)
             
             # Set transformation if provided
             if 'rotation' in symbol and 'translation' in symbol:
