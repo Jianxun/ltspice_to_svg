@@ -32,19 +32,22 @@ class ASCParser:
             
         print(f"Parsing schematic: {self.file_path}")
         
-        # Try different encodings
-        encodings = ['ascii', 'utf-16le']  # Try ASCII first, then UTF-16LE
+        # Try different encodings in order of likelihood
+        encodings = ['utf-8', 'utf-16le', 'ascii', 'latin1']
         lines = None
+        last_error = None
         
         for encoding in encodings:
             try:
                 with open(self.file_path, 'r', encoding=encoding) as f:
                     lines = f.readlines()
-                #print(f"[DEBUG] Successfully read file with {encoding} encoding")
                 break
             except UnicodeError as e:
-                print(f"[DEBUG] Failed to read with {encoding} encoding: {e}")
+                last_error = e
                 continue
+        
+        if lines is None and last_error:
+            print(f"[DEBUG] Failed to read with any encoding. Last error: {last_error}")
                 
         if lines is None:
             raise ValueError(f"Could not read {self.file_path} with any of the supported encodings")
