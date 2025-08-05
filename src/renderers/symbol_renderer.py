@@ -34,6 +34,7 @@ class SymbolRenderer(BaseRenderer):
         self._is_mirrored = False
         self._symbol_def = None
         self._window_overrides = {}
+        self._rotation_angle = 0
         
         # Initialize child renderers with base properties
         self.shape_renderer.stroke_width = self.stroke_width
@@ -128,6 +129,7 @@ class SymbolRenderer(BaseRenderer):
         self._is_mirrored = False
         self._symbol_def = None
         self._window_overrides = {}
+        self._rotation_angle = 0
         
         # Add symbol name as custom attribute if provided
         if symbol_name:
@@ -171,7 +173,8 @@ class SymbolRenderer(BaseRenderer):
                 self.logger.warning(f"Invalid rotation value: {rotation}")
                 angle = 0
                 
-            # Set mirrored state
+            # Store rotation angle and set mirrored state
+            self._rotation_angle = angle
             self._is_mirrored = (rotation_type == 'M')
             self.logger.info(f"Setting symbol transformation - Position: ({x},{y}), "
                            f"Rotation: {rotation}, Mirrored: {self._is_mirrored}")
@@ -334,6 +337,49 @@ class SymbolRenderer(BaseRenderer):
         # Render window for property 3 (value)
         self._render_window_property("3", value)
         
+    def _calculate_text_rotation_compensation(self, justification: str) -> tuple[int, str]:
+        """Calculate rotation compensation and justification adjustment needed to keep text readable.
+        
+        Args:
+            justification: Text justification ('Left', 'Right', 'Center', 'VTop', 'VBottom', etc.)
+            
+        Returns:
+            Tuple of (rotation angle in degrees, adjusted justification)
+        """
+        if self._rotation_angle == 0 or self._rotation_angle == 90:
+            # R0 and R90 work correctly (R90 by coincidence)
+            return 0, justification
+        elif self._rotation_angle == 180 or self._rotation_angle == 270:
+            # R180 and R270: apply 180° counter-rotation and swap justifications 
+            adjusted_justification = self._swap_justification(justification)
+            return 180, adjusted_justification
+        else:
+            # Other rotation angles not handled yet
+            self.logger.warning(f"Unhandled rotation angle: {self._rotation_angle}")
+            return 0, justification
+    
+    def _swap_justification(self, justification: str) -> str:
+        """Swap justification for rotated symbols.
+        
+        Args:
+            justification: Original justification
+            
+        Returns:
+            Swapped justification
+        """
+        justification_swaps = {
+            'Left': 'Right',
+            'Right': 'Left', 
+            'VTop': 'VBottom',
+            'VBottom': 'VTop',
+            # Center justifications don't change
+            'Center': 'Center',
+            'VCenter': 'VCenter',
+            'Top': 'Top',
+            'Bottom': 'Bottom'
+        }
+        return justification_swaps.get(justification, justification)
+    
     def _render_window_property(self, property_id: str, property_value: str) -> None:
         """Render a window text for a specific property.
         
@@ -383,15 +429,24 @@ class SymbolRenderer(BaseRenderer):
                 window_settings = self._window_overrides[property_id]
                 self.logger.debug(f"Using string key override for window {property_id}")
                 
+            # Calculate rotation compensation for symbol rotation
+            original_justification = window_settings['justification']
+            rotation_compensation, adjusted_justification = self._calculate_text_rotation_compensation(original_justification)
+            
             # Create text data
             text_data = {
                 'x': window_settings['x'],
                 'y': window_settings['y'],
                 'text': property_value,
-                'justification': window_settings['justification'],
+                'justification': adjusted_justification,
                 'size_multiplier': window_settings.get('size_multiplier', 0),
                 'is_mirrored': self._is_mirrored
             }
+            
+            # Add rotation compensation if needed
+            if rotation_compensation != 0:
+                text_data['rotation'] = rotation_compensation
+                self.logger.debug(f"Adding rotation compensation: {rotation_compensation}° and justification swap '{original_justification}' -> '{adjusted_justification}' at symbol rotation {self._rotation_angle}°")
             
             # Render the text
             self.logger.debug(f"Rendering window text for property {property_id}: {text_data}")
@@ -442,6 +497,7 @@ class SymbolRenderer(BaseRenderer):
             self._is_mirrored = False  # Reset mirrored state
             self._symbol_def = None  # Reset symbol definition
             self._window_overrides = {}  # Reset window overrides
+            self._rotation_angle = 0  # Reset rotation angle
             
         except Exception as e:
             self.logger.error(f"Failed to add symbol to drawing: {str(e)}")
