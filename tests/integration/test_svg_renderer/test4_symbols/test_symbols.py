@@ -18,6 +18,14 @@ def output_dir():
     return os.path.join(os.path.dirname(__file__), "results")
 
 def test_symbol_rendering(test_schematic, output_dir):
+    """Test comprehensive symbol rendering with all 8 possible orientations.
+    
+    This test verifies that symbols render correctly with:
+    - Regular orientations: R0, R90, R180, R270
+    - Mirrored orientations: M0, M90, M180, M270
+    
+    Contains 10 symbols total: 8 NMOS (one for each orientation) + 2 Voltage sources.
+    """
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
     
@@ -69,17 +77,24 @@ def test_symbol_rendering(test_schematic, output_dir):
     schematic = data['schematic']
     assert schematic is not None
     assert 'symbols' in schematic
-    assert len(schematic['symbols']) == 3  # We expect 3 symbols (2 NMOS and 1 voltage source)
+    assert len(schematic['symbols']) == 10  # We expect 10 symbols (8 NMOS and 2 voltage sources)
     
     # Verify symbol types and orientations
     symbol_names = [symbol['symbol_name'] for symbol in schematic['symbols']]
     assert 'NMOS' in symbol_names
     assert 'Voltage' in symbol_names
     
-    # Verify symbol orientations
+    # Count symbol types
+    nmos_count = sum(1 for name in symbol_names if name == 'NMOS')
+    voltage_count = sum(1 for name in symbol_names if name == 'Voltage')
+    assert nmos_count == 8, f"Expected 8 NMOS symbols, found {nmos_count}"
+    assert voltage_count == 2, f"Expected 2 Voltage symbols, found {voltage_count}"
+    
+    # Verify all 8 orientations are present (comprehensive orientation test)
     orientations = [symbol.get('rotation', 'R0') for symbol in schematic['symbols']]
-    assert 'R0' in orientations  # Default orientation
-    assert 'R270' in orientations  # Rotated NMOS
+    expected_orientations = ['R0', 'R90', 'R180', 'R270', 'M0', 'M90', 'M180', 'M270']
+    for expected_orientation in expected_orientations:
+        assert expected_orientation in orientations, f"Missing orientation: {expected_orientation}"
     
     # Verify symbol elements
     voltage_symbol = data['symbols']['Voltage']

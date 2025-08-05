@@ -125,3 +125,19 @@ Example on how to invoke the tool
   3. Configuration changes that affect multiple aspects of the project
   4. Fixes spanning both code and documentation
 
+### Working with svgwrite Custom Attributes
+- svgwrite has strict validation that rejects custom XML attributes and namespaces
+- To add custom attributes (like `s:type`, `s:width`, `xmlns:s`), disable validation by setting `debug=False` in the Drawing constructor
+- The `pretty=True` parameter should be passed to the save method (`dwg.save(pretty=True)`), not the Drawing constructor
+- Custom attributes can be added via the `.attribs` dictionary: `element.attribs['s:type'] = 'value'`
+- When adding custom namespaces, add them after creating the Drawing to avoid validation errors
+- This approach allows for semantic SVG markup while maintaining svgwrite compatibility
+
+### ViewBox Calculation for SVG Elements
+- Always ensure all element types are included in viewBox calculations
+- Missing element types (like symbols) can result in incorrect viewBox dimensions causing elements to appear off-canvas
+- When adding new element types to a schematic, also add them to the ViewboxCalculator
+- Use reasonable default sizes for elements when actual dimensions are unknown
+- The ViewboxCalculator should process: wires, shapes, symbols, flags, and any other positioned elements
+- Debugging viewBox issues: check that all element coordinates are being considered in bounds calculation
+

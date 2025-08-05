@@ -60,3 +60,10 @@ Thumbs.db
 
 # LTspice libraries
 MOSbius_LTspice_Library
+
+# Documentation
+docs/build/
+docs/_build/
+
+# Logs
+*.log

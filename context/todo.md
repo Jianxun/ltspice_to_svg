@@ -2,6 +2,27 @@
 
 ## Current Tasks
 
+### [X] Enhance SVG Output with Symbol Metadata and Pretty Formatting
+- [X] Add pretty formatting to SVG output 
+  - [X] Research svgwrite's pretty printing capabilities
+  - [X] Implement `save(pretty=True)` parameter for readable SVG output
+  - [X] Test with actual schematic conversion
+- [X] Add custom namespace support for symbol metadata
+  - [X] Add `xmlns:s="https://github.com/nturley/netlistsvg"` namespace
+  - [X] Disable svgwrite validation for custom attributes (set `debug=False`)
+- [X] Add symbol type attributes to groups
+  - [X] Modify `begin_symbol()` to accept symbol name parameter
+  - [X] Add `s:type` attribute with actual symbol names
+  - [X] Update SVGRenderer to pass symbol names to SymbolRenderer
+- [X] Add symbol dimension attributes
+  - [X] Create method to calculate symbol dimensions from shapes
+  - [X] Add `s:width` and `s:height` attributes with calculated values
+  - [X] Handle all shape types (lines, rectangles, circles, arcs) in dimension calculation
+- [X] Fix viewbox calculation bug
+  - [X] Identified missing symbol inclusion in ViewboxCalculator
+  - [X] Added `_include_symbols()` method to process symbol positions
+  - [X] Updated `calculate()` method to include symbols in bounds calculation
+
 ### [X] Add viewbox margin and font option to rendering options
 - [X] Create a feature branch for rendering control options
 - [X] Add margin option to `RenderingConfig`

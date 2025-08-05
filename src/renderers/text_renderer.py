@@ -55,6 +55,7 @@ class TextRenderer(BaseRenderer):
                 - size_multiplier: Font size multiplier index (0-7)
                 - type: Text type ('spice' or 'comment')
                 - is_mirrored: Whether the text is in a mirrored symbol
+                - rotation: Optional rotation angle in degrees (applied in addition to justification-based rotation)
             target_group: Optional group to add the text to. If None, adds to drawing.
         """
         # Skip if no text content
@@ -70,10 +71,11 @@ class TextRenderer(BaseRenderer):
         size_multiplier = text.get('size_multiplier', 2)  # Default to size 2 (1.5x)
         text_type = text.get('type', 'comment')  # Default to comment type
         is_mirrored = text.get('is_mirrored', False)  # Default to not mirrored
+        additional_rotation = text.get('rotation', 0)  # Optional additional rotation
         
         self.logger.debug(f"Rendering text: '{content}' at ({x},{y})")
         self.logger.debug(f"Properties: justification={justification}, size_multiplier={size_multiplier}, "
-                         f"text_type={text_type}, is_mirrored={is_mirrored}")
+                         f"text_type={text_type}, is_mirrored={is_mirrored}, additional_rotation={additional_rotation}")
         
         # Strip prefix based on text type
         if text_type == 'spice' and content.startswith('!'):
@@ -144,6 +146,14 @@ class TextRenderer(BaseRenderer):
             text_group.add(text_element)
             text_element = text_group
             self.logger.debug(f"Added counter-mirroring transform: {text_group.attribs['transform']}")
+        
+        # Apply additional rotation if specified
+        if additional_rotation != 0:
+            rotation_group = self.dwg.g()
+            rotation_group.attribs['transform'] = f"rotate({additional_rotation}, {x}, {y})"
+            rotation_group.add(text_element)
+            text_element = rotation_group
+            self.logger.debug(f"Applied additional rotation: {additional_rotation}° at ({x},{y})")
         
         # For vertical text (VTop, VBottom), we need to rotate the text 90 degrees
         if is_vertical:
