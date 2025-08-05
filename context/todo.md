@@ -2,6 +2,76 @@
 
 ## Current Tasks
 
+### [ ] NetlistSVG Compatibility Sprint 
+**Goal**: Adapt SVG output format to be compatible with netlistsvg skin definition format for better interoperability and more concise, readable output.
+
+#### Phase 1: CSS Classes Implementation ✅ **PRIORITY**
+- [ ] Design CSS class taxonomy for different element types
+  - [ ] Define classes for: `.symbol`, `.wire`, `.text`, `.flag`, `.shape`, `.connect`, `.detail`
+  - [ ] Research netlistsvg's class naming conventions for alignment
+  - [ ] Create comprehensive CSS class mapping for all our element types
+- [ ] Add CSS `<style>` block to SVG header
+  - [ ] Modify `SVGRenderer.create_drawing()` to include style definitions
+  - [ ] Define global styles matching our current inline style patterns
+  - [ ] Ensure styles are compatible with existing test expectations
+- [ ] Refactor renderers to use CSS classes
+  - [ ] Update `WireRenderer` to use classes instead of inline styles
+  - [ ] Update `ShapeRenderer` to use classes instead of inline styles  
+  - [ ] Update `SymbolRenderer` to use classes instead of inline styles
+  - [ ] Update `TextRenderer` to use classes instead of inline styles
+  - [ ] Update `FlagRenderer` to use classes instead of inline styles
+- [ ] Test CSS class implementation
+  - [ ] Run existing integration tests to ensure visual compatibility
+  - [ ] Verify file size reduction from removing repeated inline styles
+  - [ ] Check SVG readability improvement in generated files
+
+#### Phase 2: Port Metadata Enhancement ✅ **IMPLEMENT**  
+- [ ] Extract port information from parsed .asy symbols
+  - [ ] Review current symbol parsing code for pin/port data availability
+  - [ ] Identify which port information is already parsed vs needs extraction
+  - [ ] Map LTspice pin definitions to netlistsvg port format
+- [ ] Add port definition generation to symbol renderer
+  - [ ] Modify `SymbolRenderer.begin_symbol()` to accept port data
+  - [ ] Generate invisible `<g>` elements for each port with required attributes
+  - [ ] Calculate port positions relative to symbol bounds
+  - [ ] Determine appropriate `s:position` values ("left", "right", "top", "bottom")
+- [ ] Update symbol rendering pipeline
+  - [ ] Modify `SVGRenderer.render_symbols()` to pass port data to renderer  
+  - [ ] Ensure port definitions are included in symbol groups
+  - [ ] Test port metadata generation with different symbol types
+- [ ] Validate port metadata implementation
+  - [ ] Test with various symbol types (nmos, pmos, resistor, capacitor, etc.)
+  - [ ] Verify port coordinates are accurate within symbol bounds
+  - [ ] Check that port identifiers match expected values
+
+#### Phase 3: Dynamic Attributes (Optional) ⚠️ **FUTURE**
+- [ ] Add `s:attribute` support for component values  
+  - [ ] Identify which text elements should have dynamic attributes
+  - [ ] Add `s:attribute="value"` to component value text elements
+  - [ ] Add `s:attribute="ref"` to reference designator text elements
+- [ ] Extract component parameters from .asc files
+  - [ ] Review parsed schematic data for component parameters
+  - [ ] Map component attributes to appropriate s:attribute values
+- [ ] Ensure standalone viewability
+  - [ ] Verify text displays literal values when viewed outside netlistsvg
+  - [ ] Test that SVG files remain standalone viewable
+
+#### Testing and Validation
+- [ ] Create comprehensive test suite for netlistsvg compatibility
+  - [ ] Test CSS class generation and application
+  - [ ] Test port metadata accuracy and completeness
+  - [ ] Test dynamic attribute implementation (if implemented)
+- [ ] Validate compatibility with netlistsvg tools
+  - [ ] Test generated SVGs as potential skin components  
+  - [ ] Verify namespace and attribute compatibility
+  - [ ] Check for any validation issues with netlistsvg
+
+#### Documentation Updates
+- [ ] Update README with new output format features
+- [ ] Document CSS class usage and customization options
+- [ ] Add examples of netlistsvg compatibility features
+- [ ] Update API documentation for new renderer methods
+
 ### [X] Enhance SVG Output with Symbol Metadata and Pretty Formatting
 - [X] Add pretty formatting to SVG output 
   - [X] Research svgwrite's pretty printing capabilities

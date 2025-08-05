@@ -98,6 +98,18 @@ def test_symbol_window_texts(test_schematic, output_dir):
     # 5. Verify the 12mV text is positioned and formatted correctly
     assert 'transform="rotate(-90, 32, 56)"' in svg_content, "12mV text should have counter-rotation transform"
     assert 'text-anchor="middle"' in svg_content, "12mV text should have 'middle' anchor for VTop justification"
+    
+    # 6. V3 (R180) assertions - These will FAIL until rotation compensation is implemented
+    assert 'transform="translate(336,464) rotate(180)"' in svg_content, "V3 symbol should be rotated 180 degrees"
+    # TODO: The following assertions will fail due to text rotation bug
+    # V3 uses 'Left' justification which should remain readable after R180 rotation
+    # Currently the text will appear upside down because it's rotated with the symbol
+    
+    # 7. V4 (R270) assertions - These will FAIL until rotation compensation is implemented  
+    assert 'transform="translate(112,480) rotate(270)"' in svg_content, "V4 symbol should be rotated 270 degrees"
+    # TODO: The following assertions will fail due to text rotation bug
+    # V4 uses 'VTop' and 'VBottom' justifications which should be compensated for R270 rotation
+    # Currently the text will be incorrectly oriented (upside down/sideways)
 
 def test_symbol_window_texts_component_name(test_schematic, output_dir):
     """Test rendering only component names (property 0)."""
@@ -141,6 +153,8 @@ def test_symbol_window_texts_component_name(test_schematic, output_dir):
     # Verify component names are present
     assert 'V1' in svg_content, "Component name 'V1' should be present"
     assert 'V2' in svg_content, "Component name 'V2' should be present"
+    assert 'V3' in svg_content, "Component name 'V3' should be present"
+    assert 'V4' in svg_content, "Component name 'V4' should be present"
     
     # Verify component value is not present
     assert '12mV' not in svg_content, "Component value '12mV' should not be present"
@@ -189,4 +203,6 @@ def test_symbol_window_texts_component_value(test_schematic, output_dir):
     
     # Verify component names are not present
     assert 'V1' not in svg_content, "Component name 'V1' should not be present"
-    assert 'V2' not in svg_content, "Component name 'V2' should not be present" 
+    assert 'V2' not in svg_content, "Component name 'V2' should not be present"
+    assert 'V3' not in svg_content, "Component name 'V3' should not be present"
+    assert 'V4' not in svg_content, "Component name 'V4' should not be present" 

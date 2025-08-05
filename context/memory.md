@@ -131,6 +131,37 @@ The project now generates SVG files with advanced metadata and proper formatting
 </svg>
 ```
 
+### NetlistSVG Compatibility Analysis
+- **Analysis Document**: Created comprehensive analysis in `docs/netlistsvg_analysis.md`
+- **Compatibility Goal**: Adapt SVG output to be compatible with netlistsvg skin definition format
+- **Key Findings**:
+  - NetlistSVG uses CSS classes instead of inline styles for better conciseness and maintainability
+  - Port connection metadata is crucial for component interoperability
+  - Template-based architecture with semantic markup enables component reuse
+  - Dynamic attribute substitution supports both standalone viewing and runtime integration
+
+### Planned Adaptations for NetlistSVG Compatibility
+The next development sprint will focus on making our SVG output more compatible with netlistsvg's skin definition format:
+
+#### Phase 1: CSS Classes Implementation
+- Replace repeated inline styles with CSS classes
+- Add global `<style>` block to SVG header
+- Use semantic class names aligned with netlistsvg conventions
+- Benefits: More concise markup, better readability, easier maintenance
+
+#### Phase 2: Port Metadata Enhancement  
+- Extract port/pin information from parsed .asy symbol files
+- Add port definitions as invisible `<g>` elements with attributes:
+  - `s:x`, `s:y` - Port coordinates within component
+  - `s:pid` - Port identifier (matches connections)
+  - `s:position` - Port position hint ("left", "right", "top", "bottom")
+- Enable programmatic analysis and component interoperability
+
+#### Phase 3: Dynamic Attributes (Optional)
+- Add `s:attribute` support for component values
+- Extract component parameters from .asc files
+- Generate appropriate attribute references while maintaining standalone viewability
+
 ## Testing
 - Comprehensive test suite with pytest
 - Test files organized under `/tests/`
