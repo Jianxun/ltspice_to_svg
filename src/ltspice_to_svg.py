@@ -17,6 +17,9 @@ from src.parsers.schematic_parser import SchematicParser
 from src.renderers.svg_renderer import SVGRenderer
 from src.renderers.rendering_config import RenderingConfig
 
+# Version information
+__version__ = "0.2.0"
+
 def get_ltspice_lib_path() -> str:
     """
     Find the LTspice library path based on the operating system.
@@ -89,6 +92,10 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(description="Convert LTspice schematic to SVG")
+    
+    # Version argument
+    parser.add_argument("--version", action="version", version=f"ltspice_to_svg {__version__}")
+    
     # Input file argument
     parser.add_argument("asc_file", help="Path to the .asc schematic file")
     
