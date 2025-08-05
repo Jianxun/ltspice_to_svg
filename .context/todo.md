@@ -2,6 +2,59 @@
 
 ## Current Tasks
 
+### [X] Version 0.2.0 Release Preparation
+- [X] Fix critical symbol rotation bugs (M90, M270 orientations)
+- [X] Add CLI version command support
+- [X] Enhance SVG output with metadata and pretty formatting
+- [X] Create comprehensive CHANGELOG.md
+- [X] Update version to 0.2.0 and status to Beta
+- [X] Build and test distribution packages
+- [X] Include CHANGELOG.md in package distribution
+
+### [ ] Python Release Best Practices Implementation
+**Goal**: Implement missing Python release best practices to improve project maintainability and professionalism.
+
+#### Release Automation ⚠️ **RECOMMENDED**
+- [ ] Create git tags for version releases
+  - [ ] Tag v0.2.0 release
+  - [ ] Set up semantic versioning tag format
+- [ ] Set up GitHub Releases
+  - [ ] Create release for v0.2.0 with release notes from CHANGELOG
+  - [ ] Configure automated release note generation
+- [ ] Implement CI/CD for releases
+  - [ ] Set up GitHub Actions workflow for PyPI publishing
+  - [ ] Configure automated publishing on tag creation
+  - [ ] Add release workflow testing
+
+#### Project Governance ✅ **PRIORITY**
+- [ ] Create SECURITY.md
+  - [ ] Document vulnerability reporting process
+  - [ ] Add security contact information
+  - [ ] Define supported versions policy
+- [ ] Create CONTRIBUTING.md
+  - [ ] Document development environment setup
+  - [ ] Add code style guidelines
+  - [ ] Explain testing procedures and PR process
+- [ ] Add CODE_OF_CONDUCT.md
+  - [ ] Use standard Contributor Covenant
+  - [ ] Adapt for project-specific needs
+- [ ] Create GitHub templates
+  - [ ] Issue templates for bug reports and feature requests
+  - [ ] Pull request template with checklist
+
+#### Code Quality Improvements ⚠️ **FUTURE**
+- [ ] Set up pre-commit hooks
+  - [ ] Add code formatting (black, isort)
+  - [ ] Add linting (flake8, pylint)
+  - [ ] Add type checking (mypy)
+- [ ] Configure Dependabot
+  - [ ] Set up automated dependency updates
+  - [ ] Configure update frequency and scope
+- [ ] Implement single-source version management
+  - [ ] Move version to __init__.py or _version.py
+  - [ ] Update setup.py to read version dynamically
+  - [ ] Update CLI module to import version
+
 ### [ ] NetlistSVG Compatibility Sprint 
 **Goal**: Adapt SVG output format to be compatible with netlistsvg skin definition format for better interoperability and more concise, readable output.
 

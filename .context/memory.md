@@ -40,6 +40,12 @@ The project is structured as follows:
 
 The project is functional and can convert both LTspice schematics (.asc) and symbols (.asy) to SVG format.
 
+### Version 0.2.0 Release (January 2025)
+- **Status**: Beta quality, ready for release
+- **Package Built**: Wheel and source distributions created and tested
+- **Key Improvements**: Critical symbol rotation bugs fixed, SVG metadata enhancements, CLI version command
+- **Development Status**: Upgraded from Alpha to Beta
+
 ### Recently Completed Features
 - Fixed text mirroring issues in symbols
 - Implemented proper text alignment for symbol pins
@@ -68,7 +74,7 @@ The project is functional and can convert both LTspice schematics (.asc) and sym
   - Updated package metadata and created necessary files
   - Enabled direct installation via pip from GitHub
   - Added installation documentation in README
-- **Enhanced SVG Output with Symbol Metadata (Current Session)**
+- **Enhanced SVG Output with Symbol Metadata (v0.2.0)**
   - Added pretty formatting to SVG output using svgwrite's `pretty=True` parameter
   - Implemented custom namespace support: `xmlns:s="https://github.com/nturley/netlistsvg"`
   - Added `s:type` attribute to symbol groups with actual symbol names
@@ -76,6 +82,17 @@ The project is functional and can convert both LTspice schematics (.asc) and sym
   - Fixed viewbox calculation to properly include symbols (was missing symbols before)
   - Disabled svgwrite validation for custom attributes to avoid conflicts
   - Enhanced symbol dimension calculation from actual shape bounds
+- **Critical Bug Fixes (v0.2.0)**
+  - Fixed symbol rotation order for mirrored orientations (M90, M270)
+  - Fixed window text rotation issues for R180/R270 symbols
+  - Added rotation compensation logic to keep text readable
+- **CLI Enhancements (v0.2.0)**
+  - Added `--version` command support
+  - Enhanced help text and documentation
+- **Release Preparation (v0.2.0)**
+  - Created CHANGELOG.md following Keep a Changelog format
+  - Updated MANIFEST.in to include changelog in distributions
+  - Built and tested wheel/source packages
 
 ### In Progress Features
 - Documentation Improvement
@@ -103,6 +120,29 @@ The documentation needs improvement in several areas:
 
 ### Known Issues
 - None at this time
+
+### Missing Python Release Best Practices
+The project could benefit from implementing additional Python release practices:
+
+1. **Release Automation**
+   - Git tags for version releases (currently missing)
+   - GitHub Releases with automated release notes
+   - CI/CD pipeline for automated PyPI publishing on tag creation
+   
+2. **Project Governance**
+   - SECURITY.md for vulnerability reporting procedures
+   - CONTRIBUTING.md with development guidelines
+   - CODE_OF_CONDUCT.md for community standards
+   - GitHub issue and PR templates
+   
+3. **Code Quality**
+   - Pre-commit hooks for automated code quality checks
+   - Dependabot or similar for dependency updates
+   - Version management from single source (currently hardcoded in multiple places)
+   
+4. **Documentation**
+   - Contributor guide (partially done in docs/)
+   - Security policy documentation
 
 ### SVG Output Features
 The project now generates SVG files with advanced metadata and proper formatting:
