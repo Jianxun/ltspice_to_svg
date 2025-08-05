@@ -15,8 +15,8 @@ project = 'LTspice to SVG Converter'
 copyright = '2025, Jianxun Zhu'
 author = 'Jianxun Zhu'
 
-version = '1.0.0'
-release = '1.0.0'
+version = '0.2.0'
+release = '0.2.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

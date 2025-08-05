@@ -16,7 +16,7 @@ if "src.renderers.flag_definitions" not in packages:
 
 setup(
     name="ltspice_to_svg",
-    version="0.1.1",
+    version="0.2.0",
     packages=packages,
     package_data={
         "src": ["renderers/flag_definitions/flags.json"],
@@ -38,7 +38,7 @@ setup(
     author_email="zhujianxun.bupt@gmail.com",  # Replace with your PyPI registered email
     url="https://github.com/Jianxun/ltspice_to_svg",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Science/Research",
         "Programming Language :: Python :: 3",
         "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
