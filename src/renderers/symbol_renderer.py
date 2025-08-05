@@ -179,15 +179,20 @@ class SymbolRenderer(BaseRenderer):
             self.logger.info(f"Setting symbol transformation - Position: ({x},{y}), "
                            f"Rotation: {rotation}, Mirrored: {self._is_mirrored}")
                 
-            # Apply rotation first
-            if angle != 0:
-                transform.append(f"rotate({angle})")
-                self.logger.debug(f"Added rotation transform: rotate({angle})")
-                
-            # Apply mirroring after rotation
+            # Apply transformations in correct order based on LTspice conventions
             if self._is_mirrored:
+                # For mirrored symbols: mirror first, then rotate
                 transform.append("scale(-1,1)")  # Mirror across Y axis
                 self.logger.debug("Added mirroring transform: scale(-1,1)")
+                
+                if angle != 0:
+                    transform.append(f"rotate({angle})")
+                    self.logger.debug(f"Added rotation transform after mirroring: rotate({angle})")
+            else:
+                # For regular symbols: just rotate
+                if angle != 0:
+                    transform.append(f"rotate({angle})")
+                    self.logger.debug(f"Added rotation transform: rotate({angle})")
                 
             # Set the transform
             self._current_group.attribs['transform'] = ' '.join(transform)
