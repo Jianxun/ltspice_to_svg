@@ -52,13 +52,14 @@ git tag v0.2.1 && git push origin v0.2.1
 
 ## Workflow Details
 
-The CI/CD pipeline:
+The build and publish pipeline:
 
-1. **Tests**: Runs on Python 3.8-3.12 for all pushes and PRs
-2. **Build & Publish**: Only runs on releases
+1. **Build & Publish**: Only runs on releases
    - Builds source distribution and wheel
    - Validates the package with `twine check`
    - Publishes to PyPI automatically
+
+**Note**: CI testing is not included as this package requires LTspice libraries and Windows-specific functionality that are not available on Linux CI runners.
 
 ## Version Management
 
