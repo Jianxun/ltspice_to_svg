@@ -1,28 +1,25 @@
 # Publishing to PyPI
 
-This repository is configured for automated publishing to PyPI using GitHub Actions.
+This repository uses **PyPI Trusted Publishing** for secure, automated publishing to PyPI using GitHub Actions.
 
 ## Setup Requirements
 
-### 1. PyPI API Token
+### 1. PyPI Trusted Publishing Setup
 1. Go to [PyPI](https://pypi.org) and create an account if you don't have one
-2. Generate an API token:
-   - Go to Account Settings → API tokens
-   - Create a new token with "Entire account" scope
-   - Copy the token (starts with `pypi-`)
+2. Go to your PyPI account settings → Publishing
+3. Add a new trusted publisher:
+   - **PyPI project name**: `ltspice-to-svg` (or your actual PyPI project name)
+   - **Owner**: `Jianxun` (your GitHub username)
+   - **Repository name**: `ltspice_to_svg`
+   - **Workflow name**: `publish.yml`
+   - **Environment name**: `publish`
 
-### 2. GitHub Secrets
-Add the following secrets to your GitHub repository:
-- Go to Settings → Secrets and variables → Actions
-- Add repository secret:
-  - Name: `PYPI_API_TOKEN`
-  - Value: Your PyPI API token
+### 2. GitHub Environment Setup
+1. Go to your GitHub repository → Settings → Environments
+2. Create a new environment named `publish`
+3. (Optional) Add protection rules like requiring reviews for deployments
 
-### 3. Test PyPI (Optional)
-For testing releases, you can also set up Test PyPI:
-1. Create account at [Test PyPI](https://test.pypi.org)
-2. Generate API token
-3. Add `TEST_PYPI_API_TOKEN` secret to GitHub
+**Note**: No API tokens needed! Trusted publishing uses OpenID Connect (OIDC) for secure authentication.
 
 ## Release Process
 
